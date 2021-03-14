@@ -47,7 +47,6 @@ Matrix::Matrix(){
 };
 
 Matrix::~Matrix(){
-    printf("DECONSTRUCTOR\n");
 };
 
 int Matrix::getRows(){
