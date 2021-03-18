@@ -11,7 +11,7 @@
 #include <iostream>
 
 Matrix::Matrix(unsigned int r, unsigned int c):rows(r), columns(c){
-    (r!=0 && c!=0)?:throw 505; //need to change this
+    //(r!=0 && c!=0)?:throw 505; //need to change this
     this->mat.resize(this->rows*this->columns);
     int zeros = round(this->sparsity * r*c);
     int nonZeros = r*c - zeros;
@@ -32,7 +32,7 @@ Matrix::Matrix(unsigned int r, unsigned int c):rows(r), columns(c){
     std::random_shuffle(mat.begin(), mat.end());
 };
 
-void Matrix::printMat(){
+void Matrix::print(){
     printf("PRINTING MATRIX\n[");
     for (int e=0; e<(this->mat.size()); e++){
         if (e%this->rows == 0){
@@ -56,8 +56,12 @@ int Matrix::getColumns(){
     return this->columns;
 };
 
+std::vector<double> Matrix::getMat(){
+    return this->mat;
+};
+
 double Matrix::operator[](unsigned int i){
-    return(mat[i]);
+    return(this->mat[i]);
 };
 
 double Matrix::operator()(unsigned int i){
@@ -71,7 +75,7 @@ double Matrix::operator()(unsigned int r, unsigned int c){
     else{
         
         printf("please use valid indices: (r,c) where 0=<r<%i and 0=<c<%i\n",this->rows,this->columns);
-        throw 505;
+        //throw 505;
         return EXIT_FAILURE;
     }
     
@@ -85,3 +89,67 @@ Matrix Matrix::operator*(double i){
     }
     return out;
 };
+
+double Matrix::Dnrm2(){
+    double sumScaled = 1.0;
+    double magnitudeOfLargestElement=0.0;
+    for(int i=0;i<this->mat.size();i++){
+        if(this->mat[i]!=0){
+            double value = this->mat[i];
+            double absVal = std::abs(value);
+            if(magnitudeOfLargestElement<absVal){
+                //rescale sum to the range of the new element
+                value = magnitudeOfLargestElement /absVal;
+                sumScaled=sumScaled*(value*value)+1.0;
+                magnitudeOfLargestElement=absVal;
+            }
+            else{
+                //rescale the new element to the range of the snum
+                value = absVal /magnitudeOfLargestElement;
+                sumScaled+=value*value;
+            }
+        }
+    }
+    printf("sumScaled: %f, magOfLargestEle: %f\n",sumScaled,magnitudeOfLargestElement);
+    return magnitudeOfLargestElement*sqrt(sumScaled);
+};
+
+double Matrix::normalNorm(){
+    double sumScaled = 0;
+    for(int i=0;i<this->mat.size();i++){
+        if(this->mat[i]!=0){
+            double value = this->mat[i];
+            sumScaled +=  value * value;
+        }
+    }
+    return sqrt(sumScaled);
+};
+
+void Vector::print(){
+    printf("PRINTING VECTOR\n[");
+    for (int e=0; e<(this->mat.size()); e++){
+        (e==mat.size()-1)?printf("%f",this->mat[e]):printf("%f ",this->mat[e]);
+    }
+    printf("]\n");
+}
+
+Vector Vector::operator*(double i){
+    //probably can find a better implementation
+    Vector out(*this);
+    for (int e = 0; e<out.mat.size();e++){
+        out.mat[e]*=i;
+    }
+    return out;
+};
+
+Vector::~Vector(){
+    printf("DECONSTRUCTOR");
+}
+
+int lsqr(Matrix &A, Vector &b){
+    double beta = b.Dnrm2();
+    auto u = b*(1/beta);
+    u.print();
+    std::cout<<beta<<std::endl;
+    return 0;
+}
