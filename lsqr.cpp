@@ -1,15 +1,33 @@
 #include "lsqr.h"
 #include <iostream>
+#include <math.h>
+
+double D2Norm(double a, double b){
+    const double scale = std::abs(a) + std::abs(b);
+    const double zero = 0.0;
+
+    if( scale == zero )
+    {
+    return zero;
+    }
+
+    const double sa = a / scale;
+    const double sb = b / scale;
+
+    return scale * sqrt( sa * sa + sb * sb );
+};
 
 int lsqr(Matrix &A, Vector &b){
+    //1. Initialize
     int itn = 0;
     Vector u;
     Vector v;
     Vector w;
+    Vector x;//(A.getRows(),1,0);
     double alpha;
     double beta = b.Dnrm2();
     if (beta>0){
-        u = b*(1/beta);
+        u = b * (1/beta);
         v = A.transpose() * u;
         alpha = v.Dnrm2();
         printf("does %f = ",alpha);
@@ -22,7 +40,8 @@ int lsqr(Matrix &A, Vector &b){
     
     double Arnorm = alpha * beta;
     double rhobar = alpha;
-    
+    double rho;
+
     double phibar = beta;
     double bnorm = beta;
     double rnorm = beta;
@@ -34,19 +53,54 @@ int lsqr(Matrix &A, Vector &b){
     double test3;
     double rtol;
     unsigned int istop = 0;
-
+    Vector res_v;
+    double res;
     double epsilon = 1e-15;
+    //2. For i=1,2,3....
+    printf("2. For i=1,2,3....\n");
     do{
         itn++;
         Vector A_T = A.transpose();
-        //3. Bidiagonialization
+        
+        //3. Continue the bidiagonialization
+        printf("3. Continue the bidiagonialization\n");
         u = A*v - u*alpha;
         beta = u.Dnrm2();
-        u = u*(1/beta);
-        v = A_T*u - v*beta;
+        if(beta>0){
+            u = u * (1/beta);
+            v = (A_T * u) - (v * beta);
+            alpha = v.Dnrm2();
+            if (alpha>0){
+                v = v * (1/alpha);
+            }
+        }
 
-    
-    
+        //4. Construct and apply next orthogonal transformation
+        printf("4. Construct and apply next orthogonal transformation\n");
+        double rhbar1 = rhobar;
+
+        double rho = D2Norm( rhbar1, beta );
+        double c = rhbar1/rho;
+        double s = beta/rho;
+        double theta = s * alpha;
+        rhobar = -c * alpha;
+        double phi = c * phibar;
+        phibar = s * phibar;
+        
+        double tau = s * phi;
+
+        //5. Update x,w
+        printf("5. Update x,w\n");
+        w.print();
+        std::cout<<phi/rho<<std::endl;
+        Vector test = w * (phi/rho);
+        w.print();
+        x = x + (test);
+        x.print();
+        w = v - (w * (theta/rho));
+        res_v = A*x - b;
+        res = res_v.Dnrm2();
+        std::cout<<"\nres: "<<res<<" iter: "<<itn<<std::endl;
     }while(istop==1);
     
     return 0;

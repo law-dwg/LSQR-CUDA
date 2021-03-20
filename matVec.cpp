@@ -81,14 +81,19 @@ Vector Vector::operator-(Vector v){
 };
 
 Vector Vector::operator+(Vector v){
-    Vector out(this->rows,this->columns);
-    if(out.rows == v.rows && out.columns == v.columns){
+    if(this->mat.size()==0){
+        Vector out(v.rows,v.columns,0);
+        return out;
+    }
+    else if(this->rows == v.rows && this->columns == v.columns){
+        Vector out(this->rows,this->columns);
         for(int i = 0; i>this->mat.size(); i++){
             out.mat[i] = this->mat[i] + v.mat[i];
         }
         return out;
     }
     else{
+        printf("out.mat.size() = %i ",this->mat.size());
         printf("cannot perform this addition, vectors need to be the same size");
         return (*this);
     };
