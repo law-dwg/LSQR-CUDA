@@ -18,7 +18,8 @@ class Vector {
         //operator overloads
         Vector operator*(Vector &v);
         Vector operator*(double i);
-        Vector operator-(Vector &v);
+        Vector operator-(Vector v);
+        Vector operator+(Vector v);
         double operator()(unsigned int i);
         double operator()(unsigned int r, unsigned int c);
         double operator[](unsigned int i);

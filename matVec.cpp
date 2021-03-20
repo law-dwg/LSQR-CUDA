@@ -59,14 +59,40 @@ Vector Vector::operator*(Vector &v){
 
 Vector Vector::operator*(double i){
     //probably can find a better implementation
-    Vector out(*this);
+    Vector out=*this;
     for (int e = 0; e<out.mat.size();e++){
         out.mat[e]*=i;
     }
     return out;
 };
 
-Vector operator-(Vector &v);
+Vector Vector::operator-(Vector v){
+    Vector out(this->rows,this->columns);
+    if(out.rows == v.rows && out.columns == v.columns){
+        for(int i = 0; i<this->mat.size(); i++){
+            out.mat[i] = this->mat[i] - v.mat[i];
+        }
+        return out;
+    }
+    else{
+        printf("cannot perform this subtraction, vectors need to be the same size");
+        return (*this);
+    };
+};
+
+Vector Vector::operator+(Vector v){
+    Vector out(this->rows,this->columns);
+    if(out.rows == v.rows && out.columns == v.columns){
+        for(int i = 0; i>this->mat.size(); i++){
+            out.mat[i] = this->mat[i] + v.mat[i];
+        }
+        return out;
+    }
+    else{
+        printf("cannot perform this addition, vectors need to be the same size");
+        return (*this);
+    };
+};
 
 double Vector::operator()(unsigned int i){
     return(Vector::operator[](i));

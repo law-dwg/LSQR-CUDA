@@ -36,11 +36,18 @@ int lsqr(Matrix &A, Vector &b){
     unsigned int istop = 0;
 
     double epsilon = 1e-15;
-    /**do{
+    do{
         itn++;
+        Vector A_T = A.transpose();
+        //3. Bidiagonialization
         u = A*v - u*alpha;
+        beta = u.Dnrm2();
+        u = u*(1/beta);
+        v = A_T*u - v*beta;
 
-    }while(istop==0);
-    **/
+    
+    
+    }while(istop==1);
+    
     return 0;
 }
