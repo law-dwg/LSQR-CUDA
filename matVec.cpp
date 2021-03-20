@@ -10,17 +10,18 @@
 
 #include "matVec.h"
 
+//constructors
 Matrix::Matrix(unsigned int r, unsigned int c){
     this->rows=r; 
     this->columns=c;
     this->mat.resize(this->rows*this->columns);
     int zeros = round(this->sparsity * r*c);
     int nonZeros = r*c - zeros;
-    std::cout<<zeros<<std::endl;
+    //std::cout<<zeros<<std::endl;
     srand(time(0));
     
-    printf("%f sparsity for %i elements leads to %f zero values which rounds to %d. That means there are %d nonzero values\n",this->sparsity,r*c,this->sparsity * r*c,zeros,nonZeros);
-    printf("mat size: %i\n",mat.size());
+    //printf("%f sparsity for %i elements leads to %f zero values which rounds to %d. That means there are %d nonzero values\n",this->sparsity,r*c,this->sparsity * r*c,zeros,nonZeros);
+    //printf("mat size: %i\n",mat.size());
     for (int i = 0; i < mat.size(); i++){
         if(i < nonZeros){
             mat[i]=rand()%100;
@@ -33,63 +34,45 @@ Matrix::Matrix(unsigned int r, unsigned int c){
     std::random_shuffle(mat.begin(), mat.end());
 };
 
-void Matrix::print(){
-    printf("#ofRows:%i #ofCols:%i\n",this->rows,this->columns);
-    printf("PRINTING MATRIX\n[");
-    for (int e=0; e<(this->mat.size()); e++){
-        if (e%this->columns == 0){
-            (e==0)?:printf("\n ");
-        };
-        (e==mat.size()-1)?printf("%f",this->mat[e]):printf("%f ",this->mat[e]);
+//operator overloads
+Vector Vector::operator*(Vector &v){
+    std::vector<double> lhs = this->mat;
+    std::vector<double> rhs = v.getMat();
+    Vector out(this->rows);
+    //std::cout<<lhs.size()<<std::endl;
+    //std::cout<<rhs.size()<<std::endl;
+    if(this->columns==rhs.size()){
+        for(int r =0; r<this->rows; r++){
+            double sum = 0; 
+            for(int c=0; c<this->columns; c++){
+                sum += lhs[r*this->columns + c]*rhs[c];
+            }
+            out.mat[r]=sum;
+        }
+        return out;
     }
-    printf("]\n");
+    else{
+        printf("cannot perform this multiplication\n");
+        return v;
+    }
 };
 
-int Matrix::getRows(){
-    printf("number of rows: %i\n",this->rows);
-    return this->rows;
-};
-
-int Matrix::getColumns(){
-    printf("number of columns: %i\n",this->columns);
-    return this->columns;
-};
-
-Vector Vector::transpose(){
-    Vector out = (*this);
-    out.rows = this->columns;
-    out.columns = this->rows;
-    for(int r=0; r<this->rows; r++){
-        for(int c=0; c<this->columns; c++){
-            printf("new index: %i, old index: %i\n",(r+c*this->rows),(c+r*this->columns));
-            out.mat[r+c*this->rows]=this->mat[c+r*this->columns];
-        }
-    };
+Vector Vector::operator*(double i){
+    //probably can find a better implementation
+    Vector out(*this);
+    for (int e = 0; e<out.mat.size();e++){
+        out.mat[e]*=i;
+    }
     return out;
 };
 
-Matrix Matrix::transpose(){
-    Matrix out = (*this);
-    out.rows = this->columns;
-    out.columns = this->rows;
-    for(int r=0; r<this->rows; r++){
-        for(int c=0; c<this->columns; c++){
-            printf("new index: %i, old index: %i\n",(r+c*this->rows),(c+r*this->columns));
-            out.mat[r+c*this->rows]=this->mat[c+r*this->columns];
-        }
-    };
-    return out;
+Vector operator-(Vector &v);
+
+double Vector::operator()(unsigned int i){
+    return(Vector::operator[](i));
 };
 
-double Vector::operator[](unsigned int i){
-    return(this->mat[i]);
-};
-
-double Matrix::operator()(unsigned int i){
-    return(Matrix::operator[](i));
-};
-
-double Matrix::operator()(unsigned int r, unsigned int c){
+double Vector::operator()(unsigned int r, unsigned int c){
     if (r < this->rows && c < this->columns){
         return(mat[r*this->columns + c]);
     }
@@ -102,12 +85,43 @@ double Matrix::operator()(unsigned int r, unsigned int c){
     
 };
 
-Matrix Matrix::operator*(double i){
-    //probably can find a better implementation
-    Matrix out(*this);
-    for (int e = 0; e<out.mat.size();e++){
-        out.mat[e]*=i;
+double Vector::operator[](unsigned int i){
+    return(this->mat[i]);
+};
+
+//member functions
+void Vector::print(){
+    printf("#ofRows:%i #ofCols:%i\n",this->rows,this->columns);
+    printf("PRINTING MATRIX\n[");
+    for (int e=0; e<(this->mat.size()); e++){
+        if (e%this->columns == 0){
+            (e==0)?:printf("\n ");
+        };
+        (e==mat.size()-1)?printf("%f",this->mat[e]):printf("%f ",this->mat[e]);
     }
+    printf("]\n");
+};
+
+int Vector::getRows(){
+    //printf("number of rows: %i\n",this->rows);
+    return this->rows;
+};
+
+int Vector::getColumns(){
+    //printf("number of columns: %i\n",this->columns);
+    return this->columns;
+};
+
+Vector Vector::transpose(){
+    Vector out = (*this);
+    out.rows = this->columns;
+    out.columns = this->rows;
+    for(int r=0; r<this->rows; r++){
+        for(int c=0; c<this->columns; c++){
+            //printf("new index: %i, old index: %i\n",(r+c*this->rows),(c+r*this->columns));
+            out.mat[r+c*this->rows]=this->mat[c+r*this->columns];
+        }
+    };
     return out;
 };
 
@@ -131,7 +145,7 @@ double Vector::Dnrm2(){
             }
         }
     }
-    printf("sumScaled: %f, magOfLargestEle: %f\n",sumScaled,magnitudeOfLargestElement);
+    //printf("sumScaled: %f, magOfLargestEle: %f\n",sumScaled,magnitudeOfLargestElement);
     return magnitudeOfLargestElement*sqrt(sumScaled);
 };
 
@@ -144,21 +158,4 @@ double Vector::normalNorm(){
         }
     }
     return sqrt(sumScaled);
-};
-
-void Vector::print(){
-    printf("PRINTING VECTOR\n[");
-    for (int e=0; e<(this->mat.size()); e++){
-        (e==mat.size()-1)?printf("%f",this->mat[e]):printf("%f ",this->mat[e]);
-    }
-    printf("]\n");
-}
-
-Vector Vector::operator*(double i){
-    //probably can find a better implementation
-    Vector out(*this);
-    for (int e = 0; e<out.mat.size();e++){
-        out.mat[e]*=i;
-    }
-    return out;
 };

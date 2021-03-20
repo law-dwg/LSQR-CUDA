@@ -3,9 +3,44 @@
 
 int lsqr(Matrix &A, Vector &b){
     int itn = 0;
+    Vector u;
+    Vector v;
+    Vector w;
+    double alpha;
     double beta = b.Dnrm2();
-    Vector u = b*(1/beta);
-    Vector v = A.transpose() * u;
-    std::cout<<beta<<std::endl;
+    if (beta>0){
+        u = b*(1/beta);
+        v = A.transpose() * u;
+        alpha = v.Dnrm2();
+        printf("does %f = ",alpha);
+    };
+    printf("%f?\n", alpha);
+    if (alpha>0){
+        v*(1/alpha);
+        w=v;
+    };
+    
+    double Arnorm = alpha * beta;
+    double rhobar = alpha;
+    
+    double phibar = beta;
+    double bnorm = beta;
+    double rnorm = beta;
+
+    double test1 = 0.0;
+    double test2 = 0.0;
+
+    double temp;
+    double test3;
+    double rtol;
+    unsigned int istop = 0;
+
+    double epsilon = 1e-15;
+    /**do{
+        itn++;
+        u = A*v - u*alpha;
+
+    }while(istop==0);
+    **/
     return 0;
 }
