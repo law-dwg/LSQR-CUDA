@@ -11,9 +11,6 @@ int main(){
     std::cin>>n;
     Matrix ma(m,n);
     Vector vec(m);
-    ma.print();
-    vec.print();
-    
     int b = lsqr(ma,vec);
     return 0;
 };

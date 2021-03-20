@@ -1,33 +1,43 @@
 #include <vector>
 
-
-class Matrix {
-    private:
+class Vector {
+    public:
+        //attributes
         unsigned int rows;
         unsigned int columns;
-        double sparsity=.70; //the number of 0-elements/non-0-elements
-    public:
         std::vector<double> mat;
-        Matrix(): Matrix(0,0) {printf("DEFAULT MATRIX CONSTRUCTOR\n");};
-        Matrix(unsigned int r, unsigned int c);
-        Matrix(unsigned int r, unsigned int c, double v):rows(r),columns(c){mat.resize(r*c,v);};
-        Matrix(const Matrix &m):rows(m.rows),columns(m.columns),mat(m.mat){};
-        Matrix(std::vector<double> v):mat(v){}
-        ~Matrix();
-        
-        int getRows();
-        int getColumns();
-        std::vector<double> getMat();
+        //constructors and destructor
+        Vector(): Vector(1){};
+        Vector(unsigned int p):columns(1),rows(p){mat.resize(p,5.0);};
+        Vector(const Vector &v):columns(v.columns),rows(v.rows),mat(v.mat){};
+        ~Vector(){};
+        //
+        std::vector<double> getMat(){return this->mat;};
         virtual void print();
+        Vector operator*(double i);
+
         double Dnrm2();
         double normalNorm();
-        double operator()(unsigned int i);
-        double operator()(unsigned int r, unsigned int c);
         double operator[](unsigned int i);
         
-        //template member functions have to be defined in header
+        Vector transpose();
+};
+
+class Matrix : public Vector {
+    public: 
+        double sparsity=.70; //the number of 0-elements/non-0-elements
+        Matrix(): Matrix(0,0){};
+        Matrix(unsigned int r, unsigned int c);
+        Matrix(unsigned int r, unsigned int c, double v){this->rows=r;this->columns=c;mat.resize(r*c,v);};
+        Matrix(const Matrix &m){this->mat=m.mat; this->rows=m.rows; this->columns=m.columns;};
+        //Matrix(std::vector<double> v){this->mat=v;};
+        ~Matrix(){};
         
-        Matrix operator*(double i);
+
+        Matrix transpose();
+        int getRows();
+        int getColumns();
+        //template member functions have to be defined in header
         template<typename T>
         T operator*(T &v){
             std::vector<double> lhs = this->mat;
@@ -50,23 +60,12 @@ class Matrix {
                 return v;
             }
         };
-
         
-
-        
-};
-
-class Vector : public Matrix {
-    private:
-        unsigned int length;
-    public:
-        Vector(): Vector(1){printf("DEFAULT VECTOR CONSTRUCTOR");};
-        Vector(unsigned int p):length(p){printf("vector constructed");mat.resize(p,5.0);};
-        Vector(const Vector &v):length(v.length){this->mat=(v.mat);};
-        ~Vector();
-
-        Vector operator*(double i);
+        double operator()(unsigned int i);
+        double operator()(unsigned int r, unsigned int c);
         void print();
+        Matrix operator*(double i);
+
 };
 
 int lsqr(Matrix &A, Vector &b);

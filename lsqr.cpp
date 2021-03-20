@@ -8,10 +8,10 @@
 #include <math.h>
 #include <algorithm>
 #include <cassert>
-#include <iostream>
 
-Matrix::Matrix(unsigned int r, unsigned int c):rows(r), columns(c){
-    //(r!=0 && c!=0)?:throw 505; //need to change this
+Matrix::Matrix(unsigned int r, unsigned int c){
+    this->rows=r; 
+    this->columns=c;
     this->mat.resize(this->rows*this->columns);
     int zeros = round(this->sparsity * r*c);
     int nonZeros = r*c - zeros;
@@ -33,17 +33,15 @@ Matrix::Matrix(unsigned int r, unsigned int c):rows(r), columns(c){
 };
 
 void Matrix::print(){
+    printf("#ofRows:%i #ofCols:%i\n",this->rows,this->columns);
     printf("PRINTING MATRIX\n[");
     for (int e=0; e<(this->mat.size()); e++){
-        if (e%this->rows == 0){
+        if (e%this->columns == 0){
             (e==0)?:printf("\n ");
         };
         (e==mat.size()-1)?printf("%f",this->mat[e]):printf("%f ",this->mat[e]);
     }
     printf("]\n");
-};
-
-Matrix::~Matrix(){
 };
 
 int Matrix::getRows(){
@@ -56,11 +54,33 @@ int Matrix::getColumns(){
     return this->columns;
 };
 
-std::vector<double> Matrix::getMat(){
-    return this->mat;
+Vector Vector::transpose(){
+    Vector out = (*this);
+    out.rows = this->columns;
+    out.columns = this->rows;
+    for(int r=0; r<this->rows; r++){
+        for(int c=0; c<this->columns; c++){
+            printf("new index: %i, old index: %i\n",(r+c*this->rows),(c+r*this->columns));
+            out.mat[r+c*this->rows]=this->mat[c+r*this->columns];
+        }
+    };
+    return out;
 };
 
-double Matrix::operator[](unsigned int i){
+Matrix Matrix::transpose(){
+    Matrix out = (*this);
+    out.rows = this->columns;
+    out.columns = this->rows;
+    for(int r=0; r<this->rows; r++){
+        for(int c=0; c<this->columns; c++){
+            printf("new index: %i, old index: %i\n",(r+c*this->rows),(c+r*this->columns));
+            out.mat[r+c*this->rows]=this->mat[c+r*this->columns];
+        }
+    };
+    return out;
+};
+
+double Vector::operator[](unsigned int i){
     return(this->mat[i]);
 };
 
@@ -90,7 +110,7 @@ Matrix Matrix::operator*(double i){
     return out;
 };
 
-double Matrix::Dnrm2(){
+double Vector::Dnrm2(){
     double sumScaled = 1.0;
     double magnitudeOfLargestElement=0.0;
     for(int i=0;i<this->mat.size();i++){
@@ -114,7 +134,7 @@ double Matrix::Dnrm2(){
     return magnitudeOfLargestElement*sqrt(sumScaled);
 };
 
-double Matrix::normalNorm(){
+double Vector::normalNorm(){
     double sumScaled = 0;
     for(int i=0;i<this->mat.size();i++){
         if(this->mat[i]!=0){
@@ -141,10 +161,6 @@ Vector Vector::operator*(double i){
     }
     return out;
 };
-
-Vector::~Vector(){
-    printf("DECONSTRUCTOR");
-}
 
 int lsqr(Matrix &A, Vector &b){
     double beta = b.Dnrm2();
