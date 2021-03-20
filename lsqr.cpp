@@ -23,7 +23,7 @@ int lsqr(Matrix &A, Vector &b){
     Vector u;
     Vector v;
     Vector w;
-    Vector x;//(A.getRows(),1,0);
+    Vector x(A.getColumns(),1,0);
     double alpha;
     double beta = b.Dnrm2();
     if (beta>0){
@@ -37,12 +37,9 @@ int lsqr(Matrix &A, Vector &b){
         v*(1/alpha);
         w=v;
     };
-    
+    /**
     double Arnorm = alpha * beta;
-    double rhobar = alpha;
-    double rho;
-
-    double phibar = beta;
+    
     double bnorm = beta;
     double rnorm = beta;
 
@@ -52,10 +49,15 @@ int lsqr(Matrix &A, Vector &b){
     double temp;
     double test3;
     double rtol;
+    **/
+    
+    double rhobar = alpha;
+    double phibar = beta;
+    double rho, phi, c, s, theta, tau, res;
     unsigned int istop = 0;
+    
     Vector res_v;
-    double res;
-    double epsilon = 1e-15;
+    double epsilon = 1e-10;
     //2. For i=1,2,3....
     printf("2. For i=1,2,3....\n");
     do{
@@ -79,29 +81,35 @@ int lsqr(Matrix &A, Vector &b){
         printf("4. Construct and apply next orthogonal transformation\n");
         double rhbar1 = rhobar;
 
-        double rho = D2Norm( rhbar1, beta );
-        double c = rhbar1/rho;
-        double s = beta/rho;
-        double theta = s * alpha;
+        rho = D2Norm( rhbar1, beta );
+        c = rhbar1/rho;
+        s = beta/rho;
+        theta = s * alpha;
         rhobar = -c * alpha;
-        double phi = c * phibar;
+        phi = c * phibar;
         phibar = s * phibar;
         
-        double tau = s * phi;
+        tau = s * phi;
 
         //5. Update x,w
         printf("5. Update x,w\n");
-        w.print();
-        std::cout<<phi/rho<<std::endl;
+        //w.print();
         Vector test = w * (phi/rho);
-        w.print();
-        x = x + (test);
+        test.print();
+        x.print();
+        x = x + test;
         x.print();
         w = v - (w * (theta/rho));
+        //w.print();
         res_v = A*x - b;
+        res_v.print();
         res = res_v.Dnrm2();
         std::cout<<"\nres: "<<res<<" iter: "<<itn<<std::endl;
-    }while(istop==1);
+        if (res < epsilon){
+            istop=1;
+            std::cout<<"STOPPED"<<std::endl;
+        }
+    }while(istop==0);
     
     return 0;
 }

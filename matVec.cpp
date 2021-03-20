@@ -82,12 +82,11 @@ Vector Vector::operator-(Vector v){
 
 Vector Vector::operator+(Vector v){
     if(this->mat.size()==0){
-        Vector out(v.rows,v.columns,0);
-        return out;
+        return v;
     }
     else if(this->rows == v.rows && this->columns == v.columns){
-        Vector out(this->rows,this->columns);
-        for(int i = 0; i>this->mat.size(); i++){
+        Vector out(this->rows,this->columns,0);
+        for(int i = 0; i<this->mat.size(); i++){
             out.mat[i] = this->mat[i] + v.mat[i];
         }
         return out;
