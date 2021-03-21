@@ -19,7 +19,25 @@ double D2Norm(double a, double b){
 
 int lsqr(Matrix &A, Vector &b){
     //1. Initialize
-    int itn = 0;
+    unsigned int itn=0;
+    unsigned int istop = 0;
+    double ctol = 0;
+    double conlim = 0;
+    if (conlim > 0){
+        ctol = 1/conlim;
+    };
+    double Anorm = 0;
+    double Acond = 0;
+    double damp = 0;
+    double dampsq = damp*damp;
+    double ddnorm = 0;
+    double res2 = 0;
+    double xnorm = 0;
+    double xxnorm = 0;
+    double z = 0;
+    double cs2 = -1;
+    double sn2 = 0;
+
     Vector u;
     Vector v;
     Vector w;
@@ -30,34 +48,31 @@ int lsqr(Matrix &A, Vector &b){
         u = b * (1/beta);
         v = A.transpose() * u;
         alpha = v.Dnrm2();
-        printf("does %f = ",alpha);
+    }
+    else{
+        v = x;
+        alpha=0;
     };
-    printf("%f?\n", alpha);
+
     if (alpha>0){
-        v*(1/alpha);
+        v=v*(1/alpha);
         w=v;
     };
-    /**
-    double Arnorm = alpha * beta;
-    
-    double bnorm = beta;
-    double rnorm = beta;
-
-    double test1 = 0.0;
-    double test2 = 0.0;
-
-    double temp;
-    double test3;
-    double rtol;
-    **/
-    
     double rhobar = alpha;
     double phibar = beta;
-    double rho, phi, c, s, theta, tau, res;
-    unsigned int istop = 0;
+    double rnorm = beta;
+    double r1norm = rnorm;
+    double r2norm = rnorm;
+    double arnorm = alpha * beta;
+    double rtol;
+
+    
+    
+    double rho, phi, c, s, theta, tau, res, res1;
+    double res_old = 1e10;
     
     Vector res_v;
-    double epsilon = 1e-10;
+    double epsilon = 1e-16;
     //2. For i=1,2,3....
     printf("2. For i=1,2,3....\n");
     do{
@@ -90,25 +105,32 @@ int lsqr(Matrix &A, Vector &b){
         phibar = s * phibar;
         
         tau = s * phi;
-
+        arnorm = alpha  * std::abs(tau);
         //5. Update x,w
         printf("5. Update x,w\n");
-        //w.print();
-        Vector test = w * (phi/rho);
-        test.print();
-        x.print();
-        x = x + test;
-        x.print();
+        x = x + w * (phi/rho);
+        Vector dk = w*(1/rho);
+        ddnorm = dk.Dnrm2()*dk.Dnrm2();
         w = v - (w * (theta/rho));
-        //w.print();
-        res_v = A*x - b;
-        res_v.print();
+        res_v = b - A*x;
         res = res_v.Dnrm2();
-        std::cout<<"\nres: "<<res<<" iter: "<<itn<<std::endl;
-        if (res < epsilon){
-            istop=1;
-            std::cout<<"STOPPED"<<std::endl;
-        }
+
+        //Test for convergence
+        printf("6. Test for convergence\n");
+        Acond = A.Dnrm2() * sqrt(ddnorm);
+        res1 = phibar*phibar;
+        double test3 = 1/ (Acond + epsilon);
+        std::cout.precision(25);
+        std::cout<<std::fixed<<res<<std::endl;
+        if(test3<=ctol){
+            istop=3;
+            printf("%i\n",itn);
+        };
+        double test2 = arnorm / (A.Dnrm2()*res + epsilon);
+        if( 1 + test2 <= 1){
+            istop=5;
+            printf("%i\n",itn);
+        };
     }while(istop==0);
     
     return 0;
