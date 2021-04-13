@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "lsqr.h"
+#include "matVec.h"
 
 int main(){
     int m,n;
