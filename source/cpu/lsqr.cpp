@@ -156,12 +156,12 @@ int lsqr(Matrix &A, Vector &b){
 
         /*Test 3 for convergence
         stop if cond(A) => conlim
-        */
+        
         Acond = A.Dnrm2() * sqrt(ddnorm);
         if (Acond < conlim){
             istop=3;
         }
-        /*
+        
         res1 = phibar*phibar;
         double test3 = 1/ (Acond + epsilon);
         std::cout.precision(25);
@@ -181,6 +181,8 @@ int lsqr(Matrix &A, Vector &b){
         printf("iteration %i\n",itn);
         printf("istop %i\n",istop);
         x.print();
+        printf("%f\n",arnorm);
+
     }while(istop==0);
     
     return 0;
