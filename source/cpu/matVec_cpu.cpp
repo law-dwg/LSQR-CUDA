@@ -8,10 +8,10 @@
 #include <algorithm>
 #include <cassert>
 
-#include "matVec.h"
+#include "matVec_cpu.h"
 
 //constructors
-Matrix::Matrix(unsigned int r, unsigned int c){
+Matrix_CPU::Matrix_CPU(unsigned int r, unsigned int c){
     this->rows=r; 
     this->columns=c;
     this->mat.resize(this->rows*this->columns);
@@ -35,10 +35,10 @@ Matrix::Matrix(unsigned int r, unsigned int c){
 };
 
 //operator overloads
-Vector Vector::operator*(Vector &v){
+Vector_CPU Vector_CPU::operator*(Vector_CPU &v){
     std::vector<double> lhs = this->mat;
     std::vector<double> rhs = v.getMat();
-    Vector out(this->rows);
+    Vector_CPU out(this->rows);
     //std::cout<<lhs.size()<<std::endl;
     //std::cout<<rhs.size()<<std::endl;
     if(this->columns==rhs.size()){
@@ -57,17 +57,17 @@ Vector Vector::operator*(Vector &v){
     }
 };
 
-Vector Vector::operator*(double i){
+Vector_CPU Vector_CPU::operator*(double i){
     //probably can find a better implementation
-    Vector out=*this;
+    Vector_CPU out=*this;
     for (int e = 0; e<out.mat.size();e++){
         out.mat[e]*=i;
     }
     return out;
 };
 
-Vector Vector::operator-(Vector v){
-    Vector out(this->rows,this->columns);
+Vector_CPU Vector_CPU::operator-(Vector_CPU v){
+    Vector_CPU out(this->rows,this->columns);
     if(out.rows == v.rows && out.columns == v.columns){
         for(int i = 0; i<this->mat.size(); i++){
             out.mat[i] = this->mat[i] - v.mat[i];
@@ -80,12 +80,12 @@ Vector Vector::operator-(Vector v){
     };
 };
 
-Vector Vector::operator+(Vector v){
+Vector_CPU Vector_CPU::operator+(Vector_CPU v){
     if(this->mat.size()==0){
         return v;
     }
     else if(this->rows == v.rows && this->columns == v.columns){
-        Vector out(this->rows,this->columns,0);
+        Vector_CPU out(this->rows,this->columns,0);
         for(int i = 0; i<this->mat.size(); i++){
             out.mat[i] = this->mat[i] + v.mat[i];
         }
@@ -98,11 +98,11 @@ Vector Vector::operator+(Vector v){
     };
 };
 
-double Vector::operator()(unsigned int i){
-    return(Vector::operator[](i));
+double Vector_CPU::operator()(unsigned int i){
+    return(Vector_CPU::operator[](i));
 };
 
-double Vector::operator()(unsigned int r, unsigned int c){
+double Vector_CPU::operator()(unsigned int r, unsigned int c){
     if (r < this->rows && c < this->columns){
         return(mat[r*this->columns + c]);
     }
@@ -115,12 +115,12 @@ double Vector::operator()(unsigned int r, unsigned int c){
     
 };
 
-double Vector::operator[](unsigned int i){
+double Vector_CPU::operator[](unsigned int i){
     return(this->mat[i]);
 };
 
 //member functions
-void Vector::print(){
+void Vector_CPU::print(){
     printf("#ofRows:%i #ofCols:%i\n",this->rows,this->columns);
     printf("PRINTING MATRIX\n[");
     for (int e=0; e<(this->mat.size()); e++){
@@ -132,18 +132,18 @@ void Vector::print(){
     printf("]\n");
 };
 
-int Vector::getRows(){
+int Vector_CPU::getRows(){
     //printf("number of rows: %i\n",this->rows);
     return this->rows;
 };
 
-int Vector::getColumns(){
+int Vector_CPU::getColumns(){
     //printf("number of columns: %i\n",this->columns);
     return this->columns;
 };
 
-Vector Vector::transpose(){
-    Vector out = (*this);
+Vector_CPU Vector_CPU::transpose(){
+    Vector_CPU out = (*this);
     out.rows = this->columns;
     out.columns = this->rows;
     for(int r=0; r<this->rows; r++){
@@ -155,7 +155,7 @@ Vector Vector::transpose(){
     return out;
 };
 
-double Vector::Dnrm2(){
+double Vector_CPU::Dnrm2(){
     double sumScaled = 1.0;
     double magnitudeOfLargestElement=0.0;
     for(int i=0;i<this->mat.size();i++){
@@ -179,7 +179,7 @@ double Vector::Dnrm2(){
     return magnitudeOfLargestElement*sqrt(sumScaled);
 };
 
-double Vector::normalNorm(){
+double Vector_CPU::normalNorm(){
     double sumScaled = 0;
     for(int i=0;i<this->mat.size();i++){
         if(this->mat[i]!=0){

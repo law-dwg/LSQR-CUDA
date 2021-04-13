@@ -2,25 +2,25 @@
 #include <vector>
 #include <iostream>
 
-class Vector {    
+class Vector_CPU {    
     public:
         //attributes
         unsigned int rows;
         unsigned int columns;
         std::vector<double> mat;
         //constructors and destructor
-        Vector(){};
-        Vector(unsigned int p):columns(1),rows(p){this->mat.resize(p,5.0);};
-        Vector(unsigned int r, unsigned int c):rows(r),columns(c){this->mat.resize(r*c,5);};
-        Vector(unsigned int r, unsigned int c, double v){this->rows=r;this->columns=c;mat.resize(r*c,v);};
-        Vector(const Vector &v):columns(v.columns),rows(v.rows),mat(v.mat){};
-        ~Vector(){};
+        Vector_CPU(){};
+        Vector_CPU(unsigned int p):columns(1),rows(p){this->mat.resize(p,5.0);};
+        Vector_CPU(unsigned int r, unsigned int c):rows(r),columns(c){this->mat.resize(r*c,5);};
+        Vector_CPU(unsigned int r, unsigned int c, double v){this->rows=r;this->columns=c;mat.resize(r*c,v);};
+        Vector_CPU(const Vector_CPU &v):columns(v.columns),rows(v.rows),mat(v.mat){};
+        ~Vector_CPU(){};
 
         //operator overloads
-        Vector operator*(Vector &v);
-        Vector operator*(double i);
-        Vector operator-(Vector v);
-        Vector operator+(Vector v);
+        Vector_CPU operator*(Vector_CPU &v);
+        Vector_CPU operator*(double i);
+        Vector_CPU operator-(Vector_CPU v);
+        Vector_CPU operator+(Vector_CPU v);
         double operator()(unsigned int i);
         double operator()(unsigned int r, unsigned int c);
         double operator[](unsigned int i);
@@ -32,13 +32,13 @@ class Vector {
         int getColumns();
         double Dnrm2();
         double normalNorm();
-        Vector transpose();
+        Vector_CPU transpose();
 };
 
 //create matrix class for readability / sparsity attribute
-class Matrix : public Vector{
+class Matrix_CPU : public Vector_CPU{
     public:
         double sparsity=.70; //the number of 0-elements/non-0-elements
-        Matrix(unsigned int r, unsigned int c);
+        Matrix_CPU(unsigned int r, unsigned int c);
 
 };
