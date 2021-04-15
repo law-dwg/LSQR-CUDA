@@ -8,12 +8,18 @@ class Vector_GPU {
         double * mat;
         //constructors and destructor
         Vector_GPU(){};
-        Vector_GPU(unsigned int p):columns(1),rows(p){this->mat.resize(p,5.0);};
+        Vector_GPU(unsigned int r, unsigned int c, double * m){
+            cudaMalloc((void**)&mat,sizeof(double)*r*c);
+            cudaMemcpy(mat,m,sizeof(double)*r*c,cudaMemcpyHostToDevice);
+        };
+        /*Vector_GPU(unsigned int p):columns(1),rows(p){this->mat.resize(p,5.0);};
         Vector_GPU(unsigned int r, unsigned int c):rows(r),columns(c){this->mat.resize(r*c,5);};
         Vector_GPU(unsigned int r, unsigned int c, double v){this->rows=r;this->columns=c;mat.resize(r*c,v);};
-        Vector_GPU(const Vector_GPU &v):columns(v.columns),rows(v.rows),mat(v.mat){};
+        Vector_GPU(const Vector_GPU &v):columns(v.columns),rows(v.rows),mat(v.mat){
+        
+        };*/
         ~Vector_GPU(){};
-
+        /*
         //operator overloads
         Vector_GPU operator*(Vector_GPU &v);
         Vector_GPU operator*(double i);
@@ -30,8 +36,8 @@ class Vector_GPU {
         int getColumns();
         double Dnrm2();
         double normalNorm();
-        Vector_GPU transpose();
-}
+        Vector_GPU transpose();*/
+};
 
 //create matrix class for readability / sparsity attribute
 class Matrix_GPU : public Vector_GPU{

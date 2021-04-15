@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string.h>
 #include <time.h>
+#include "matVec_gpu.cuh"
 
 void __global__ scale(double * input, double scalar,double * output){
     const unsigned int bid = blockIdx.x //1D
@@ -54,6 +55,7 @@ int main(){
         h_input1[i]=i;
         h_input2[i]=i;
     }
+    Vector_GPU h_i1(array_size,1,h_input1);
     double *h_output = new double [array_size];
     
     //device
