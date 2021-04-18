@@ -1,5 +1,5 @@
 #pragma once
-
+#include <stdio.h> //NULL, printf
 class Vector_GPU {
     public:
         //attributes

@@ -1,3 +1,15 @@
+#include "matVec_gpu.cuh"
+#include <stdio.h> //NULL, printf
+#include <stdlib.h> //srand, rand
+#include <assert.h>
+#include <cuda.h>
+#include <cuda_runtime.h>
+#include "device_launch_parameters.h"
+#include <sstream>
+#include <iostream>
+#include <string.h>
+#include <time.h>
+
 int main(){
     
     //host
@@ -62,5 +74,11 @@ int main(){
         std::cout<<h_out[i]<<std::endl;
     }
     
+    int nDevices;
+    cudaGetDeviceCount(&nDevices);
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, 0);
+    printf("%i\n",nDevices);
+    printf("%s\n",prop.name);
     return 0;
 }
