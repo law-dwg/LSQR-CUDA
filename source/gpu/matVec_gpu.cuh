@@ -30,11 +30,11 @@ class Vector_GPU {
         //operator overloads
         Vector_GPU operator*(Vector_GPU &v);
         Vector_GPU operator*(double i);
-        Vector_GPU& operator=(Vector_GPU &v); //overwrite previous data
+        Vector_GPU& operator=(const Vector_GPU &v); //overwrite previous data
         
-        /*Vector_GPU operator-(Vector_GPU v);
-        Vector_GPU operator+(Vector_GPU v);
-        double operator()(unsigned int i);
+        Vector_GPU operator-(const Vector_GPU &v);
+        Vector_GPU operator+(const Vector_GPU &v);
+        /*double operator()(unsigned int i);
         double operator()(unsigned int r, unsigned int c);
         double operator[](unsigned int i);
         */

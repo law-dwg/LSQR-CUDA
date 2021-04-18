@@ -10,6 +10,7 @@
 #include <time.h>
 #include "matVec_gpu.cuh"
 
+//CUDA kernels
 void __global__ scale(double * input, double scalar,double * output){
     const unsigned int bid = blockIdx.x //1D
         + blockIdx.y * gridDim.x //2D
@@ -60,6 +61,39 @@ void __global__ assignment(double * in1, double * in2){
     
 }
 
+void __global__ subtract(double * in1, double * in2, double * out){
+    const unsigned int bid = blockIdx.x //1D
+        + blockIdx.y * gridDim.x //2D
+        + gridDim.x * gridDim.y * blockIdx.z; //3D
+    const unsigned int threadsPerBlock = blockDim.x
+        *blockDim.y //2D
+        *blockDim.z; //3D
+    const unsigned int tid = threadIdx.x //1D
+        +threadIdx.y*blockDim.x //2D
+        +blockDim.x*blockDim.x*threadIdx.z; //3D
+    const unsigned int gid = bid * threadsPerBlock + tid;
+    printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
+        blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
+    out[gid] = in1[gid] - in2[gid];
+}
+
+void __global__ add(double * in1, double * in2, double * out){
+    const unsigned int bid = blockIdx.x //1D
+        + blockIdx.y * gridDim.x //2D
+        + gridDim.x * gridDim.y * blockIdx.z; //3D
+    const unsigned int threadsPerBlock = blockDim.x
+        *blockDim.y //2D
+        *blockDim.z; //3D
+    const unsigned int tid = threadIdx.x //1D
+        +threadIdx.y*blockDim.x //2D
+        +blockDim.x*blockDim.x*threadIdx.z; //3D
+    const unsigned int gid = bid * threadsPerBlock + tid;
+    printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
+        blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
+    out[gid] = in1[gid] + in2[gid];
+}
+
+//Operator overloads
 Vector_GPU Vector_GPU::operator*(Vector_GPU &v){
     printf("WE GOT HERE %i %i\n",this->rows,v.columns);
     Vector_GPU out(this->rows,v.columns);
@@ -77,79 +111,46 @@ Vector_GPU Vector_GPU::operator*(double i){
     return out;
 }
 
-Vector_GPU& Vector_GPU::operator=(Vector_GPU &v){
-    printf("THIS WAS CALLED\n");
+Vector_GPU& Vector_GPU::operator=(const Vector_GPU &v){
+    printf("Assignment operator called\n");
+    this->rows = v.rows;
+    this->columns = v.columns;
     dim3 grid(1,1,1);
     dim3 block(v.rows * v.columns,1,1);
-    if (rows == v.rows && columns == v.columns){
+    //if (columns == v.rows){
         assignment <<<grid,block>>> (this->d_mat,v.d_mat);
         
-    }
+    /*}
     else{
-        printf("ARRAYS ARE NOT THE SAME SIZE");
-    }
-    printf("%i\n",rows);
+        printf("ARRAYS ARE NOT THE SAME SIZE, canot perform assignment operation\n");
+    }*/
     return *this;
 }
 
-int main(){
-    
-    //host
-    int array_size = 6;
-    int byte_size = sizeof(double) * array_size;
-    double *h_input1 = new double [array_size];
-    double *h_input2 = new double [array_size];
-    
-    for (int i = 0; i < array_size; i++){
-        h_input1[i]=i;
-        h_input2[i]=i;
-    }
-    Vector_GPU d_i1(array_size,1,h_input1);
-    Vector_GPU d_i2(array_size,1,h_input2);
-    printf("TEST\n");
-    Vector_GPU out = d_i1*23;
-    cudaDeviceSynchronize(); //wait for GPU to finish
-    out = d_i2;
-    cudaDeviceSynchronize(); //wait for GPU to finish
-    double *h_out = new double [array_size];
-    cudaMemcpy(h_out,out.d_mat,byte_size,cudaMemcpyDeviceToHost);
-    /*
-    double *h_output = new double [array_size];
-    
-    //device
-    double *d_input1,*d_input2,*d_output;
-    
-    cudaMalloc((void**)&d_input1,byte_size);
-    cudaMalloc((void**)&d_input2,byte_size);
-    cudaMalloc((void**)&d_output,byte_size);
-    cudaMemcpy(d_input1,h_input1,byte_size,cudaMemcpyHostToDevice);
-    cudaMemcpy(d_input2,h_input2,byte_size,cudaMemcpyHostToDevice);
-
-    int nx = 2; //x thread dimension
-    int ny = 3; //y thread dimension
-    int nz = 1; //z thread dimension
-    
+Vector_GPU Vector_GPU::operator-(const Vector_GPU &v){
+    Vector_GPU out(this->rows,this->columns);
     dim3 grid(1,1,1);
-    dim3 block(nx/grid.x,ny/grid.y,nz/grid.z);
+    dim3 block(v.rows * v.columns,1,1);
+    //if (columns == v.rows){
+        subtract <<<grid,block>>> (this->d_mat,v.d_mat,out.d_mat);
+        
+    /*}
+    else{
+        printf("ARRAYS ARE NOT THE SAME SIZE, canot perform operation\n");
+    }*/
+    return out;   
+}
 
-    scale <<<grid,block>>> (d_input1,5,d_input1);
-    cudaDeviceSynchronize(); //wait for GPU to finish
-    multiply <<<grid,block>>> (d_input1,d_input2,d_output);
-    
-    //cudaDeviceSynchronize(); //wait for GPU to finish
-    cudaMemcpy(h_output,d_output,byte_size,cudaMemcpyDeviceToHost);
-    
-    for (int i = 0; i<6; i++){
-        std::cout<<h_output[i]<<std::endl;
-    }
-
-    
-    */
-    delete h_input1, h_input2;
-    
-    for (int i = 0; i<array_size; i++){
-        std::cout<<h_out[i]<<std::endl;
-    }
-    
-    return 0;
+Vector_GPU Vector_GPU::operator+(const Vector_GPU &v){
+    Vector_GPU out(this->rows,this->columns);
+    dim3 grid(1,1,1);
+    dim3 block(v.rows * v.columns,1,1);
+    //if (columns == v.rows){
+        add <<<grid,block>>> (this->d_mat,v.d_mat,out.d_mat);
+        
+    /*}
+    else{
+        printf("ARRAYS ARE NOT THE SAME SIZE, canot perform operation\n");
+    }*/
+    return out;   
 }
