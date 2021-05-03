@@ -3,49 +3,53 @@
 class Vector_GPU {
     public:
         //attributes
-        unsigned int  rows, columns;
-        unsigned int *d_rows, *d_columns;
+        unsigned int h_rows, h_columns;
+        unsigned int  * d_rows, * d_columns;
         double* d_mat;
         //constructors and destructor
         Vector_GPU(){};
-        Vector_GPU(int * r, int * c, double * m){
-            cudaMalloc((void**)&rows,sizeof(int));
-            cudaMalloc((void**)&columns,sizeof(int));
-            cudaMalloc((void**)&d_mat,sizeof(double)**r**c);
+        Vector_GPU(unsigned int r, unsigned int c, double * m):h_rows(r),h_columns(c){        
+            printf("CONSTRUCTOR #1 CALLED\n");
+            printf("%d x %d\n",h_rows,h_columns);
+            cudaMalloc((void**)&d_rows,sizeof(unsigned int));
+            cudaMalloc((void**)&d_columns,sizeof(unsigned int));
+            cudaMalloc((void**)&d_mat,sizeof(double)*r*c);
 
-            cudaMemcpy(rows,&r,sizeof(int),cudaMemcpyHostToDevice);
-            cudaMemcpy(columns,&c,sizeof(int),cudaMemcpyHostToDevice);
-            cudaMemcpy(d_mat,&m,sizeof(double)**r**c,cudaMemcpyHostToDevice);
+            cudaMemcpy(d_rows,&r,sizeof(int),cudaMemcpyHostToDevice);
+            cudaMemcpy(d_columns,&c,sizeof(int),cudaMemcpyHostToDevice);
+            cudaMemcpy(d_mat,m,sizeof(double)*r*c,cudaMemcpyHostToDevice);
         };
         //Vector_GPU(unsigned int p):columns(1),rows(p){this->mat.resize(p,5.0);};
-        Vector_GPU(unsigned int* r, unsigned int* c){ 
-            printf("CONSTRUCTOR\n");
-            cudaMalloc((void**)&rows,sizeof(unsigned int));
-            cudaMalloc((void**)&columns,sizeof(unsigned int));
-            cudaMalloc((void**)&d_mat,sizeof(double)**r**c);
+        Vector_GPU(unsigned int r, unsigned int c):h_rows(r),h_columns(c){ 
+            printf("CONSTRUCTOR #2 CALLED\n");
+            cudaMalloc((void**)&d_rows,sizeof(unsigned int));
+            cudaMalloc((void**)&d_columns,sizeof(unsigned int));
+            cudaMalloc((void**)&d_mat,sizeof(double)*r*c);
 
-            cudaMemcpy(rows,&r,sizeof(unsigned int),cudaMemcpyHostToDevice);
-            cudaMemcpy(columns,&c,sizeof(unsigned int),cudaMemcpyHostToDevice);
+            cudaMemcpy(d_rows,&r,sizeof(unsigned int),cudaMemcpyHostToDevice);
+            cudaMemcpy(d_columns,&c,sizeof(unsigned int),cudaMemcpyHostToDevice);
         };
         //Vector_GPU(unsigned int r, unsigned int c, double v){this->rows=r;this->columns=c;mat.resize(r*c,v);};
-        Vector_GPU(const Vector_GPU &v){
+        /*Vector_GPU(const Vector_GPU &v){
             printf("COPY CONSTRUCTOR INVOKED\n");
             cudaMalloc((void**)&rows,sizeof(unsigned int));
             cudaMalloc((void**)&columns,sizeof(unsigned int));
-            cudaMalloc((void**)&d_mat,sizeof(double)*v.columns*v.rows);
+            cudaMalloc((void**)&d_mat,sizeof(v.d_mat));
 
             cudaMemcpy(rows,&v.rows,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
             cudaMemcpy(columns,&v.columns,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
             cudaMemcpy(d_mat,&v.d_mat,sizeof(double)*v.columns*v.rows,cudaMemcpyDeviceToDevice);
-        };
+        };*/
         ~Vector_GPU(){
             cudaFree(d_mat);
+            cudaFree(d_rows);
+            cudaFree(d_columns);
             
         };
         
         //operator overloads
         Vector_GPU operator*(Vector_GPU &v);
-        Vector_GPU operator*(double i);
+        /*Vector_GPU operator*(double i);
         Vector_GPU& operator=(const Vector_GPU &v); //overwrite previous data
         
         Vector_GPU operator-(const Vector_GPU &v);
