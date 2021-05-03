@@ -3,26 +3,26 @@
 class Vector_GPU {
     public:
         //attributes
-        unsigned int* rows;
-        unsigned int* columns;
+        unsigned int  rows, columns;
+        unsigned int *d_rows, *d_columns;
         double* d_mat;
         //constructors and destructor
         Vector_GPU(){};
-        Vector_GPU(unsigned int* r, unsigned int * c, double * m){
-            cudaMalloc((void**)&rows,sizeof(unsigned int));
-            cudaMalloc((void**)&columns,sizeof(unsigned int));
+        Vector_GPU(int * r, int * c, double * m){
+            cudaMalloc((void**)&rows,sizeof(int));
+            cudaMalloc((void**)&columns,sizeof(int));
             cudaMalloc((void**)&d_mat,sizeof(double)**r**c);
 
-            cudaMemcpy(rows,&r,sizeof(unsigned int),cudaMemcpyHostToDevice);
-            cudaMemcpy(columns,&c,sizeof(unsigned int),cudaMemcpyHostToDevice);
-            cudaMemcpy(d_mat,m,sizeof(double)**r**c,cudaMemcpyHostToDevice);
+            cudaMemcpy(rows,&r,sizeof(int),cudaMemcpyHostToDevice);
+            cudaMemcpy(columns,&c,sizeof(int),cudaMemcpyHostToDevice);
+            cudaMemcpy(d_mat,&m,sizeof(double)**r**c,cudaMemcpyHostToDevice);
         };
         //Vector_GPU(unsigned int p):columns(1),rows(p){this->mat.resize(p,5.0);};
         Vector_GPU(unsigned int* r, unsigned int* c){ 
             printf("CONSTRUCTOR\n");
             cudaMalloc((void**)&rows,sizeof(unsigned int));
             cudaMalloc((void**)&columns,sizeof(unsigned int));
-            cudaMalloc((void**)&d_mat,sizeof(double)*r*c);
+            cudaMalloc((void**)&d_mat,sizeof(double)**r**c);
 
             cudaMemcpy(rows,&r,sizeof(unsigned int),cudaMemcpyHostToDevice);
             cudaMemcpy(columns,&c,sizeof(unsigned int),cudaMemcpyHostToDevice);
@@ -36,7 +36,7 @@ class Vector_GPU {
 
             cudaMemcpy(rows,&v.rows,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
             cudaMemcpy(columns,&v.columns,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
-            cudaMemcpy(d_mat,&m.d_mat,sizeof(double)*r*c,cudaMemcpyDeviceToDevice);
+            cudaMemcpy(d_mat,&v.d_mat,sizeof(double)*v.columns*v.rows,cudaMemcpyDeviceToDevice);
         };
         ~Vector_GPU(){
             cudaFree(d_mat);

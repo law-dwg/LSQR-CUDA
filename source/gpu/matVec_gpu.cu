@@ -9,7 +9,7 @@
 #include <string.h>
 #include <time.h>
 #include "matVec_gpu.cuh"
-
+//nvcc -arch=sm_37
 //CUDA kernels
 void __global__ scale(double * input, double scalar,double * output){
     const unsigned int bid = blockIdx.x //1D
@@ -27,7 +27,7 @@ void __global__ scale(double * input, double scalar,double * output){
     output[gid] = input[gid] * scalar;
 }
 
-void __global__ multiply(double * in1, double * in2, double * output){
+void __global__ multiply(double * in1, double * in2, int * rows1, int * cols1,int * rows2, int*cols2, double * output){
     const unsigned int bid = blockIdx.x //1D
         + blockIdx.y * gridDim.x //2D
         + gridDim.x * gridDim.y * blockIdx.z; //3D
@@ -38,9 +38,19 @@ void __global__ multiply(double * in1, double * in2, double * output){
         +threadIdx.y*blockDim.x //2D
         +blockDim.x*blockDim.x*threadIdx.z; //3D
     const unsigned int gid = bid * threadsPerBlock + tid;
+    const unsigned int r = blockIdx.y * blockDim.y + threadIdx.y; // the row of M1
+    const unsigned int c = blockIdx.x * blockDim.x + threadIdx.x; // the col of M2
     //printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f * %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
     //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
-    output[gid] = in1[gid] * in2[gid];
+    double sum = 0;
+
+    //if (cols1 === rows2){
+    for (int i = 0; i < rows1; i++){
+        sum += in1[r * cols1 + i] * in2[i*cols2 + c];
+    }
+    //}
+    out[r*cols2+c] = sum;
+    
 }
 
 void __global__ assignment(double * in1, double * in2){
@@ -95,11 +105,11 @@ void __global__ add(double * in1, double * in2, double * out){
 
 //Operator overloads
 Vector_GPU Vector_GPU::operator*(Vector_GPU &v){
-    printf("WE GOT HERE %i %i\n",this->rows,v.columns);
+    printf("MatMultiply\n",this->rows,v.columns);
     Vector_GPU out(this->rows,v.columns);
     dim3 grid(1,1,1);
-    dim3 block(this->rows * v.columns,1,1);
-    multiply <<<grid,block>>> (this->d_mat,v.d_mat,out.d_mat);
+    dim3 block(out.rows,out.columns,1);
+    multiply <<<grid,block>>> (this->d_mat,v.d_mat,this->rows,this->columns, v.rows, v.columns, out.d_mat);
     return out;
 }
 
