@@ -30,16 +30,16 @@ class Vector_GPU {
             cudaMemcpy(d_columns,&c,sizeof(unsigned int),cudaMemcpyHostToDevice);
         };
         //Vector_GPU(unsigned int r, unsigned int c, double v){this->rows=r;this->columns=c;mat.resize(r*c,v);};
-        /*Vector_GPU(const Vector_GPU &v){
+        Vector_GPU(const Vector_GPU &v):h_rows(v.h_rows),h_columns(v.h_columns){
             printf("COPY CONSTRUCTOR INVOKED\n");
-            cudaMalloc((void**)&rows,sizeof(unsigned int));
-            cudaMalloc((void**)&columns,sizeof(unsigned int));
-            cudaMalloc((void**)&d_mat,sizeof(v.d_mat));
+            cudaMalloc((void**)&d_rows,sizeof(unsigned int));
+            cudaMalloc((void**)&d_columns,sizeof(unsigned int));
+            cudaMalloc((void**)&d_mat,sizeof(double)*v.h_rows*v.h_columns);
 
-            cudaMemcpy(rows,&v.rows,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
-            cudaMemcpy(columns,&v.columns,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
-            cudaMemcpy(d_mat,&v.d_mat,sizeof(double)*v.columns*v.rows,cudaMemcpyDeviceToDevice);
-        };*/
+            cudaMemcpy(d_rows,&v.d_rows,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
+            cudaMemcpy(d_columns,&v.d_columns,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
+            cudaMemcpy(d_mat,v.d_mat,sizeof(double)*v.h_columns*v.h_rows,cudaMemcpyDeviceToDevice);
+        };
         ~Vector_GPU(){
             cudaFree(d_mat);
             cudaFree(d_rows);

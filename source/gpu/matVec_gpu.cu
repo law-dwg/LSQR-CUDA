@@ -43,12 +43,13 @@ void __global__ multiply(double * in1, unsigned int * rows1, unsigned int * cols
     //printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f * %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
     //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
     double sum = 0;
-    printf("%i %i %i %i\n",*rows1, *cols1, *rows2, *cols2);
-    if (cols1 == rows2){
+    //printf("gid:%i, %i %i %i %i\n",gid,*rows1, *cols1, *rows2, *cols2);
+    if (*cols1 == *rows2){
+        printf("row: %i \n",r);
         for (int i = 0; i < *rows1; i++){
-            sum += in1[r * *cols1 + i] * in2[i*cols2 + c];
+            sum += in1[r * *cols1 + i] * in2[i* *cols2 + c];
         }
-        out[r*cols2+c] = sum;
+        output[r**cols2+c] = sum;
     }
     else{
         printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
