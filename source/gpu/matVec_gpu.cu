@@ -152,14 +152,16 @@ Vector_GPU Vector_GPU::operator*(double h_i){
 
 void Vector_GPU::printmat(){
     dim3 grid(1,1,1);
+    printf("PRINTING\n");
     dim3 block(this->h_rows,this->h_columns,1);
+    
     print <<<grid,block>>> (this->d_mat);
 };
 
 Vector_CPU Vector_GPU::matDeviceToHost(){
     double* out;
     cudaMemcpy(out,this->d_mat,sizeof(double)*this->h_columns*this->h_rows,cudaMemcpyDeviceToDevice);
-    Vector_CPU v_cpu(this->h_rows,this->h_columns,out);
+    Vector_CPU v_cpu(this->h_rows,this->h_columns,*out);
     return v_cpu;
 };
 
