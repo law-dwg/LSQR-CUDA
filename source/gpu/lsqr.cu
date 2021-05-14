@@ -1,4 +1,5 @@
 #include "matVec_gpu.cuh"
+#include "../cpu/matVec_cpu.h"
 #include <stdio.h> //NULL, printf
 #include <stdlib.h> //srand, rand
 #include <assert.h>
@@ -43,22 +44,11 @@ int main(){
         Vector_GPU d_i1(array_size,1,h_in1);
         Vector_GPU d_i2(1,array_size,h_in2);
         
-        Vector_GPU d_out = d_i1 * d_i2;
-        cudaMemcpy(h_out,d_out.d_mat,sizeof(double)*array_size*array_size,cudaMemcpyDeviceToHost);
-        cudaMemcpy(rows,d_out.d_rows,sizeof(unsigned int),cudaMemcpyDeviceToHost);
-        cudaMemcpy(columns,d_out.d_columns,sizeof(unsigned int),cudaMemcpyDeviceToHost);
-        cudaDeviceSynchronize();
-        /*Vector_GPU d_out = d_i1 * d_i2;
-        cudaMemcpy(h_out,d_out.d_mat,byte_size,cudaMemcpyDeviceToHost);*/
-        printf("PRINTING MATRIX\n");
-        for (int i = 0; i<(*rows * *columns); i++){
-            int temp = i % *columns;
-            if(temp==0){
-                std::cout<<std::endl;
-            }
-            std::cout<<h_out[i]<<" ";
-        }
-        printf("\n%d x %d\n",*rows,*columns);
+        Vector_GPU d_out = d_i1 * 7;
+        d_out.printmat();
+        Vector_CPU out = d_out.matDeviceToHost();
+        out.print();
+        
         delete h_in1, h_in2, h_out, rows, columns;
 
     }

@@ -1,4 +1,5 @@
 #pragma once
+#include "../cpu/matVec_cpu.h"
 #include <stdio.h> //NULL, printf
 class Vector_GPU {
     public:
@@ -49,7 +50,8 @@ class Vector_GPU {
         
         //operator overloads
         Vector_GPU operator*(Vector_GPU &v);
-        /*Vector_GPU operator*(double i);
+        Vector_GPU operator*(double i);
+        /*
         Vector_GPU& operator=(const Vector_GPU &v); //overwrite previous data
         
         Vector_GPU operator-(const Vector_GPU &v);
@@ -59,7 +61,8 @@ class Vector_GPU {
         double operator[](unsigned int i);
         */
         //member functions
-
+        void printmat();
+        Vector_CPU matDeviceToHost();
         /*
         std::vector<double> getMat(){return this->mat;};
         void print();
