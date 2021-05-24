@@ -75,7 +75,6 @@ void __global__ print(double * input){
     printf("%f\n",input[gid]);
 }
 
-
 void __global__ assignment(double * in1, double * in2){
     const unsigned int bid = blockIdx.x //1D
         + blockIdx.y * gridDim.x //2D
@@ -94,8 +93,7 @@ void __global__ assignment(double * in1, double * in2){
     
 }
 
-/*
-void __global__ subtract(double * in1, double * in2, double * out){
+void __global__ subtract(double * in1, double * in2, double * output){
     const unsigned int bid = blockIdx.x //1D
         + blockIdx.y * gridDim.x //2D
         + gridDim.x * gridDim.y * blockIdx.z; //3D
@@ -106,11 +104,15 @@ void __global__ subtract(double * in1, double * in2, double * out){
         +threadIdx.y*blockDim.x //2D
         +blockDim.x*blockDim.x*threadIdx.z; //3D
     const unsigned int gid = bid * threadsPerBlock + tid;
-    printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
-        blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
-    out[gid] = in1[gid] - in2[gid];
+    const unsigned int r = blockIdx.y * blockDim.y + threadIdx.y; // the row of M1
+    const unsigned int c = blockIdx.x * blockDim.x + threadIdx.x; // the col of M2
+    //printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f * %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
+    //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
+    output[gid] = in1[gid] - in2[gid];
+    printf("%f = %f - %f\n",output[gid], in1[gid], in2[gid]);
 }
 
+/*
 void __global__ add(double * in1, double * in2, double * out){
     const unsigned int bid = blockIdx.x //1D
         + blockIdx.y * gridDim.x //2D
@@ -192,21 +194,22 @@ Vector_GPU& Vector_GPU::operator=(const Vector_GPU &v){
         
     return *this;
 }
-/*
+
 Vector_GPU Vector_GPU::operator-(const Vector_GPU &v){
-    Vector_GPU out(this->rows,this->columns);
+    printf("SUBTRACT CALLED\n");
+    Vector_GPU out(this->h_rows,this->h_columns);
     dim3 grid(1,1,1);
-    dim3 block(v.rows * v.columns,1,1);
-    if (columns == v.rows){
-        subtract <<<grid,block>>> (this->d_mat,v.d_mat,out.d_mat);
-        
+    std::cout<<v.h_rows<<"="<<this->h_rows<<std::endl;
+    dim3 block(v.h_rows * v.h_columns,1,1);
+    if (this->h_rows == v.h_rows){
+        subtract <<<grid,block>>> (this->d_mat,v.d_mat,out.d_mat);   
     }
     else{
         printf("ARRAYS ARE NOT THE SAME SIZE, canot perform operation\n");
     }
     return out;   
 }
-
+/*
 Vector_GPU Vector_GPU::operator+(const Vector_GPU &v){
     Vector_GPU out(this->rows,this->columns);
     dim3 grid(1,1,1);

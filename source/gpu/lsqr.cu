@@ -37,7 +37,7 @@ int main(){
         double * h_out = new double [array_size*array_size];
         for (int i = 0; i < array_size; i++){
             h_in1[i]=i;
-            h_in2[i]=2*i;
+            h_in2[i]=5*i;
         }
         for (int i = 0; i < array_size/2; i++){
             h_in3[i]=3*i;
@@ -46,18 +46,20 @@ int main(){
             std::cout<<h_in2[i]<<std::endl;
         }*/
         Vector_GPU d_i1(rows,columns,h_in1);
-        Vector_GPU d_i2(columns,rows,h_in2);
+        Vector_GPU d_i2(rows,columns,h_in2);
         Vector_GPU d_i3(rows,columns/2,h_in3);
         d_i3.printmat();
         
         Vector_GPU d_out = d_i1 * d_i2;
+        d_i2 = d_i2 - d_i1;
+
         printf("BEFORE COPY\n");
         Vector_GPU copy = d_out;
         printf("AFTER COPY\n");
         printf("BEFORE ASSIGNMENT\n");
         d_i3 = d_i1;
         printf("AFTER ASSIGNMENT\n");
-        d_i3.printmat();
+        d_i2.printmat();
         cudaDeviceSynchronize();
         
         //Vector_CPU out = copy.matDeviceToHost();
