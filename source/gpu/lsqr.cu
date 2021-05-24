@@ -52,20 +52,14 @@ int main(){
         
         Vector_GPU d_out = d_i1 * d_i2;
         d_i2 = d_i2 - d_i1;
-
-        printf("BEFORE COPY\n");
+        d_i1 = d_i2 + d_i1 + d_i2;
         Vector_GPU copy = d_out;
-        printf("AFTER COPY\n");
-        printf("BEFORE ASSIGNMENT\n");
         d_i3 = d_i1;
-        printf("AFTER ASSIGNMENT\n");
-        d_i2.printmat();
+        d_i1.printmat();
         cudaDeviceSynchronize();
         
-        //Vector_CPU out = copy.matDeviceToHost();
         Vector_CPU h = d_i3.matDeviceToHost();
-        //out.print();
-        
+    
         delete h_in1, h_in2, h_in3, h_out;
 
     }
