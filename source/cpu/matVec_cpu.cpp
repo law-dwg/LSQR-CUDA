@@ -120,6 +120,18 @@ double Vector_CPU::operator[](unsigned int i){
 };
 
 //member functions
+void Vector_CPU::h_print(){
+    printf("#ofRows:%i #ofCols:%i\n",this->rows,this->columns);
+    printf("PRINTING MATRIX\n[");
+    for (int e=0; e<(this->rows*this->columns); e++){
+        if (e%this->columns == 0){
+            (e==0)?:printf("\n ");
+        
+        };
+        std::cout<<h_mat[e]<<std::endl;
+    }
+    printf("]\n");
+};
 void Vector_CPU::print(){
     printf("#ofRows:%i #ofCols:%i\n",this->rows,this->columns);
     printf("PRINTING MATRIX\n[");
