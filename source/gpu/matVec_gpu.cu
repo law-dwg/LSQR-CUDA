@@ -159,9 +159,10 @@ void Vector_GPU::printmat(){
 };
 
 Vector_CPU Vector_GPU::matDeviceToHost(){
-    double* out;
-    cudaMemcpy(out,this->d_mat,sizeof(double)*this->h_columns*this->h_rows,cudaMemcpyDeviceToDevice);
-    Vector_CPU v_cpu(this->h_rows,this->h_columns,*out);
+    printf("matDeviceToHost\n");
+    double out[this->h_columns * this->h_rows];
+    cudaMemcpy(&out,d_mat,sizeof(double)*this->h_columns*this->h_rows,cudaMemcpyDeviceToHost);
+    Vector_CPU v_cpu(this->h_rows,this->h_columns, out);
     return v_cpu;
 };
 

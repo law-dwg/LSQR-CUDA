@@ -48,10 +48,8 @@ int main(){
         d_out.printmat();
         cudaDeviceSynchronize();
         Vector_CPU out = d_out.matDeviceToHost();
-        unsigned int test = out.rows;
-        std::cout<<out.rows<<" x " <<out.columns<<std::endl;
-        std::cout<<out.mat[1]<<"\n"<<std::endl;
-        //out.print();
+        
+        out.print();
         
         delete h_in1, h_in2, h_out, rows, columns;
 
