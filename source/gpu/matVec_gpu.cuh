@@ -31,6 +31,7 @@ class Vector_GPU {
             cudaMemcpy(d_columns,&c,sizeof(unsigned int),cudaMemcpyHostToDevice);
         };
         //Vector_GPU(unsigned int r, unsigned int c, double v){this->rows=r;this->columns=c;mat.resize(r*c,v);};
+        //copy constructor
         Vector_GPU(const Vector_GPU &v):h_rows(v.h_rows),h_columns(v.h_columns){
             printf("COPY CONSTRUCTOR INVOKED\n");
             cudaMalloc((void**)&d_rows,sizeof(unsigned int));
@@ -51,9 +52,9 @@ class Vector_GPU {
         //operator overloads
         Vector_GPU operator*(Vector_GPU &v);
         Vector_GPU operator*(double i);
-        /*
-        Vector_GPU& operator=(const Vector_GPU &v); //overwrite previous data
         
+        Vector_GPU& operator=(const Vector_GPU &v); //overwrite previous data
+        /*
         Vector_GPU operator-(const Vector_GPU &v);
         Vector_GPU operator+(const Vector_GPU &v);
         /*double operator()(unsigned int i);
@@ -65,9 +66,9 @@ class Vector_GPU {
         Vector_CPU matDeviceToHost();
         /*
         std::vector<double> getMat(){return this->mat;};
-        void print();
+        void print();*/
         int getRows();
-        int getColumns();
+        int getColumns();/*
         double Dnrm2();
         double normalNorm();
         Vector_GPU transpose();*/

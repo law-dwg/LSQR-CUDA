@@ -31,7 +31,7 @@ void __global__ multiply(double * in1, unsigned int * rows1, unsigned int * cols
     double sum = 0;
     //printf("gid:%i, %i %i %i %i\n",gid,*rows1, *cols1, *rows2, *cols2);
     if (*cols1 == *rows2){
-        printf("row: %i \n",r);
+        //printf("row: %i \n",r);
         for (int i = 0; i < *rows1; i++){
             sum += in1[r * *cols1 + i] * in2[i* *cols2 + c];
         }
@@ -75,7 +75,7 @@ void __global__ print(double * input){
     printf("%f\n",input[gid]);
 }
 
-/*
+
 void __global__ assignment(double * in1, double * in2){
     const unsigned int bid = blockIdx.x //1D
         + blockIdx.y * gridDim.x //2D
@@ -94,6 +94,7 @@ void __global__ assignment(double * in1, double * in2){
     
 }
 
+/*
 void __global__ subtract(double * in1, double * in2, double * out){
     const unsigned int bid = blockIdx.x //1D
         + blockIdx.y * gridDim.x //2D
@@ -161,28 +162,37 @@ void Vector_GPU::printmat(){
 Vector_CPU Vector_GPU::matDeviceToHost(){
     printf("matDeviceToHost\n");
     double out[this->h_columns * this->h_rows];
+    unsigned int rows;
+    unsigned int cols;
     cudaMemcpy(&out,d_mat,sizeof(double)*this->h_columns*this->h_rows,cudaMemcpyDeviceToHost);
+    cudaMemcpy(&rows,this->d_rows,sizeof(unsigned int),cudaMemcpyDeviceToHost);
+    cudaMemcpy(&cols,this->d_columns,sizeof(unsigned int),cudaMemcpyDeviceToHost);
+    std::cout<<"d_rows="<<rows<<"=h_rows="<<this->h_rows<<std::endl;
+    std::cout<<"d_columns="<<cols<<"=h_columns="<<this->h_columns<<std::endl;
+    if(rows != this->h_rows || cols != this->h_columns){
+        printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
+    }
     Vector_CPU v_cpu(this->h_rows,this->h_columns, out);
     return v_cpu;
 };
 
-/*
+
 Vector_GPU& Vector_GPU::operator=(const Vector_GPU &v){
     printf("Assignment operator called\n");
-    this->rows = v.rows;O
-    this->columns = v.columns;
-    dim3 grid(1,1,1);
-    dim3 block(v.rows * v.columns,1,1);
-    if (columns == v.rows){
-        assignment <<<grid,block>>> (this->d_mat,v.d_mat);
+    this->h_rows = v.h_rows;
+    this->h_columns = v.h_columns;
+    cudaFree(this->d_mat);
+    cudaMalloc((void**)&d_mat,sizeof(double)*v.h_rows*v.h_columns);
+    //dim3 grid(1,1,1);
+    //dim3 block(v.rows * v.columns,1,1);
+    cudaMemcpy(this->d_rows,v.d_rows,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
+    cudaMemcpy(this->d_columns,v.d_columns,sizeof(unsigned int),cudaMemcpyDeviceToDevice);
+    cudaMemcpy(d_mat,v.d_mat,sizeof(double)*v.h_columns*v.h_rows,cudaMemcpyDeviceToDevice);
+    //assignment <<<grid,block>>> (this->d_mat,v.d_mat);
         
-    }
-    else{
-        printf("ARRAYS ARE NOT THE SAME SIZE, canot perform assignment operation\n");
-    }
     return *this;
 }
-
+/*
 Vector_GPU Vector_GPU::operator-(const Vector_GPU &v){
     Vector_GPU out(this->rows,this->columns);
     dim3 grid(1,1,1);
@@ -210,3 +220,13 @@ Vector_GPU Vector_GPU::operator+(const Vector_GPU &v){
     }
     return out;   
 }*/
+
+int Vector_GPU::getRows(){
+    //printf("number of rows: %i\n",this->rows);
+    return this->h_rows;
+};
+
+int Vector_GPU::getColumns(){
+    //printf("number of columns: %i\n",this->columns);
+    return this->h_columns;
+};

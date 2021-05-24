@@ -27,31 +27,44 @@ int main(){
             cudaGetDeviceProperties (&deviceProp, device);
             printf ("Device %s has compute capability %d.%d.\n", deviceProp.name, deviceProp.major, deviceProp.minor);
         }
-        int array_size = 6;
+        unsigned int rows = 6;
+        unsigned int columns = 2;
+        int array_size = rows*columns;
         int byte_size = sizeof(double) * array_size;
-        unsigned int *rows = new unsigned int;
-        unsigned int *columns = new unsigned int;
         double *h_in1 = new double [array_size];
         double *h_in2 = new double [array_size];
+        double *h_in3 = new double [array_size/2];
         double * h_out = new double [array_size*array_size];
         for (int i = 0; i < array_size; i++){
             h_in1[i]=i;
             h_in2[i]=2*i;
         }
-        for (int i = 0; i<array_size; i++){
-            std::cout<<h_in2[i]<<std::endl;
+        for (int i = 0; i < array_size/2; i++){
+            h_in3[i]=3*i;
         }
-        Vector_GPU d_i1(array_size,1,h_in1);
-        Vector_GPU d_i2(1,array_size,h_in2);
+        /*for (int i = 0; i<array_size; i++){
+            std::cout<<h_in2[i]<<std::endl;
+        }*/
+        Vector_GPU d_i1(rows,columns,h_in1);
+        Vector_GPU d_i2(columns,rows,h_in2);
+        Vector_GPU d_i3(rows,columns/2,h_in3);
+        d_i3.printmat();
         
-        Vector_GPU d_out = d_i1 * 7;
-        d_out.printmat();
+        Vector_GPU d_out = d_i1 * d_i2;
+        printf("BEFORE COPY\n");
+        Vector_GPU copy = d_out;
+        printf("AFTER COPY\n");
+        printf("BEFORE ASSIGNMENT\n");
+        d_i3 = d_i1;
+        printf("AFTER ASSIGNMENT\n");
+        d_i3.printmat();
         cudaDeviceSynchronize();
-        Vector_CPU out = d_out.matDeviceToHost();
         
-        out.print();
+        //Vector_CPU out = copy.matDeviceToHost();
+        Vector_CPU h = d_i3.matDeviceToHost();
+        //out.print();
         
-        delete h_in1, h_in2, h_out, rows, columns;
+        delete h_in1, h_in2, h_in3, h_out;
 
     }
     else{
