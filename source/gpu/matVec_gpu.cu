@@ -10,6 +10,8 @@
 #include <time.h>
 #include "matVec_gpu.cuh"
 #include "../cpu/matVec_cpu.h"
+#define TILE_DIM 4
+#define BLOCK_ROWS 4
 //nvcc -arch=sm_37
 //CUDA kernels
 
@@ -129,8 +131,7 @@ void __global__ add(double * in1, double * in2, double * out){
     printf("%f = %f + %f\n",out[gid], in1[gid], in2[gid]);
 }
 
-void __global__ transpose(double * in1, unsigned int * rows1, unsigned int * cols1, double * in2, unsigned int * rows2, unsigned int * cols2, double * output){
-    //NEED TO USE SHARED MEMORY
+void __global__ transposer(double * in1, double * output){ //need this to be named differently from transpose in cpu functions
     
     const unsigned int bid = blockIdx.x //1D
         + blockIdx.y * gridDim.x //2D
@@ -142,10 +143,18 @@ void __global__ transpose(double * in1, unsigned int * rows1, unsigned int * col
         +threadIdx.y*blockDim.x //2D
         +blockDim.x*blockDim.x*threadIdx.z; //3D
     const unsigned int gid = bid * threadsPerBlock + tid;
-    const unsigned int r = blockIdx.y * blockDim.y + threadIdx.y; // the row of M1
-    const unsigned int c = blockIdx.x * blockDim.x + threadIdx.x; // the col of M2
-    //printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
-    //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
+    /*
+    source found here:
+    https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
+    */
+    int x = blockIdx.x * TILE_DIM + threadIdx.x;
+    int y = blockIdx.y * TILE_DIM + threadIdx.y;
+    int width = gridDim.x * TILE_DIM;
+
+    for (int j = 0; j < TILE_DIM; j+= BLOCK_ROWS){
+        output[x*width + (y+j)] = in1[(y+j)*width + x];
+    }   
+
     
 }
 
@@ -198,7 +207,6 @@ Vector_CPU Vector_GPU::matDeviceToHost(){
     return v_cpu;
 };
 
-
 Vector_GPU& Vector_GPU::operator=(const Vector_GPU &v){
     printf("Assignment operator called\n");
     this->h_rows = v.h_rows;
@@ -245,16 +253,24 @@ Vector_GPU Vector_GPU::operator+(const Vector_GPU &v){
 }
 
 int Vector_GPU::getRows(){
-    //printf("number of rows: %i\n",this->rows);
+    printf("number of rows: %i\n",this->h_rows);
     return this->h_rows;
 };
 
 int Vector_GPU::getColumns(){
-    //printf("number of columns: %i\n",this->columns);
+    printf("number of columns: %i\n",this->h_columns);
     return this->h_columns;
 };
 
 Vector_GPU Vector_GPU::transpose(){
-    
-    return *this;
+    Vector_GPU out(this->h_columns,this->h_rows);
+    dim3 grid(1,1,1);
+    dim3 block(this->h_rows,this->h_columns,1);
+    this->printmat();
+    int r = this->getRows();
+    int c = this->getColumns();
+    int r2 = out.getRows();
+    int c2 = out.getColumns();
+    transposer <<<grid,block>>> (this->d_mat,out.d_mat);
+    return out;
 };
