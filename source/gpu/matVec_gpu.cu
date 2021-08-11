@@ -10,14 +10,21 @@
 #include <stdlib.h> //srand, rand
 #include <string.h>
 #include <time.h>
-#define TILE_DIM 4
-#define BLOCK_ROWS 5
+// OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
+#define TILE_DIM_X 4
+#define TILE_DIM_Y 4
 // nvcc -arch=sm_37
-// CUDA kernels
 
-void __global__ multiply(double *in1, unsigned int *rows1, unsigned int *cols1,
-                         double *in2, unsigned int *rows2, unsigned int *cols2,
-                         double *output) {
+// gridDim.x - # of blocks in a grid, in x
+// gridDim.y - # of blocks in a grid, in y
+// blockDim.x - # of threads in a block, in x
+// blockDim.y - # of threads in a block, in y
+
+// CUDA kernels
+void __global__ multiplyNaive(double *in1, unsigned int *rows1,
+                              unsigned int *cols1, double *in2,
+                              unsigned int *rows2, unsigned int *cols2,
+                              double *output) {
   const unsigned int bid = blockIdx.x                               // 1D
                            + blockIdx.y * gridDim.x                 // 2D
                            + gridDim.x * gridDim.y * blockIdx.z;    // 3D
@@ -130,30 +137,35 @@ void __global__ add(double *in1, double *in2, double *out) {
   printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
 }
 
-void __global__
-transposer(double *in1, double *output) { // need this to be named differently
-                                          // from transpose in cpu functions
+void __global__ transposer(double *in1, double *output, unsigned int *rows,
+                           unsigned int *cols) {
 
-  const unsigned int bid = blockIdx.x                               // 1D
-                           + blockIdx.y * gridDim.x                 // 2D
-                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
-                                       * blockDim.z;                // 3D
-  const unsigned int tid = threadIdx.x                              // 1D
-                           + threadIdx.y * blockDim.x               // 2D
-                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
-  const unsigned int gid = bid * threadsPerBlock + tid;
-  /*
-  source found here:
-  https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
-  */
-  int x = blockIdx.x * TILE_DIM + threadIdx.x;
-  int y = blockIdx.y * TILE_DIM + threadIdx.y;
-  int width = gridDim.x * TILE_DIM;
+  int row = blockIdx.y * TILE_DIM_Y + threadIdx.y; // y-dimension
+  // row = 0 * 2 + 0 = 0 //block (0,0) thread (0,0)
+  // row = 0 * 2 + 0 = 0 //block (0,0) thread (1,0)
+  // row = 0 * 2 + 1 = 1 //block (0,0) thread (0,1)
+  // row = 0 * 2 + 1 = 1 //block (0,0) thread (1,1)
 
-  for (int j = 0; j < TILE_DIM; j += BLOCK_ROWS) {
-    output[x * width + (y + j)] = in1[(y + j) * width + x];
+  int col = blockIdx.x * TILE_DIM_X + threadIdx.x; // x-dimension
+  int width = gridDim.x * TILE_DIM_X;
+  __shared__ float A[TILE_DIM_Y * TILE_DIM_X];
+  // Load the matrix into shared memory
+  for (int i = 0; i < 4; i += 2) {
+    output[(row + i) * width + col] = in1[(row + i) * width + col];
+    printf("block(%d, %d), thread(%d,% d), i=%d, A[%d] = in1[%d] = %f\n",
+           blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
+           (row + i) * width + col, (row + i) * width + col,
+           in1[(row + i) * width + col]);
   }
+  __syncthreads();
+  // printf("block(%d, %d), thread(%d, %d); A[] = [ %f, %f, %f, %f, %f, %f, %f,
+  // %f, %f, %f, %f, %f, %f, %f,  %f,
+  // %f]\n",blockIdx.y,blockIdx.x,threadIdx.y,threadIdx.x,A[0],A[1],A[2],A[3],A[4],A[5],A[6],A[7],A[8],A[9],A[10],A[11],A[12],A[13],A[14],A[15]);
+
+  /*
+  for(int i = 0; i < (*rows* *cols)/(TILE_DIM_X*TILE_DIM_Y); i++){
+    output[row * *cols + col] = A[col+i][row];
+  }*/
 }
 
 // Operator overloads
@@ -162,8 +174,8 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   Vector_GPU out(this->h_rows, v.h_columns);
   dim3 grid(1, 1, 1);
   dim3 block(out.h_rows, out.h_columns, 1);
-  multiply<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat,
-                            v.d_rows, v.d_columns, out.d_mat);
+  multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns,
+                                 v.d_mat, v.d_rows, v.d_columns, out.d_mat);
   return out;
 }
 
@@ -267,13 +279,10 @@ int Vector_GPU::getColumns() {
 
 Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
-  dim3 grid(1, 1, 1);
-  dim3 block(this->h_rows, this->h_columns, 1);
-  this->printmat();
-  int r = this->getRows();
-  int c = this->getColumns();
-  int r2 = out.getRows();
-  int c2 = out.getColumns();
-  transposer<<<grid, block>>>(this->d_mat, out.d_mat);
+  dim3 numOfBlocksInGrid(2, 2, 1);
+  dim3 numOfThreadsInBlock(4, 2, 1);
+  transposer<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(
+      this->d_mat, out.d_mat, this->d_rows, this->d_columns);
+  // out.printmat();
   return out;
 };

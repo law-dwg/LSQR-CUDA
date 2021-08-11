@@ -51,8 +51,8 @@ int main() {
              deviceProp.maxThreadsDim[2]);
     }
 
-    unsigned int rows = 5;
-    unsigned int columns = 4;
+    unsigned int rows = 8;
+    unsigned int columns = 8;
     int array_size = rows * columns;
     int byte_size = sizeof(double) * array_size;
     double *h_in1 = new double[array_size];
@@ -70,9 +70,10 @@ int main() {
     Vector_GPU d_i1(rows, columns, h_in1);
     Vector_GPU d_i2(columns, rows, h_in2);
     d_i2 = d_i1.transpose();
-    Vector_CPU h_i1 = d_i1.matDeviceToHost();
+    // d_i2.transpose();
+    // Vector_CPU h_i1 = d_i1.matDeviceToHost();
     Vector_CPU h_i2 = d_i2.matDeviceToHost();
-    h_i1.print();
+    // h_i1.print();
     h_i2.print();
     // Vector_GPU d_i2(rows,columns,h_in1);
     // d_i2 = d_i1.transpose();
