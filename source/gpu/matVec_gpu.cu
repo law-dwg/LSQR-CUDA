@@ -137,9 +137,9 @@ void __global__ add(double *in1, double *in2, double *out) {
   printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
 }
 
+// source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
 void __global__ transposer(double *in1, double *output, unsigned int *rows,
                            unsigned int *cols) {
-
   int row = blockIdx.y * TILE_DIM_Y + threadIdx.y; // y-dimension
   // row = 0 * 2 + 0 = 0 //block (0,0) thread (0,0)
   // row = 0 * 2 + 0 = 0 //block (0,0) thread (1,0)
@@ -148,10 +148,11 @@ void __global__ transposer(double *in1, double *output, unsigned int *rows,
 
   int col = blockIdx.x * TILE_DIM_X + threadIdx.x; // x-dimension
   int width = gridDim.x * TILE_DIM_X;
-  __shared__ float A[TILE_DIM_Y * TILE_DIM_X];
+  int height = gridDim.y * TILE_DIM_X;
+  __shared__ float A[(TILE_DIM_Y) * TILE_DIM_X];
   // Load the matrix into shared memory
-  for (int i = 0; i < 4; i += 2) {
-    output[(row + i) * width + col] = in1[(row + i) * width + col];
+  for (int i = 0; i < TILE_DIM_Y; i += blockDim.y) {
+    A[(row + i) * width + col] = in1[(row + i) * width + col];
     printf("block(%d, %d), thread(%d,% d), i=%d, A[%d] = in1[%d] = %f\n",
            blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
            (row + i) * width + col, (row + i) * width + col,
@@ -162,10 +163,15 @@ void __global__ transposer(double *in1, double *output, unsigned int *rows,
   // %f, %f, %f, %f, %f, %f, %f,  %f,
   // %f]\n",blockIdx.y,blockIdx.x,threadIdx.y,threadIdx.x,A[0],A[1],A[2],A[3],A[4],A[5],A[6],A[7],A[8],A[9],A[10],A[11],A[12],A[13],A[14],A[15]);
 
-  /*
-  for(int i = 0; i < (*rows* *cols)/(TILE_DIM_X*TILE_DIM_Y); i++){
-    output[row * *cols + col] = A[col+i][row];
-  }*/
+  
+  for(int i = 0; i < TILE_DIM_Y; i += blockDim.y){
+    output[col * width + (row+i)] = A[(row + i) * width + col];
+    printf("block(%d, %d), thread(%d, %d), i=%d, output[%d] = A[%d] = %f\n",
+           blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
+           col * width + (row+i), (row + i) * width + col,
+           A[(row + i) * width + col]);
+  }
+  __syncthreads();
 }
 
 // Operator overloads
