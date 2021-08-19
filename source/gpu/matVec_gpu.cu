@@ -82,6 +82,7 @@ void __global__ print(double *input) {
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d,
   // value=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,input[gid]);
+  __syncthreads();
   printf("%f\n", input[gid]);
 }
 
@@ -138,40 +139,42 @@ void __global__ add(double *in1, double *in2, double *out) {
 }
 
 // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
-void __global__ transposer(double *in1, double *output, unsigned int *rows,
-                           unsigned int *cols) {
-  int row = blockIdx.y * TILE_DIM_Y + threadIdx.y; // y-dimension
-  // row = 0 * 2 + 0 = 0 //block (0,0) thread (0,0)
-  // row = 0 * 2 + 0 = 0 //block (0,0) thread (1,0)
-  // row = 0 * 2 + 1 = 1 //block (0,0) thread (0,1)
-  // row = 0 * 2 + 1 = 1 //block (0,0) thread (1,1)
-
-  int col = blockIdx.x * TILE_DIM_X + threadIdx.x; // x-dimension
+void __global__ transposer(double *in1, double *output, unsigned int *rows,unsigned int *cols) {
+  
+  __shared__ float A[(TILE_DIM_X)][TILE_DIM_Y]; // Add +1 to prevent race-conditions
+                
+  int x = blockIdx.x * TILE_DIM_X + threadIdx.x; // col
+  int y = blockIdx.y * TILE_DIM_Y + threadIdx.y; // row
   int width = gridDim.x * TILE_DIM_X;
-  int height = gridDim.y * TILE_DIM_X;
-  __shared__ float A[(TILE_DIM_Y) * TILE_DIM_X+1]; // Add +1 to prevent race-conditions
+  int height = gridDim.y * TILE_DIM_Y;
+  
   // Load the matrix into shared memory
   for (int i = 0; i < TILE_DIM_Y; i += blockDim.y) {
-    A[(row + i) * width + col] = in1[(row + i) * width + col];
-    printf("block(%d, %d), thread(%d,% d), i=%d, A[%d] = in1[%d] = %f\n",
-           blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
-           (row + i) * width + col, (row + i) * width + col,
-           in1[(row + i) * width + col]);
-  }
+    if((x < *cols) && (y+i < *rows)) {
+      //A[(row + i) * height + col] = in1[(row + i) * width + col];
+      A[threadIdx.y+i][threadIdx.x] = in1[(y + i) * *cols + x];
+      printf("block(%d, %d), thread(%d,% d), row = %d, col = %d, ,i=%d, A[%d][%d] = in1[%d] = %f\n",
+            blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x,i,
+            threadIdx.y+i,threadIdx.x, (y + i) * *cols + x, in1[(y + i) * *cols + x]);
+    }
+  };
+  
   __syncthreads();
-  // printf("block(%d, %d), thread(%d, %d); A[] = [ %f, %f, %f, %f, %f, %f, %f,
-  // %f, %f, %f, %f, %f, %f, %f,  %f,
-  // %f]\n",blockIdx.y,blockIdx.x,threadIdx.y,threadIdx.x,A[0],A[1],A[2],A[3],A[4],A[5],A[6],A[7],A[8],A[9],A[10],A[11],A[12],A[13],A[14],A[15]);
-
+  x = blockIdx.y * TILE_DIM_X + threadIdx.x; // x-dimension col
+  y = blockIdx.x * TILE_DIM_Y + threadIdx.y; // y-dimension row
   
   for(int i = 0; i < TILE_DIM_Y; i += blockDim.y){
-    output[col * width + (row+i)] = A[(row + i) * width + col];
-    printf("block(%d, %d), thread(%d, %d), i=%d, output[%d] = A[%d] = %f\n",
-           blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
-           col * width + (row+i), (row + i) * width + col,
-           A[(row + i) * width + col]);
+    // printf("block(%d, %d), thread(%d, %d), i=%d, A[%d][%d] = %f\n",
+    //       blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
+    //       threadIdx.y+i,threadIdx.x, A[threadIdx.y+i][threadIdx.x]);
+    //if((x+i < *cols) && (y+i < *rows)) {
+      //output[col * width + (row+i)] = A[(row + i) * width + col];
+      output[(y + i) * *rows + x]=A[threadIdx.x][threadIdx.y+i];
+      printf("block(%d, %d), thread(%d, %d), row = %d, col = %d, i=%d, output[%d] = A[%d][%d] = %f\n",
+            blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y,x,i,
+            (y + i) * *rows + x, threadIdx.x,threadIdx.y+i, A[threadIdx.x][threadIdx.y+i]);
+    //}
   }
-  __syncthreads();
 }
 
 // Operator overloads
@@ -285,10 +288,21 @@ int Vector_GPU::getColumns() {
 
 Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
-  dim3 numOfBlocksInGrid(2, 2, 1);
-  dim3 numOfThreadsInBlock(4, 2, 1);
+  
+  dim3 numOfThreadsInBlock(TILE_DIM_X, 2, 1);
+  unsigned int blocksX = (this->h_columns / TILE_DIM_X);
+  unsigned int blocksY = (this->h_rows / TILE_DIM_Y);
+  if(this->h_columns % TILE_DIM_X > 0){
+    blocksX += 1;
+  };
+  if(this->h_rows % TILE_DIM_Y > 0){
+    blocksY += 1;
+  };
+  printf("blocksX=%d\n", blocksX);
+  printf("blocksY=%d\n", blocksY);
+  dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
   transposer<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(
       this->d_mat, out.d_mat, this->d_rows, this->d_columns);
-  // out.printmat();
+  out.printmat();
   return out;
 };
