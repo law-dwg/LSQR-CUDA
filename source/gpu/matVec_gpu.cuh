@@ -1,8 +1,9 @@
 #pragma once
+#include <stdio.h>  //NULL, printf
+
 #include "../cpu/matVec_cpu.h"
-#include <stdio.h> //NULL, printf
 class Vector_GPU {
-public:
+ public:
   // attributes
   unsigned int h_rows, h_columns;
   unsigned int *d_rows, *d_columns;
@@ -56,7 +57,7 @@ public:
   Vector_GPU operator*(Vector_GPU &v);
   Vector_GPU operator*(double i);
 
-  Vector_GPU &operator=(const Vector_GPU &v); // overwrite previous data
+  Vector_GPU &operator=(const Vector_GPU &v);  // overwrite previous data
 
   Vector_GPU operator-(const Vector_GPU &v);
 
@@ -80,7 +81,7 @@ public:
 
 // create matrix class for readability / sparsity attribute
 class Matrix_GPU : public Vector_GPU {
-public:
-  double sparsity = .70; // the number of 0-elements/non-0-elements
+ public:
+  double sparsity = .70;  // the number of 0-elements/non-0-elements
   Matrix_GPU(unsigned int r, unsigned int c);
 };

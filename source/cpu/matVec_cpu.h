@@ -5,7 +5,7 @@
 #include <vector>
 
 class Vector_CPU {
-public:
+ public:
   // attributes
   unsigned int rows;
   unsigned int columns;
@@ -50,7 +50,7 @@ public:
 
 // create matrix class for readability / sparsity attribute
 class Matrix_CPU : public Vector_CPU {
-public:
-  double sparsity = .70; // the number of 0-elements/non-0-elements
+ public:
+  double sparsity = .70;  // the number of 0-elements/non-0-elements
   Matrix_CPU(unsigned int r, unsigned int c);
 };

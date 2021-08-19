@@ -1,14 +1,15 @@
-#include <algorithm>
-#include <cassert>
-#include <cstdio>
-#include <iostream>
+#include "matVec_cpu.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <vector>
 
-#include "matVec_cpu.h"
+#include <algorithm>
+#include <cassert>
+#include <cstdio>
+#include <iostream>
+#include <vector>
 
 // constructors
 Matrix_CPU::Matrix_CPU(unsigned int r, unsigned int c) {
@@ -102,7 +103,6 @@ double Vector_CPU::operator()(unsigned int r, unsigned int c) {
   if (r < this->rows && c < this->columns) {
     return (mat[r * this->columns + c]);
   } else {
-
     printf("please use valid indices: (r,c) where 0=<r<%i and 0=<c<%i\n",
            this->rows, this->columns);
     // throw 505;

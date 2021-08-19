@@ -1,6 +1,8 @@
 #include "lsqr_cpu.h"
-#include <iostream>
+
 #include <math.h>
+
+#include <iostream>
 
 double D2Norm(double a, double b) {
   const double scale = std::abs(a) + std::abs(b);
@@ -83,27 +85,27 @@ Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b) {
     v_i+1 =  vbar_i+1 * (1/alpha_i+1)
     */
     printf("3. Continue the bidiagonialization\n");
-    u = A * v - u * alpha; // ubar_i+1
-    beta = u.Dnrm2();      // beta_i+1 = ||ubar_i+1||
+    u = A * v - u * alpha;  // ubar_i+1
+    beta = u.Dnrm2();       // beta_i+1 = ||ubar_i+1||
     if (beta > 0) {
-      u = u * (1 / beta);         // u_i+1
-      v = (A_T * u) - (v * beta); // vbar_i+1
-      alpha = v.Dnrm2();          // alpha_i+1
+      u = u * (1 / beta);          // u_i+1
+      v = (A_T * u) - (v * beta);  // vbar_i+1
+      alpha = v.Dnrm2();           // alpha_i+1
       if (alpha > 0) {
-        v = v * (1 / alpha); // v_i+1
+        v = v * (1 / alpha);  // v_i+1
       }
     }
 
     // 4. Construct and apply next orthogonal transformation
     printf("4. Construct and apply next orthogonal transformation\n");
 
-    rho = D2Norm(rhobar, beta); // rho_i
-    c = rhobar / rho;           // c_i
-    s = beta / rho;             // s_i
-    theta = s * alpha;          // theta_i+1
-    rhobar = -c * alpha;        // rhobar_i+1
-    phi = c * phibar;           // phi_i = c_i*phibar_i
-    phibar = s * phibar;        // phibar_i+1 = s_i*phibar_i
+    rho = D2Norm(rhobar, beta);  // rho_i
+    c = rhobar / rho;            // c_i
+    s = beta / rho;              // s_i
+    theta = s * alpha;           // theta_i+1
+    rhobar = -c * alpha;         // rhobar_i+1
+    phi = c * phibar;            // phi_i = c_i*phibar_i
+    phibar = s * phibar;         // phibar_i+1 = s_i*phibar_i
 
     // used for stopping critera
     tau = s * phi;

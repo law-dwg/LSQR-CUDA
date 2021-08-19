@@ -1,15 +1,17 @@
 #include "matVec_gpu.cuh"
 //#include "../cpu/matVec_cpu.h"
-#include "device_launch_parameters.h"
 #include <assert.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <iostream>
-#include <sstream>
-#include <stdio.h>  //NULL, printf
-#include <stdlib.h> //srand, rand
+#include <stdio.h>   //NULL, printf
+#include <stdlib.h>  //srand, rand
 #include <string.h>
 #include <time.h>
+
+#include <iostream>
+#include <sstream>
+
+#include "device_launch_parameters.h"
 
 void __global__ print() {}
 
@@ -75,7 +77,7 @@ int main() {
     Vector_CPU h_i2 = d_i2.matDeviceToHost();
     h_i1.print();
     h_i2.print();
-    d_i2 = (d_i1*d_i2);
+    d_i2 = (d_i1 * d_i2);
     d_i2.printmat();
     h_i2 = d_i2.matDeviceToHost();
     h_i2.print();

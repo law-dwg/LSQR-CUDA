@@ -1,15 +1,17 @@
-#include "../cpu/matVec_cpu.h"
-#include "device_launch_parameters.h"
-#include "matVec_gpu.cuh"
 #include <assert.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <iostream>
-#include <sstream>
-#include <stdio.h>  //NULL, printf
-#include <stdlib.h> //srand, rand
+#include <stdio.h>   //NULL, printf
+#include <stdlib.h>  //srand, rand
 #include <string.h>
 #include <time.h>
+
+#include <iostream>
+#include <sstream>
+
+#include "../cpu/matVec_cpu.h"
+#include "device_launch_parameters.h"
+#include "matVec_gpu.cuh"
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
 #define TILE_DIM_X 4
 #define TILE_DIM_Y 4
@@ -25,17 +27,19 @@ void __global__ multiplyNaive(double *in1, unsigned int *rows1,
                               unsigned int *cols1, double *in2,
                               unsigned int *rows2, unsigned int *cols2,
                               double *output) {
-  const unsigned int bid = blockIdx.x                               // 1D
-                           + blockIdx.y * gridDim.x                 // 2D
-                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
-                                       * blockDim.z;                // 3D
-  const unsigned int tid = threadIdx.x                              // 1D
-                           + threadIdx.y * blockDim.x               // 2D
-                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
+  const unsigned int bid = blockIdx.x                                // 1D
+                           + blockIdx.y * gridDim.x                  // 2D
+                           + gridDim.x * gridDim.y * blockIdx.z;     // 3D
+  const unsigned int threadsPerBlock = blockDim.x * blockDim.y       // 2D
+                                       * blockDim.z;                 // 3D
+  const unsigned int tid = threadIdx.x                               // 1D
+                           + threadIdx.y * blockDim.x                // 2D
+                           + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
-  const unsigned int r = blockIdx.y * blockDim.y + threadIdx.y; // the row of M1
-  const unsigned int c = blockIdx.x * blockDim.x + threadIdx.x; // the col of M2
+  const unsigned int r =
+      blockIdx.y * blockDim.y + threadIdx.y;  // the row of M1
+  const unsigned int c =
+      blockIdx.x * blockDim.x + threadIdx.x;  // the col of M2
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f *
   // %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
@@ -45,24 +49,25 @@ void __global__ multiplyNaive(double *in1, unsigned int *rows1,
     // printf("row: %i \n",r);
     for (int i = 0; i < *cols1; i++) {
       sum += in1[r * *cols1 + i] * in2[i * *cols2 + c];
-      // printf("sum = %f += in1[%d] * in2[%d] = %f * %f\n",sum,r * *cols1 + i, i * *cols2 + c,in1[r * *cols1 + i],in2[i * *cols2 + c]);
+      // printf("sum = %f += in1[%d] * in2[%d] = %f * %f\n",sum,r * *cols1 + i,
+      // i * *cols2 + c,in1[r * *cols1 + i],in2[i * *cols2 + c]);
     }
     output[r * *cols2 + c] = sum;
-    //printf("output[%d] = %f\n",r * *cols2 + c, output[r * *cols2 + c]);
+    // printf("output[%d] = %f\n",r * *cols2 + c, output[r * *cols2 + c]);
   } else {
     printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
   }
 }
 
 void __global__ scale(double *input, double *scalar, double *output) {
-  const unsigned int bid = blockIdx.x                               // 1D
-                           + blockIdx.y * gridDim.x                 // 2D
-                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
-                                       * blockDim.z;                // 3D
-  const unsigned int tid = threadIdx.x                              // 1D
-                           + threadIdx.y * blockDim.x               // 2D
-                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
+  const unsigned int bid = blockIdx.x                                // 1D
+                           + blockIdx.y * gridDim.x                  // 2D
+                           + gridDim.x * gridDim.y * blockIdx.z;     // 3D
+  const unsigned int threadsPerBlock = blockDim.x * blockDim.y       // 2D
+                                       * blockDim.z;                 // 3D
+  const unsigned int tid = threadIdx.x                               // 1D
+                           + threadIdx.y * blockDim.x                // 2D
+                           + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d,
   // value=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
@@ -72,14 +77,14 @@ void __global__ scale(double *input, double *scalar, double *output) {
 }
 
 void __global__ print(double *input) {
-  const unsigned int bid = blockIdx.x                               // 1D
-                           + blockIdx.y * gridDim.x                 // 2D
-                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
-                                       * blockDim.z;                // 3D
-  const unsigned int tid = threadIdx.x                              // 1D
-                           + threadIdx.y * blockDim.x               // 2D
-                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
+  const unsigned int bid = blockIdx.x                                // 1D
+                           + blockIdx.y * gridDim.x                  // 2D
+                           + gridDim.x * gridDim.y * blockIdx.z;     // 3D
+  const unsigned int threadsPerBlock = blockDim.x * blockDim.y       // 2D
+                                       * blockDim.z;                 // 3D
+  const unsigned int tid = threadIdx.x                               // 1D
+                           + threadIdx.y * blockDim.x                // 2D
+                           + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d,
   // value=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
@@ -89,14 +94,14 @@ void __global__ print(double *input) {
 }
 
 void __global__ assignment(double *in1, double *in2) {
-  const unsigned int bid = blockIdx.x                               // 1D
-                           + blockIdx.y * gridDim.x                 // 2D
-                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
-                                       * blockDim.z;                // 3D
-  const unsigned int tid = threadIdx.x                              // 1D
-                           + threadIdx.y * blockDim.x               // 2D
-                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
+  const unsigned int bid = blockIdx.x                                // 1D
+                           + blockIdx.y * gridDim.x                  // 2D
+                           + gridDim.x * gridDim.y * blockIdx.z;     // 3D
+  const unsigned int threadsPerBlock = blockDim.x * blockDim.y       // 2D
+                                       * blockDim.z;                 // 3D
+  const unsigned int tid = threadIdx.x                               // 1D
+                           + threadIdx.y * blockDim.x                // 2D
+                           + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
   printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n",
          threadIdx.x, threadIdx.y, threadIdx.z, blockIdx.x, blockIdx.y,
@@ -105,17 +110,19 @@ void __global__ assignment(double *in1, double *in2) {
 }
 
 void __global__ subtract(double *in1, double *in2, double *output) {
-  const unsigned int bid = blockIdx.x                               // 1D
-                           + blockIdx.y * gridDim.x                 // 2D
-                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
-                                       * blockDim.z;                // 3D
-  const unsigned int tid = threadIdx.x                              // 1D
-                           + threadIdx.y * blockDim.x               // 2D
-                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
+  const unsigned int bid = blockIdx.x                                // 1D
+                           + blockIdx.y * gridDim.x                  // 2D
+                           + gridDim.x * gridDim.y * blockIdx.z;     // 3D
+  const unsigned int threadsPerBlock = blockDim.x * blockDim.y       // 2D
+                                       * blockDim.z;                 // 3D
+  const unsigned int tid = threadIdx.x                               // 1D
+                           + threadIdx.y * blockDim.x                // 2D
+                           + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
-  const unsigned int r = blockIdx.y * blockDim.y + threadIdx.y; // the row of M1
-  const unsigned int c = blockIdx.x * blockDim.x + threadIdx.x; // the col of M2
+  const unsigned int r =
+      blockIdx.y * blockDim.y + threadIdx.y;  // the row of M1
+  const unsigned int c =
+      blockIdx.x * blockDim.x + threadIdx.x;  // the col of M2
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f *
   // %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
@@ -124,14 +131,14 @@ void __global__ subtract(double *in1, double *in2, double *output) {
 }
 
 void __global__ add(double *in1, double *in2, double *out) {
-  const unsigned int bid = blockIdx.x                               // 1D
-                           + blockIdx.y * gridDim.x                 // 2D
-                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
-                                       * blockDim.z;                // 3D
-  const unsigned int tid = threadIdx.x                              // 1D
-                           + threadIdx.y * blockDim.x               // 2D
-                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
+  const unsigned int bid = blockIdx.x                                // 1D
+                           + blockIdx.y * gridDim.x                  // 2D
+                           + gridDim.x * gridDim.y * blockIdx.z;     // 3D
+  const unsigned int threadsPerBlock = blockDim.x * blockDim.y       // 2D
+                                       * blockDim.z;                 // 3D
+  const unsigned int tid = threadIdx.x                               // 1D
+                           + threadIdx.y * blockDim.x                // 2D
+                           + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f,
   // in2=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
@@ -141,38 +148,45 @@ void __global__ add(double *in1, double *in2, double *out) {
 }
 
 // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
-void __global__ transposer(double *in1, double *output, unsigned int *rows,unsigned int *cols) {
-  
-  __shared__ float A[(TILE_DIM_X)][TILE_DIM_Y]; // Add +1 to prevent race-conditions
-                
-  int x = blockIdx.x * TILE_DIM_X + threadIdx.x; // col
-  int y = blockIdx.y * TILE_DIM_Y + threadIdx.y; // row
-  
+void __global__ transposer(double *in1, double *output, unsigned int *rows,
+                           unsigned int *cols) {
+  __shared__ float A[(TILE_DIM_X)]
+                    [TILE_DIM_Y];  // Add +1 to prevent race-conditions
+
+  int x = blockIdx.x * TILE_DIM_X + threadIdx.x;  // col
+  int y = blockIdx.y * TILE_DIM_Y + threadIdx.y;  // row
+
   // Load the matrix into shared memory
   for (int i = 0; i < TILE_DIM_Y; i += blockDim.y) {
-    if((x < *cols) && (y+i < *rows)) {
-      //A[(row + i) * height + col] = in1[(row + i) * width + col];
-      A[threadIdx.y+i][threadIdx.x] = in1[(y + i) * *cols + x];
-      printf("block(%d, %d), thread(%d,% d), row = %d, col = %d, ,i=%d, A[%d][%d] = in1[%d] = %f\n",
-            blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x,i,
-            threadIdx.y+i,threadIdx.x, (y + i) * *cols + x, in1[(y + i) * *cols + x]);
+    if ((x < *cols) && (y + i < *rows)) {
+      // A[(row + i) * height + col] = in1[(row + i) * width + col];
+      A[threadIdx.y + i][threadIdx.x] = in1[(y + i) * *cols + x];
+      printf(
+          "block(%d, %d), thread(%d,% d), row = %d, col = %d, ,i=%d, A[%d][%d] "
+          "= in1[%d] = %f\n",
+          blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i,
+          threadIdx.y + i, threadIdx.x, (y + i) * *cols + x,
+          in1[(y + i) * *cols + x]);
     }
   };
-  
+
   __syncthreads();
-  x = blockIdx.y * TILE_DIM_X + threadIdx.x; // x-dimension col
-  y = blockIdx.x * TILE_DIM_Y + threadIdx.y; // y-dimension row
-  
-  for(int i = 0; i < TILE_DIM_Y; i += blockDim.y){
+  x = blockIdx.y * TILE_DIM_X + threadIdx.x;  // x-dimension col
+  y = blockIdx.x * TILE_DIM_Y + threadIdx.y;  // y-dimension row
+
+  for (int i = 0; i < TILE_DIM_Y; i += blockDim.y) {
     // printf("block(%d, %d), thread(%d, %d), i=%d, A[%d][%d] = %f\n",
     //       blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
     //       threadIdx.y+i,threadIdx.x, A[threadIdx.y+i][threadIdx.x]);
-    if((y < *cols) && (x < *rows)) {
-      //output[col * width + (row+i)] = A[(row + i) * width + col];
-      output[(y + i) * *rows + x]=A[threadIdx.x][threadIdx.y+i];
-      printf("block(%d, %d), thread(%d, %d), row = %d, col = %d, i=%d, output[%d] = A[%d][%d] = %f\n",
-            blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y,x,i,
-            (y + i) * *rows + x, threadIdx.x,threadIdx.y+i, A[threadIdx.x][threadIdx.y+i]);
+    if ((y < *cols) && (x < *rows)) {
+      // output[col * width + (row+i)] = A[(row + i) * width + col];
+      output[(y + i) * *rows + x] = A[threadIdx.x][threadIdx.y + i];
+      printf(
+          "block(%d, %d), thread(%d, %d), row = %d, col = %d, i=%d, output[%d] "
+          "= A[%d][%d] = %f\n",
+          blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i,
+          (y + i) * *rows + x, threadIdx.x, threadIdx.y + i,
+          A[threadIdx.x][threadIdx.y + i]);
     }
   }
 }
@@ -288,14 +302,14 @@ int Vector_GPU::getColumns() {
 
 Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
-  
+
   dim3 numOfThreadsInBlock(TILE_DIM_X, 2, 1);
   unsigned int blocksX = (this->h_columns / TILE_DIM_X);
   unsigned int blocksY = (this->h_rows / TILE_DIM_Y);
-  if(this->h_columns % TILE_DIM_X > 0){
+  if (this->h_columns % TILE_DIM_X > 0) {
     blocksX += 1;
   };
-  if(this->h_rows % TILE_DIM_Y > 0){
+  if (this->h_rows % TILE_DIM_Y > 0) {
     blocksY += 1;
   };
   printf("blocksX=%d\n", blocksX);
