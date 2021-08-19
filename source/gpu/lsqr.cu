@@ -52,7 +52,7 @@ int main() {
     }
 
     unsigned int rows = 8;
-    unsigned int columns = 8;
+    unsigned int columns = 4;
     int array_size = rows * columns;
     int byte_size = sizeof(double) * array_size;
     double *h_in1 = new double[array_size];

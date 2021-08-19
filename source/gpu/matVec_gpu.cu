@@ -165,13 +165,13 @@ void __global__ transposer(double *in1, double *output, unsigned int *rows,unsig
     // printf("block(%d, %d), thread(%d, %d), i=%d, A[%d][%d] = %f\n",
     //       blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
     //       threadIdx.y+i,threadIdx.x, A[threadIdx.y+i][threadIdx.x]);
-    //if((x+i < *cols) && (y+i < *rows)) {
+    if((y < *cols) && (x < *rows)) {
       //output[col * width + (row+i)] = A[(row + i) * width + col];
       output[(y + i) * *rows + x]=A[threadIdx.x][threadIdx.y+i];
       printf("block(%d, %d), thread(%d, %d), row = %d, col = %d, i=%d, output[%d] = A[%d][%d] = %f\n",
             blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y,x,i,
             (y + i) * *rows + x, threadIdx.x,threadIdx.y+i, A[threadIdx.x][threadIdx.y+i]);
-    //}
+    }
   }
 }
 
