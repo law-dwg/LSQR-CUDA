@@ -149,7 +149,7 @@ void __global__ transposer(double *in1, double *output, unsigned int *rows,
   int col = blockIdx.x * TILE_DIM_X + threadIdx.x; // x-dimension
   int width = gridDim.x * TILE_DIM_X;
   int height = gridDim.y * TILE_DIM_X;
-  __shared__ float A[(TILE_DIM_Y) * TILE_DIM_X];
+  __shared__ float A[(TILE_DIM_Y) * TILE_DIM_X+1]; // Add +1 to prevent race-conditions
   // Load the matrix into shared memory
   for (int i = 0; i < TILE_DIM_Y; i += blockDim.y) {
     A[(row + i) * width + col] = in1[(row + i) * width + col];
