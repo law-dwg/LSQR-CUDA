@@ -43,10 +43,12 @@ void __global__ multiplyNaive(double *in1, unsigned int *rows1,
   // printf("gid:%i, %i %i %i %i\n",gid,*rows1, *cols1, *rows2, *cols2);
   if (*cols1 == *rows2) {
     // printf("row: %i \n",r);
-    for (int i = 0; i < *rows1; i++) {
+    for (int i = 0; i < *cols1; i++) {
       sum += in1[r * *cols1 + i] * in2[i * *cols2 + c];
+      // printf("sum = %f += in1[%d] * in2[%d] = %f * %f\n",sum,r * *cols1 + i, i * *cols2 + c,in1[r * *cols1 + i],in2[i * *cols2 + c]);
     }
     output[r * *cols2 + c] = sum;
+    //printf("output[%d] = %f\n",r * *cols2 + c, output[r * *cols2 + c]);
   } else {
     printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
   }
