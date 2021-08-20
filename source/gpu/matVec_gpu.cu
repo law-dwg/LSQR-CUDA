@@ -13,8 +13,8 @@
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 32
-#define TILE_DIM_Y 32
+#define TILE_DIM_X 16
+#define TILE_DIM_Y 16
 // nvcc -arch=sm_37
 
 // gridDim.x - # of blocks in a grid, in x
@@ -170,7 +170,7 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
     // printf("block(%d, %d), thread(%d, %d), i=%d, A[%d][%d] = %f\n",
     //       blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
     //       threadIdx.y+i,threadIdx.x, A[threadIdx.y+i][threadIdx.x]);
-    if ((y < *cols) && (x < *rows)) {
+    if ((y + i < *cols) && (x < *rows)) {
       // output[col * width + (row+i)] = A[(row + i) * width + col];
       output[(y + i) * *rows + x] = A[threadIdx.x][threadIdx.y + i];
       // printf(
@@ -288,7 +288,7 @@ int Vector_GPU::getColumns() {
 Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
 
-  dim3 numOfThreadsInBlock(TILE_DIM_X, 8, 1);
+  dim3 numOfThreadsInBlock(TILE_DIM_X, 4, 1);
   unsigned int blocksX = (this->h_columns / TILE_DIM_X);
   unsigned int blocksY = (this->h_rows / TILE_DIM_Y);
   if (this->h_columns % TILE_DIM_X > 0) {

@@ -49,8 +49,8 @@ int main() {
              deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
     }
 
-    unsigned int rows = 8;
-    unsigned int columns = 31;
+    unsigned int rows = 2048 * 2 * 2;
+    unsigned int columns = 2048 * 2 * 2;
     int array_size = rows * columns;
     printf("%d\n", array_size);
     int byte_size = sizeof(double) * array_size;
@@ -74,9 +74,9 @@ int main() {
     cudaDeviceSynchronize();
     // Vector_CPU h_i1 = d_i1.matDeviceToHost();
     // Vector_CPU h_i2 = d_i2.matDeviceToHost();
-    // // d_i2.printmat();
-    // // h_i1.print();
-    // // h_i2.print();
+    // d_i2.printmat();
+    // h_i1.print();
+    // h_i2.print();
     // // d_i2 = (d_i1 * d_i2);
     // // d_i2.printmat();
     // // h_i2 = d_i2.matDeviceToHost();
