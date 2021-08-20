@@ -23,10 +23,8 @@
 // blockDim.y - # of threads in a block, in y
 
 // CUDA kernels
-void __global__ multiplyNaive(double *in1, unsigned int *rows1,
-                              unsigned int *cols1, double *in2,
-                              unsigned int *rows2, unsigned int *cols2,
-                              double *output) {
+void __global__ multiplyNaive(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2,
+                              unsigned int *rows2, unsigned int *cols2, double *output) {
   const unsigned int bid = blockIdx.x                                // 1D
                            + blockIdx.y * gridDim.x                  // 2D
                            + gridDim.x * gridDim.y * blockIdx.z;     // 3D
@@ -36,10 +34,8 @@ void __global__ multiplyNaive(double *in1, unsigned int *rows1,
                            + threadIdx.y * blockDim.x                // 2D
                            + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
-  const unsigned int r =
-      blockIdx.y * blockDim.y + threadIdx.y;  // the row of M1
-  const unsigned int c =
-      blockIdx.x * blockDim.x + threadIdx.x;  // the col of M2
+  const unsigned int r = blockIdx.y * blockDim.y + threadIdx.y;  // the row of M1
+  const unsigned int c = blockIdx.x * blockDim.x + threadIdx.x;  // the col of M2
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f *
   // %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
@@ -103,9 +99,9 @@ void __global__ assignment(double *in1, double *in2) {
                            + threadIdx.y * blockDim.x                // 2D
                            + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
-  printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n",
-         threadIdx.x, threadIdx.y, threadIdx.z, blockIdx.x, blockIdx.y,
-         blockIdx.z, bid, gid, in1[gid], in2[gid]);
+  printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n", threadIdx.x,
+         threadIdx.y, threadIdx.z, blockIdx.x, blockIdx.y, blockIdx.z, bid, gid, in1[gid],
+         in2[gid]);
   in1[gid] = in2[gid];
 }
 
@@ -119,10 +115,8 @@ void __global__ subtract(double *in1, double *in2, double *output) {
                            + threadIdx.y * blockDim.x                // 2D
                            + blockDim.x * blockDim.x * threadIdx.z;  // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
-  const unsigned int r =
-      blockIdx.y * blockDim.y + threadIdx.y;  // the row of M1
-  const unsigned int c =
-      blockIdx.x * blockDim.x + threadIdx.x;  // the col of M2
+  const unsigned int r = blockIdx.y * blockDim.y + threadIdx.y;  // the row of M1
+  const unsigned int c = blockIdx.x * blockDim.x + threadIdx.x;  // the col of M2
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f *
   // %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
@@ -148,10 +142,8 @@ void __global__ add(double *in1, double *in2, double *out) {
 }
 
 // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
-void __global__ transposer(double *in1, double *output, unsigned int *rows,
-                           unsigned int *cols) {
-  __shared__ float A[(TILE_DIM_X)]
-                    [TILE_DIM_Y];  // Add +1 to prevent race-conditions
+void __global__ transposer(double *in1, double *output, unsigned int *rows, unsigned int *cols) {
+  __shared__ float A[(TILE_DIM_X)][TILE_DIM_Y];  // Add +1 to prevent race-conditions
 
   int x = blockIdx.x * TILE_DIM_X + threadIdx.x;  // col
   int y = blockIdx.y * TILE_DIM_Y + threadIdx.y;  // row
@@ -164,9 +156,8 @@ void __global__ transposer(double *in1, double *output, unsigned int *rows,
       printf(
           "block(%d, %d), thread(%d,% d), row = %d, col = %d, ,i=%d, A[%d][%d] "
           "= in1[%d] = %f\n",
-          blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i,
-          threadIdx.y + i, threadIdx.x, (y + i) * *cols + x,
-          in1[(y + i) * *cols + x]);
+          blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i, threadIdx.y + i, threadIdx.x,
+          (y + i) * *cols + x, in1[(y + i) * *cols + x]);
     }
   };
 
@@ -184,9 +175,8 @@ void __global__ transposer(double *in1, double *output, unsigned int *rows,
       printf(
           "block(%d, %d), thread(%d, %d), row = %d, col = %d, i=%d, output[%d] "
           "= A[%d][%d] = %f\n",
-          blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i,
-          (y + i) * *rows + x, threadIdx.x, threadIdx.y + i,
-          A[threadIdx.x][threadIdx.y + i]);
+          blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i, (y + i) * *rows + x,
+          threadIdx.x, threadIdx.y + i, A[threadIdx.x][threadIdx.y + i]);
     }
   }
 }
@@ -197,8 +187,8 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   Vector_GPU out(this->h_rows, v.h_columns);
   dim3 grid(1, 1, 1);
   dim3 block(out.h_rows, out.h_columns, 1);
-  multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns,
-                                 v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+  multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
+                                 v.d_columns, out.d_mat);
   return out;
 }
 
@@ -229,14 +219,11 @@ Vector_CPU Vector_GPU::matDeviceToHost() {
   double out[this->h_columns * this->h_rows];
   unsigned int rows;
   unsigned int cols;
-  cudaMemcpy(&out, d_mat, sizeof(double) * this->h_columns * this->h_rows,
-             cudaMemcpyDeviceToHost);
+  cudaMemcpy(&out, d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost);
   cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int),
-             cudaMemcpyDeviceToHost);
+  cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost);
   std::cout << "d_rows=" << rows << "=h_rows=" << this->h_rows << std::endl;
-  std::cout << "d_columns=" << cols << "=h_columns=" << this->h_columns
-            << std::endl;
+  std::cout << "d_columns=" << cols << "=h_columns=" << this->h_columns << std::endl;
   if (rows != this->h_rows || cols != this->h_columns) {
     printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
   }
@@ -252,12 +239,9 @@ Vector_GPU &Vector_GPU::operator=(const Vector_GPU &v) {
   cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns);
   // dim3 grid(1,1,1);
   // dim3 block(v.rows * v.columns,1,1);
-  cudaMemcpy(this->d_rows, v.d_rows, sizeof(unsigned int),
-             cudaMemcpyDeviceToDevice);
-  cudaMemcpy(this->d_columns, v.d_columns, sizeof(unsigned int),
-             cudaMemcpyDeviceToDevice);
-  cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows,
-             cudaMemcpyDeviceToDevice);
+  cudaMemcpy(this->d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(this->d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
+  cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
   // assignment <<<grid,block>>> (this->d_mat,v.d_mat);
 
   return *this;
@@ -315,8 +299,8 @@ Vector_GPU Vector_GPU::transpose() {
   printf("blocksX=%d\n", blocksX);
   printf("blocksY=%d\n", blocksY);
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  transposer<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(
-      this->d_mat, out.d_mat, this->d_rows, this->d_columns);
+  transposer<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows,
+                                                         this->d_columns);
   out.printmat();
   return out;
 };

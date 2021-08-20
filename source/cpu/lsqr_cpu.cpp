@@ -22,8 +22,7 @@ Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b) {
   // Iteration
   unsigned int istop, itn = 0;
 
-  double ddnorm, Anorm, Acond, damp, dnorm, dknorm, res2, xnorm, xxnorm, z, sn2,
-      rtol = 0;
+  double ddnorm, Anorm, Acond, damp, dnorm, dknorm, res2, xnorm, xxnorm, z, sn2, rtol = 0;
   double rho, phi, c, s, theta, tau, res, res1;
   double cs2 = -1;
   double atol, btol = 1e-8;

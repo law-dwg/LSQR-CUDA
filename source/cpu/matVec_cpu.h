@@ -13,19 +13,14 @@ class Vector_CPU {
   double *h_mat;
   // constructors and destructor
   Vector_CPU(){};
-  Vector_CPU(unsigned int p) : columns(1), rows(p) {
-    this->mat.resize(p, 5.0);
-  };
-  Vector_CPU(unsigned int r, unsigned int c) : rows(r), columns(c) {
-    this->mat.resize(r * c, 5);
-  };
+  Vector_CPU(unsigned int p) : columns(1), rows(p) { this->mat.resize(p, 5.0); };
+  Vector_CPU(unsigned int r, unsigned int c) : rows(r), columns(c) { this->mat.resize(r * c, 5); };
   Vector_CPU(unsigned int r, unsigned int c, double *v) : rows(r), columns(c) {
     mat.resize(r * c);
     mat.assign(v, v + r * c);
     h_mat = &mat[0];
   };
-  Vector_CPU(const Vector_CPU &v)
-      : columns(v.columns), rows(v.rows), mat(v.mat){};
+  Vector_CPU(const Vector_CPU &v) : columns(v.columns), rows(v.rows), mat(v.mat){};
   ~Vector_CPU(){};
 
   // operator overloads

@@ -25,32 +25,27 @@ int main() {
     for (device = 0; device < deviceCount; ++device) {
       cudaDeviceProp deviceProp;
       cudaGetDeviceProperties(&deviceProp, device);
-      printf("Device %s has compute capability %d.%d.\n", deviceProp.name,
-             deviceProp.major, deviceProp.minor);
+      printf("Device %s has compute capability %d.%d.\n", deviceProp.name, deviceProp.major,
+             deviceProp.minor);
       printf("Number of multiprocessors: %d\n", deviceProp.multiProcessorCount);
       printf("Clock rate: %d Hz\n", deviceProp.clockRate);
-      printf("Total amount of global memory: %d KB\n",
-             deviceProp.totalGlobalMem / 1024);
-      printf("Total amount of constant memory: %d KB\n",
-             deviceProp.totalConstMem / 1024);
+      printf("Total amount of global memory: %d KB\n", deviceProp.totalGlobalMem / 1024);
+      printf("Total amount of constant memory: %d KB\n", deviceProp.totalConstMem / 1024);
       printf("Total amount of shared memory per block: %d KB\n",
              deviceProp.sharedMemPerBlock / 1024);
       printf("Total amount of shared memory per SM: %d KB\n", 64);
       printf("Warp size: %d\n", deviceProp.warpSize);
-      printf("Maximum number of threads per block: %d\n",
-             deviceProp.maxThreadsPerBlock);
+      printf("Maximum number of threads per block: %d\n", deviceProp.maxThreadsPerBlock);
       printf("Maximum number of blocks per multiprocessor: %d\n",
-             deviceProp.maxThreadsPerMultiProcessor /
-                 deviceProp.maxThreadsPerBlock);
+             deviceProp.maxThreadsPerMultiProcessor / deviceProp.maxThreadsPerBlock);
       printf("Maximum number of threads per multiprocessor: %d\n",
              deviceProp.maxThreadsPerMultiProcessor);
       printf("Maximum number of warps per multiprocessor: %d\n",
              deviceProp.maxThreadsPerMultiProcessor / 32);
       printf("Maximum Grid size: (%d,%d,%d)\n", deviceProp.maxGridSize[0],
              deviceProp.maxGridSize[1], deviceProp.maxGridSize[2]);
-      printf("Maximum block dimension: (%d,%d,%d)\n",
-             deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1],
-             deviceProp.maxThreadsDim[2]);
+      printf("Maximum block dimension: (%d,%d,%d)\n", deviceProp.maxThreadsDim[0],
+             deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
     }
 
     unsigned int rows = 2;

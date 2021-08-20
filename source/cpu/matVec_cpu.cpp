@@ -95,16 +95,14 @@ Vector_CPU Vector_CPU::operator+(Vector_CPU v) {
   };
 };
 
-double Vector_CPU::operator()(unsigned int i) {
-  return (Vector_CPU::operator[](i));
-};
+double Vector_CPU::operator()(unsigned int i) { return (Vector_CPU::operator[](i)); };
 
 double Vector_CPU::operator()(unsigned int r, unsigned int c) {
   if (r < this->rows && c < this->columns) {
     return (mat[r * this->columns + c]);
   } else {
-    printf("please use valid indices: (r,c) where 0=<r<%i and 0=<c<%i\n",
-           this->rows, this->columns);
+    printf("please use valid indices: (r,c) where 0=<r<%i and 0=<c<%i\n", this->rows,
+           this->columns);
     // throw 505;
     return EXIT_FAILURE;
   }
@@ -131,8 +129,7 @@ void Vector_CPU::print() {
     if (e % this->columns == 0) {
       (e == 0) ?: printf("\n ");
     };
-    (e == mat.size() - 1) ? printf("%f", this->mat[e])
-                          : printf("%f ", this->mat[e]);
+    (e == mat.size() - 1) ? printf("%f", this->mat[e]) : printf("%f ", this->mat[e]);
   }
   printf("]\n");
 };
