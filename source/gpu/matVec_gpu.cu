@@ -142,7 +142,8 @@ void __global__ add(double *in1, double *in2, double *out) {
 }
 
 // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
-void __global__ transposer(double *in1, double *output, unsigned int *rows, unsigned int *cols) {
+void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
+                               unsigned int *cols) {
   __shared__ float A[(TILE_DIM_X)][TILE_DIM_Y];  // Add +1 to prevent race-conditions
 
   int x = blockIdx.x * TILE_DIM_X + threadIdx.x;  // col
@@ -206,31 +207,6 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
   return out;
 }
 
-void Vector_GPU::printmat() {
-  dim3 grid(1, 1, 1);
-  printf("PRINTING\n");
-  dim3 block(this->h_rows, this->h_columns, 1);
-
-  print<<<grid, block>>>(this->d_mat);
-};
-
-Vector_CPU Vector_GPU::matDeviceToHost() {
-  printf("matDeviceToHost\n");
-  double out[this->h_columns * this->h_rows];
-  unsigned int rows;
-  unsigned int cols;
-  cudaMemcpy(&out, d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost);
-  cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  std::cout << "d_rows=" << rows << "=h_rows=" << this->h_rows << std::endl;
-  std::cout << "d_columns=" << cols << "=h_columns=" << this->h_columns << std::endl;
-  if (rows != this->h_rows || cols != this->h_columns) {
-    printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
-  }
-  Vector_CPU v_cpu(this->h_rows, this->h_columns, out);
-  return v_cpu;
-};
-
 Vector_GPU &Vector_GPU::operator=(const Vector_GPU &v) {
   printf("Assignment operator called\n");
   this->h_rows = v.h_rows;
@@ -274,15 +250,40 @@ Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
   return out;
 }
 
+void Vector_GPU::printmat() {
+  dim3 grid(1, 1, 1);
+  printf("PRINTING\n");
+  dim3 block(this->h_rows, this->h_columns, 1);
+
+  print<<<grid, block>>>(this->d_mat);
+}
+
+Vector_CPU Vector_GPU::matDeviceToHost() {
+  printf("matDeviceToHost\n");
+  double out[this->h_columns * this->h_rows];
+  unsigned int rows;
+  unsigned int cols;
+  cudaMemcpy(&out, d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost);
+  cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  std::cout << "d_rows=" << rows << "=h_rows=" << this->h_rows << std::endl;
+  std::cout << "d_columns=" << cols << "=h_columns=" << this->h_columns << std::endl;
+  if (rows != this->h_rows || cols != this->h_columns) {
+    printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
+  }
+  Vector_CPU v_cpu(this->h_rows, this->h_columns, out);
+  return v_cpu;
+}
+
 int Vector_GPU::getRows() {
   printf("number of rows: %i\n", this->h_rows);
   return this->h_rows;
-};
+}
 
 int Vector_GPU::getColumns() {
   printf("number of columns: %i\n", this->h_columns);
   return this->h_columns;
-};
+}
 
 Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
@@ -299,8 +300,8 @@ Vector_GPU Vector_GPU::transpose() {
   printf("blocksX=%d\n", blocksX);
   printf("blocksY=%d\n", blocksY);
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  transposer<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows,
-                                                         this->d_columns);
+  transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows,
+                                                             this->d_columns);
   out.printmat();
   return out;
 };
