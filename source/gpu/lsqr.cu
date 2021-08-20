@@ -4,8 +4,8 @@
 #include <cuda.h>
 #include <cuda_profiler_api.h>
 #include <cuda_runtime.h>
-#include <stdio.h>   //NULL, printf
-#include <stdlib.h>  //srand, rand
+#include <stdio.h>  //NULL, printf
+#include <stdlib.h> //srand, rand
 #include <string.h>
 #include <time.h>
 
@@ -13,7 +13,6 @@
 #include <sstream>
 
 #include "device_launch_parameters.h"
-
 void __global__ print() {}
 
 int main() {
@@ -49,8 +48,8 @@ int main() {
              deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
     }
 
-    unsigned int rows = 2048 * 2 * 2;
-    unsigned int columns = 2048 * 2 * 2;
+    unsigned int rows = 5;
+    unsigned int columns = 5;
     int array_size = rows * columns;
     printf("%d\n", array_size);
     int byte_size = sizeof(double) * array_size;
@@ -69,22 +68,50 @@ int main() {
     // }
     Vector_GPU d_i1(rows, columns, h_in1);
     Vector_GPU d_i2(columns, rows, h_in2);
-    // Vector_GPU d_i3 = d_i1.transpose();
-    d_i2 = d_i1.transpose();
     cudaDeviceSynchronize();
-    // Vector_CPU h_i1 = d_i1.matDeviceToHost();
-    // Vector_CPU h_i2 = d_i2.matDeviceToHost();
+    d_i1 = d_i1.transpose();
+    Vector_CPU hd_i1 = d_i1.matDeviceToHost();
+    hd_i1.h_print();
+    Vector_CPU comparator(rows, columns, h_in1);
+    comparator = comparator.transpose();
+    comparator.h_print();
+    
+    double *matGpu = hd_i1.getHMat();
+    double *matCpu = comparator.h_mat;
+    printf("%f\n", matGpu[2]);
+    printf("%f\n", matCpu[2]);
+    
+
+    // printf("%f\n", comparator.h_mat[20]);
+    bool same = true;
+    double epsilon = 0.001;
+    do {
+      for (int i = 0; i < rows * columns; i++) {
+        printf("matGpu[%d] = %f, matCpu[%d] = %f\n",i,matGpu[i],i,matCpu[i]);
+        
+        //if (!(std::abs(matGpu[i] - matCpu[i]) < epsilon)) {
+        // printf("MATRICIES DO NOT MATCH DISCREPANCY AT INDEX %d\n DIFF = %f, %f == %f\n", i,std::abs(matGpu[i] - matCpu[i]),matGpu[i],matCpu[i]);
+        // same = false;
+        // break;
+        //}
+      }
+      if (same) {
+        printf("MATRICIES MATCH!\n");
+        same = false;
+      };
+    } while (same);
+
     // d_i2.printmat();
     // h_i1.print();
     // h_i2.print();
     // // d_i2 = (d_i1 * d_i2);
     // // d_i2.printmat();
     // // h_i2 = d_i2.matDeviceToHost();
-    delete h_in1, h_in2;                   //, h_in3, h_out;
-    cudaError_t err = cudaGetLastError();  // add
+    delete h_in1, h_in2;                  //, h_in3, h_out;
+    cudaError_t err = cudaGetLastError(); // add
     if (err != cudaSuccess) {
       std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-    }  // add
+    } // add
     cudaProfilerStop();
   } else {
     printf("NO CUDA DEVICE AVAILABLE");
