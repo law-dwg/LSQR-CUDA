@@ -13,8 +13,8 @@
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 4
-#define TILE_DIM_Y 4
+#define TILE_DIM_X 32
+#define TILE_DIM_Y 32
 // nvcc -arch=sm_37
 
 // gridDim.x - # of blocks in a grid, in x
@@ -144,7 +144,7 @@ void __global__ add(double *in1, double *in2, double *out) {
 // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
 void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
                                unsigned int *cols) {
-  __shared__ float A[(TILE_DIM_X)][TILE_DIM_Y];  // Add +1 to prevent race-conditions
+  __shared__ float A[(TILE_DIM_X)][TILE_DIM_Y + 1];  // Add +1 to prevent race-conditions
 
   int x = blockIdx.x * TILE_DIM_X + threadIdx.x;  // col
   int y = blockIdx.y * TILE_DIM_Y + threadIdx.y;  // row
@@ -154,11 +154,11 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
     if ((x < *cols) && (y + i < *rows)) {
       // A[(row + i) * height + col] = in1[(row + i) * width + col];
       A[threadIdx.y + i][threadIdx.x] = in1[(y + i) * *cols + x];
-      printf(
-          "block(%d, %d), thread(%d,% d), row = %d, col = %d, ,i=%d, A[%d][%d] "
-          "= in1[%d] = %f\n",
-          blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i, threadIdx.y + i, threadIdx.x,
-          (y + i) * *cols + x, in1[(y + i) * *cols + x]);
+      // printf(
+      //     "block(%d, %d), thread(%d,% d), row = %d, col = %d, ,i=%d, A[%d][%d] "
+      //     "= in1[%d] = %f\n",
+      //     blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i, threadIdx.y + i,
+      //     threadIdx.x, (y + i) * *cols + x, in1[(y + i) * *cols + x]);
     }
   };
 
@@ -173,11 +173,11 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
     if ((y < *cols) && (x < *rows)) {
       // output[col * width + (row+i)] = A[(row + i) * width + col];
       output[(y + i) * *rows + x] = A[threadIdx.x][threadIdx.y + i];
-      printf(
-          "block(%d, %d), thread(%d, %d), row = %d, col = %d, i=%d, output[%d] "
-          "= A[%d][%d] = %f\n",
-          blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i, (y + i) * *rows + x,
-          threadIdx.x, threadIdx.y + i, A[threadIdx.x][threadIdx.y + i]);
+      // printf(
+      //     "block(%d, %d), thread(%d, %d), row = %d, col = %d, i=%d, output[%d] "
+      //     "= A[%d][%d] = %f\n",
+      //     blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i, (y + i) * *rows + x,
+      //     threadIdx.x, threadIdx.y + i, A[threadIdx.x][threadIdx.y + i]);
     }
   }
 }
@@ -288,7 +288,7 @@ int Vector_GPU::getColumns() {
 Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
 
-  dim3 numOfThreadsInBlock(TILE_DIM_X, 2, 1);
+  dim3 numOfThreadsInBlock(TILE_DIM_X, 8, 1);
   unsigned int blocksX = (this->h_columns / TILE_DIM_X);
   unsigned int blocksY = (this->h_rows / TILE_DIM_Y);
   if (this->h_columns % TILE_DIM_X > 0) {
@@ -302,6 +302,5 @@ Vector_GPU Vector_GPU::transpose() {
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
   transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows,
                                                              this->d_columns);
-  out.printmat();
   return out;
 };
