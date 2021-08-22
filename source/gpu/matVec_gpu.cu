@@ -260,6 +260,7 @@ void Vector_GPU::printmat() {
 Vector_CPU Vector_GPU::matDeviceToHost() {
   printf("matDeviceToHost\n");
   double out[this->h_columns * this->h_rows];
+  printf("worked\n");
   unsigned int rows;
   unsigned int cols;
   cudaMemcpy(&out, d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost);

@@ -111,20 +111,6 @@ double Vector_CPU::operator()(unsigned int r, unsigned int c) {
 double Vector_CPU::operator[](unsigned int i) { return (this->mat[i]); };
 
 // member functions
-void Vector_CPU::h_print() {
-  int r = this->rows;
-  int c = this->columns;
-  printf("#ofRows:%i #ofCols:%i\n", r, c);
-  printf("PRINTING MATRIX\n[");
-  for (int e = 0; e < (r * c); e++) {
-    if (e % this->columns == 0) {
-      (e == 0) ?: printf("\n ");
-    };
-    (e == r * c - 1) ? printf("%f", this->mat[e]) : printf("%f ", this->mat[e]);
-  }
-  printf("]\n");
-};
-
 void Vector_CPU::print() {
   printf("#ofRows:%i #ofCols:%i\n", this->rows, this->columns);
   printf("PRINTING MATRIX\n[");
@@ -158,7 +144,6 @@ Vector_CPU Vector_CPU::transpose() {
       out.mat[r + c * this->rows] = this->mat[c + r * this->columns];
     }
   };
-  out.h_mat = &out.mat[0];
   return out;
 };
 

@@ -10,7 +10,6 @@ public:
   unsigned int rows;
   unsigned int columns;
   std::vector<double> mat;
-  double *h_mat;
 
   // constructors and destructor
   Vector_CPU(){};
@@ -26,13 +25,8 @@ public:
     // printf("CONSTRUCTOR 3 CALLED\n");
     mat.resize(r * c);
     mat.assign(v, v + r * c);
-    h_mat = &mat[0];
   };
-  Vector_CPU(const Vector_CPU &v)
-      : columns(v.columns), rows(v.rows), mat(v.mat),
-        h_mat(v.h_mat){
-            // printf("CPU COPY CONSTRUCTOR CALLED\n");
-        };
+  Vector_CPU(const Vector_CPU &v) : columns(v.columns), rows(v.rows), mat(v.mat){};
   ~Vector_CPU(){};
 
   // operator overloads
@@ -46,8 +40,7 @@ public:
 
   // member functions
   std::vector<double> getMat() { return this->mat; };
-  double *getHMat() { return this->h_mat; };
-  void h_print();
+  double *getHMat() { return this->mat.data(); };
   void print();
   int getRows();
   int getColumns();

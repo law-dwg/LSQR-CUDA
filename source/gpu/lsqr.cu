@@ -48,8 +48,8 @@ int main() {
              deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
     }
 
-    unsigned int rows = 5;
-    unsigned int columns = 5;
+    unsigned int rows = 512;
+    unsigned int columns = 512;
     int array_size = rows * columns;
     printf("%d\n", array_size);
     int byte_size = sizeof(double) * array_size;
@@ -71,29 +71,22 @@ int main() {
     cudaDeviceSynchronize();
     d_i1 = d_i1.transpose();
     Vector_CPU hd_i1 = d_i1.matDeviceToHost();
-    hd_i1.h_print();
     Vector_CPU comparator(rows, columns, h_in1);
     comparator = comparator.transpose();
-    comparator.h_print();
-    
     double *matGpu = hd_i1.getHMat();
-    double *matCpu = comparator.h_mat;
-    printf("%f\n", matGpu[2]);
-    printf("%f\n", matCpu[2]);
-    
-
-    // printf("%f\n", comparator.h_mat[20]);
+    double *matCpu = comparator.getHMat();
     bool same = true;
     double epsilon = 0.001;
     do {
       for (int i = 0; i < rows * columns; i++) {
-        printf("matGpu[%d] = %f, matCpu[%d] = %f\n",i,matGpu[i],i,matCpu[i]);
-        
-        //if (!(std::abs(matGpu[i] - matCpu[i]) < epsilon)) {
-        // printf("MATRICIES DO NOT MATCH DISCREPANCY AT INDEX %d\n DIFF = %f, %f == %f\n", i,std::abs(matGpu[i] - matCpu[i]),matGpu[i],matCpu[i]);
-        // same = false;
-        // break;
-        //}
+        // printf("matGpu[%d] = %f, matCpu[%d] = %f\n", i, matGpu[i], i, matCpu[i]);
+        // printf("DIFF = %f, %f == %f\n", std::abs(matGpu[i] - matCpu[i]), matGpu[i], matCpu[i]);
+        if (!(std::abs(matGpu[i] - matCpu[i]) < epsilon)) {
+          printf("MATRICIES DO NOT MATCH DISCREPANCY AT INDEX %d\n DIFF = %f, %f == %f\n", i,
+                 std::abs(matGpu[i] - matCpu[i]), matGpu[i], matCpu[i]);
+          same = false;
+          break;
+        }
       }
       if (same) {
         printf("MATRICIES MATCH!\n");
