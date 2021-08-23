@@ -47,60 +47,64 @@ int main() {
       printf("Maximum block dimension: (%d,%d,%d)\n", deviceProp.maxThreadsDim[0],
              deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
     }
+    for (int e = 11200; e < (11201); e += 100) {
+      unsigned int rows = e;
+      unsigned int columns = e;
+      int array_size = rows * columns;
+      int byte_size = sizeof(double) * array_size;
+      double *h_in1 = new double[array_size];
+      // double *h_in2 = new double[array_size];
+      // double *h_in3 = new double[array_size / 2];
+      // double *h_out = new double[array_size * array_size];
 
-    unsigned int rows = 512;
-    unsigned int columns = 512;
-    int array_size = rows * columns;
-    printf("%d\n", array_size);
-    int byte_size = sizeof(double) * array_size;
-    printf("%d\n", byte_size);
-    double *h_in1 = new double[array_size];
-    double *h_in2 = new double[array_size];
-    // double *h_in3 = new double[array_size / 2];
-    // double *h_out = new double[array_size * array_size];
-
-    for (int i = 0; i < array_size; i++) {
-      h_in1[i] = i;
-      h_in2[i] = 5 * i;
-    }
-    // for (int i = 0; i < array_size / 2; i++) {
-    //   h_in3[i] = 3 * i;
-    // }
-    Vector_GPU d_i1(rows, columns, h_in1);
-    Vector_GPU d_i2(columns, rows, h_in2);
-    cudaDeviceSynchronize();
-    d_i1 = d_i1.transpose();
-    Vector_CPU hd_i1 = d_i1.matDeviceToHost();
-    Vector_CPU comparator(rows, columns, h_in1);
-    comparator = comparator.transpose();
-    double *matGpu = hd_i1.getHMat();
-    double *matCpu = comparator.getHMat();
-    bool same = true;
-    double epsilon = 0.001;
-    do {
-      for (int i = 0; i < rows * columns; i++) {
-        // printf("matGpu[%d] = %f, matCpu[%d] = %f\n", i, matGpu[i], i, matCpu[i]);
-        // printf("DIFF = %f, %f == %f\n", std::abs(matGpu[i] - matCpu[i]), matGpu[i], matCpu[i]);
-        if (!(std::abs(matGpu[i] - matCpu[i]) < epsilon)) {
-          printf("MATRICIES DO NOT MATCH DISCREPANCY AT INDEX %d\n DIFF = %f, %f == %f\n", i,
-                 std::abs(matGpu[i] - matCpu[i]), matGpu[i], matCpu[i]);
-          same = false;
-          break;
-        }
+      for (int i = 0; i < array_size; i++) {
+        h_in1[i] = i;
+        // h_in2[i] = 5 * i;
       }
-      if (same) {
-        printf("MATRICIES MATCH!\n");
-        same = false;
-      };
-    } while (same);
-
-    // d_i2.printmat();
-    // h_i1.print();
-    // h_i2.print();
-    // // d_i2 = (d_i1 * d_i2);
-    // // d_i2.printmat();
-    // // h_i2 = d_i2.matDeviceToHost();
-    delete h_in1, h_in2;                  //, h_in3, h_out;
+      // for (int i = 0; i < array_size / 2; i++) {
+      //   h_in3[i] = 3 * i;
+      // }
+      Vector_GPU d_i1(rows, columns, h_in1);
+      // Vector_GPU d_i2(columns, rows, h_in2);
+      cudaDeviceSynchronize();
+      d_i1 = d_i1.transpose();
+      Vector_CPU hd_i1 = d_i1.matDeviceToHost();
+      Vector_CPU comparator(rows, columns, h_in1);
+      comparator = comparator.transpose();
+      double *matGpu = new double[hd_i1.rows * hd_i1.columns];
+      double *matCpu = new double[hd_i1.rows * hd_i1.columns];
+      matGpu = &hd_i1.mat[0];
+      matCpu = &comparator.mat[0];
+      bool same = true;
+      double epsilon = 0.001;
+      do {
+        for (int i = 0; i < rows * columns; i++) {
+          // printf("matGpu[%d] = %f, matCpu[%d] = %f\n", i, matGpu[i], i, matCpu[i]);
+          // printf("DIFF = %f, %f == %f\n", std::abs(matGpu[i] - matCpu[i]), matGpu[i], matCpu[i]);
+          if (!(std::abs(matGpu[i] - matCpu[i]) < epsilon)) {
+            printf("MATRICIES SIZE (%d x %d) DO NOT MATCH DISCREPANCY AT INDEX %d; DIFF = %f, %f "
+                   "== %f\n",
+                   rows, columns, i, std::abs(matGpu[i] - matCpu[i]), matGpu[i], matCpu[i]);
+            printf("matGpu[%d]=%f, matCpu[%d]=%f\nmatGpu[%d]=%f, matCpu[%d]=%f\nmatGpu[%d]=%f, "
+                   "matCpu[%d]=%f\nmatGpu[%d]=%f, matCpu[%d]=%f\n",
+                   i - 1, matGpu[i - 1], i - 1, matCpu[i - 1], i, matGpu[i], i, matCpu[i], i + 1,
+                   matGpu[i + 1], i + 1, matCpu[i + 1], i + 2, matGpu[i + 2], i + 2, matCpu[i + 2]);
+            printf("LAST ELEMENTS matGpu[%d]=%f, matCpu[%d]=%f\n", (rows * columns) - 1,
+                   matGpu[(rows * columns) - 1], (rows * columns) - 1,
+                   matCpu[(rows * columns) - 1]);
+            same = false;
+            break;
+          }
+        }
+        if (same) {
+          printf("MATRICES MATCH FOR (%d x %d)\n", rows, columns);
+          same = false;
+        };
+      } while (same);
+      // comparator.~Vector_CPU();
+      // hd_i1.~Vector_CPU();
+      delete h_in1, matCpu, matGpu; //, h_in3, h_out;
+    }
     cudaError_t err = cudaGetLastError(); // add
     if (err != cudaSuccess) {
       std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;

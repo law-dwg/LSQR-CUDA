@@ -27,7 +27,7 @@ public:
     mat.assign(v, v + r * c);
   };
   Vector_CPU(const Vector_CPU &v) : columns(v.columns), rows(v.rows), mat(v.mat){};
-  ~Vector_CPU(){};
+  ~Vector_CPU() { mat.clear(); };
 
   // operator overloads
   Vector_CPU operator*(Vector_CPU &v);

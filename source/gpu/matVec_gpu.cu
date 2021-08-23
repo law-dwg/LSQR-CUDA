@@ -13,8 +13,8 @@
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 16
-#define TILE_DIM_Y 16
+#define TILE_DIM_X 32
+#define TILE_DIM_Y 32
 // nvcc -arch=sm_37
 
 // gridDim.x - # of blocks in a grid, in x
@@ -99,9 +99,9 @@ void __global__ assignment(double *in1, double *in2) {
                            + threadIdx.y * blockDim.x               // 2D
                            + blockDim.x * blockDim.x * threadIdx.z; // 3D
   const unsigned int gid = bid * threadsPerBlock + tid;
-  printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n", threadIdx.x,
-         threadIdx.y, threadIdx.z, blockIdx.x, blockIdx.y, blockIdx.z, bid, gid, in1[gid],
-         in2[gid]);
+  // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f, in2=%f\n", threadIdx.x,
+  //        threadIdx.y, threadIdx.z, blockIdx.x, blockIdx.y, blockIdx.z, bid, gid, in1[gid],
+  //        in2[gid]);
   in1[gid] = in2[gid];
 }
 
@@ -144,14 +144,14 @@ void __global__ add(double *in1, double *in2, double *out) {
 // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
 void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
                                unsigned int *cols) {
-  __shared__ float A[(TILE_DIM_X)][TILE_DIM_Y + 1]; // Add +1 to prevent race-conditions
+  __shared__ double A[(TILE_DIM_X)][TILE_DIM_Y + 1]; // Add +1 to prevent race-conditions
 
   int x = blockIdx.x * TILE_DIM_X + threadIdx.x; // col
   int y = blockIdx.y * TILE_DIM_Y + threadIdx.y; // row
 
   // Load the matrix into shared memory
   for (int i = 0; i < TILE_DIM_Y; i += blockDim.y) {
-    if ((x < *cols) && (y + i < *rows)) {
+    if ((x < *cols) && (y < *rows)) {
       // A[(row + i) * height + col] = in1[(row + i) * width + col];
       A[threadIdx.y + i][threadIdx.x] = in1[(y + i) * *cols + x];
       // printf(
@@ -208,7 +208,7 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
 }
 
 Vector_GPU &Vector_GPU::operator=(const Vector_GPU &v) {
-  printf("Assignment operator called\n");
+  // printf("Assignment operator called\n");
   this->h_rows = v.h_rows;
   this->h_columns = v.h_columns;
   cudaFree(this->d_mat);
@@ -258,16 +258,16 @@ void Vector_GPU::printmat() {
 }
 
 Vector_CPU Vector_GPU::matDeviceToHost() {
-  printf("matDeviceToHost\n");
-  double out[this->h_columns * this->h_rows];
-  printf("worked\n");
+  double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
   unsigned int rows;
   unsigned int cols;
-  cudaMemcpy(&out, d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost);
+  cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows,
+             cudaMemcpyDeviceToHost);
+  // cudaMemcpy(out, this, size, cudaMemcpyDeviceToHost);
   cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost);
   cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  std::cout << "d_rows=" << rows << "=h_rows=" << this->h_rows << std::endl;
-  std::cout << "d_columns=" << cols << "=h_columns=" << this->h_columns << std::endl;
+  // std::cout << "d_rows=" << rows << "=h_rows=" << this->h_rows << std::endl;
+  // std::cout << "d_columns=" << cols << "=h_columns=" << this->h_columns << std::endl;
   if (rows != this->h_rows || cols != this->h_columns) {
     printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
   }
@@ -288,18 +288,20 @@ int Vector_GPU::getColumns() {
 Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
 
-  dim3 numOfThreadsInBlock(TILE_DIM_X, 4, 1);
+  dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y / 4, 1);
   unsigned int blocksX = (this->h_columns / TILE_DIM_X);
   unsigned int blocksY = (this->h_rows / TILE_DIM_Y);
+
   if (this->h_columns % TILE_DIM_X > 0) {
     blocksX += 1;
   };
   if (this->h_rows % TILE_DIM_Y > 0) {
     blocksY += 1;
   };
-  printf("blocksX=%d\n", blocksX);
-  printf("blocksY=%d\n", blocksY);
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
+  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x,
+         numOfThreadsInBlock.y, numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x,
+         numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows,
                                                              this->d_columns);
   return out;

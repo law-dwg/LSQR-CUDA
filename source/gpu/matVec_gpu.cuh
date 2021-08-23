@@ -17,7 +17,6 @@ public:
   Vector_GPU(unsigned int r, unsigned int c, double *m) : h_rows(r), h_columns(c) {
     // allocate on device
     // printf("CONSTRUCTOR #1 CALLED\n");
-    printf("%d x %d\n", h_rows, h_columns);
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
     cudaMalloc((void **)&d_mat, sizeof(double) * r * c);
