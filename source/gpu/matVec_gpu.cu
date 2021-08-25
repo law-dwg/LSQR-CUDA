@@ -182,6 +182,23 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
   }
 }
 
+void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2,
+  unsigned int *rows2, unsigned int *cols2, double *output) {
+
+double sum = 0;
+
+__shared__ M1[][], M2[][]
+
+if (*cols1 == *rows2) {
+  for (int i = 0; i < *cols1; i++) {
+    sum += in1[r * *cols1 + i] * in2[i * *cols2 + c];
+  }
+  output[r * *cols2 + c] = sum;
+} else {
+printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
+}
+}
+
 // Operator overloads
 Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   printf("MATMULT\n");

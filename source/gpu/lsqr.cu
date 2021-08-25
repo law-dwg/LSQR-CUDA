@@ -47,7 +47,7 @@ int main() {
       printf("Maximum block dimension: (%d,%d,%d)\n", deviceProp.maxThreadsDim[0],
              deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
     }
-    for (int e = 11200; e < (11201); e += 100) {
+    for (int e = 14200; e < (14201); e += 100) {
       unsigned int rows = e;
       unsigned int columns = e;
       int array_size = rows * columns;
