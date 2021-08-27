@@ -69,16 +69,16 @@ int main() {
       printf("Maximum block dimension: (%d,%d,%d)\n", deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
     }
 
-    unsigned int rows1 = 9;
-    unsigned int columns1 = 8;
+    unsigned int rows1 = 1;
+    unsigned int columns1 = 2;
     int array_size_1 = rows1 * columns1;
     int byte_size_1 = sizeof(double) * array_size_1;
     double *h_in1 = new double[array_size_1];
     for (int i = 0; i < array_size_1; i++) {
       h_in1[i] = i;
     }
-    unsigned int rows2 = 8;
-    unsigned int columns2 = 10;
+    unsigned int rows2 = 2;
+    unsigned int columns2 = 3;
     int array_size_2 = rows2 * columns2;
     int byte_size_2 = sizeof(double) * array_size_2;
     double *h_in2 = new double[array_size_2];
@@ -95,6 +95,10 @@ int main() {
     Vector_CPU h1(rows1, columns1, h_in1);
     Vector_CPU h2(rows2, columns2, h_in2);
     Vector_CPU h3 = h1 * h2;
+    h1.print();
+    h2.print();
+    h3.print();
+    hd3.print();
     double *matCpu = new double[h3.rows * h3.columns];
     matCpu = &h3.mat[0];
     checker(matCpu, h3.getRows(), h3.getColumns(), matGpu, d3.getRows(), d3.getColumns());
