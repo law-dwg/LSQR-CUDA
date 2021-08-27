@@ -185,7 +185,7 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows, 
   }
 }
 
-// TILE SWEEPS ACROSS BLOCK (BLOCK_SIZE > TILE_SIZE)
+// BLOCK AND TILE SWEEP TOGETHER (BLOCK_SIZE = TILE_SIZE)
 void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2, unsigned int *rows2, unsigned int *cols2,
                               double *output) {
 
@@ -198,13 +198,13 @@ void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *co
   // if (y < *rows1 && x < *cols2) {
   for (int i = 0; i < *cols1; i += blockDim.x) {
     int id1, id2;
-    if (i * blockDim.x + threadIdx.x < *cols1 && y < *rows1) {
+    if (i + threadIdx.x < *cols1 && y < *rows1) {
       id1 = y * *cols1 + i + threadIdx.x;
       A[threadIdx.x][threadIdx.y] = in1[id1];
     } else {
       A[threadIdx.x][threadIdx.y] = 0;
     }
-    if (i * blockDim.x + threadIdx.y < *rows2 && x < *cols2) {
+    if (i + threadIdx.y < *rows2 && x < *cols2) {
       id2 = (i * *cols2 + threadIdx.y * *cols2) + x;
       B[threadIdx.x][threadIdx.y] = in2[id2];
     } else {
