@@ -15,6 +15,9 @@
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
 #define TILE_DIM_X 32
 #define TILE_DIM_Y 32
+
+#define MATMUL_BLOCK_DIM_X 4
+#define MATMUL_BLOCK_DIM_Y 4
 // nvcc -arch=sm_37
 
 // gridDim.x - # of blocks in a grid, in x
@@ -23,8 +26,8 @@
 // blockDim.y - # of threads in a block, in y
 
 // CUDA kernels
-void __global__ multiplyNaive(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2,
-                              unsigned int *rows2, unsigned int *cols2, double *output) {
+void __global__ multiplyNaive(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2, unsigned int *rows2, unsigned int *cols2,
+                              double *output) {
   const unsigned int bid = blockIdx.x                               // 1D
                            + blockIdx.y * gridDim.x                 // 2D
                            + gridDim.x * gridDim.y * blockIdx.z;    // 3D
@@ -141,9 +144,9 @@ void __global__ add(double *in1, double *in2, double *out) {
   printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
 }
 
+// BLOCK SWEEPS ACROSS TILE (TILE SIZE > BLOCK SIZE)
 // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
-void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
-                               unsigned int *cols) {
+void __global__ transposeTiled(double *in1, double *output, unsigned int *rows, unsigned int *cols) {
   __shared__ double A[(TILE_DIM_X)][TILE_DIM_Y + 1]; // Add +1 to prevent race-conditions
 
   int x = blockIdx.x * TILE_DIM_X + threadIdx.x; // col
@@ -182,31 +185,83 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows,
   }
 }
 
-void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2,
-  unsigned int *rows2, unsigned int *cols2, double *output) {
+// TILE SWEEPS ACROSS BLOCK (BLOCK_SIZE > TILE_SIZE)
+void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2, unsigned int *rows2, unsigned int *cols2,
+                              double *output) {
 
-double sum = 0;
+  __shared__ double A[MATMUL_BLOCK_DIM_X][MATMUL_BLOCK_DIM_Y], B[MATMUL_BLOCK_DIM_X][MATMUL_BLOCK_DIM_Y];
 
-__shared__ M1[][], M2[][]
+  int y = blockIdx.y * blockDim.y + threadIdx.y; // row
+  int x = blockIdx.x * blockDim.x + threadIdx.x; // col
+  double sum = 0;                                // sum in block
 
-if (*cols1 == *rows2) {
-  for (int i = 0; i < *cols1; i++) {
-    sum += in1[r * *cols1 + i] * in2[i * *cols2 + c];
+  // if (y < *rows1 && x < *cols2) {
+  for (int i = 0; i < *cols1; i += blockDim.x) {
+    int id1, id2;
+    if (y < *rows1) {
+      id1 = y * *cols1 + i + threadIdx.x;
+      A[threadIdx.x][threadIdx.y] = in1[id1];
+    } else {
+      A[threadIdx.x][threadIdx.y] = 0;
+    }
+    if (x < *cols2) {
+      id2 = (i * *cols2 + threadIdx.y * *cols2) + x;
+      B[threadIdx.x][threadIdx.y] = in2[id2];
+    } else {
+      B[threadIdx.x][threadIdx.y] = 0;
+    }
+
+    __syncthreads();
+    // if (blockIdx.x == 1 && blockIdx.y == 2) {
+    //   printf("block(%d, %d), thread(%d,% d), y = %d, x = %d, i=%d, A[%d][%d]=%f=in1[%d]=%f "
+    //          "B[%d][%d]=%f=in2[%d]=%f\n",
+    //          blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, y, x, i, threadIdx.x, threadIdx.y, A[threadIdx.x][threadIdx.y], id1, in1[id1],
+    //          threadIdx.x, threadIdx.y, B[threadIdx.x][threadIdx.y], id2, in2[id2]);
+    // }
+    for (int j = 0; j < blockDim.x; j++) {
+      // if (x + j < *cols2 && y + j < *rows1) {
+      int Ax, Ay, Bx, By;
+      Ax = j;
+      Ay = threadIdx.y;
+      Bx = threadIdx.x;
+      By = j;
+      if (blockIdx.x == 1 && blockIdx.y == 2 && threadIdx.x == 0 && threadIdx.y == 0) {
+        printf("OUT block(%d, %d), thread(%d,% d), y = %d, x = %d, i=%d, j=%d, A[%d][%d]=%f * "
+               "B[%d][%d]=%f\n",
+               blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, x, y, i, j, Ax, Ay, A[Ax][Ay], Bx, By, B[Bx][By]);
+      }
+      sum += A[Ax][Ay] * B[Bx][By];
+      //}
+    };
+    __syncthreads();
+  };
+  if (x < *cols2 && y < *rows1) {
+    output[y * *cols2 + x] = sum;
   }
-  output[r * *cols2 + c] = sum;
-} else {
-printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
-}
+  //}
 }
 
 // Operator overloads
 Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   printf("MATMULT\n");
   Vector_GPU out(this->h_rows, v.h_columns);
-  dim3 grid(1, 1, 1);
-  dim3 block(out.h_rows, out.h_columns, 1);
-  multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
-                                 v.d_columns, out.d_mat);
+  unsigned int blocksX = ((out.h_rows) / MATMUL_BLOCK_DIM_X);
+  unsigned int blocksY = (out.h_columns / MATMUL_BLOCK_DIM_Y);
+  if (out.h_columns % MATMUL_BLOCK_DIM_X > 0) {
+    blocksX += 1;
+  };
+  if (out.h_rows % MATMUL_BLOCK_DIM_Y > 0) {
+    blocksY += 1;
+  };
+  dim3 numOfThreadsInBlock(MATMUL_BLOCK_DIM_X, MATMUL_BLOCK_DIM_Y, 1);
+  dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
+  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+         numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+  multiplyTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+  // dim3 grid(1, 1, 1);
+  // dim3 block(out.h_rows, out.h_columns, 1);
+  // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
+  //                                v.d_columns, out.d_mat);
   return out;
 }
 
@@ -278,8 +333,7 @@ Vector_CPU Vector_GPU::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
   unsigned int rows;
   unsigned int cols;
-  cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows,
-             cudaMemcpyDeviceToHost);
+  cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost);
   // cudaMemcpy(out, this, size, cudaMemcpyDeviceToHost);
   cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost);
   cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost);
@@ -316,10 +370,8 @@ Vector_GPU Vector_GPU::transpose() {
     blocksY += 1;
   };
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x,
-         numOfThreadsInBlock.y, numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x,
-         numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
-  transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows,
-                                                             this->d_columns);
+  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+         numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+  transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows, this->d_columns);
   return out;
 };

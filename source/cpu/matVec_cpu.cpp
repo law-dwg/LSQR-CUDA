@@ -39,16 +39,18 @@ Matrix_CPU::Matrix_CPU(unsigned int r, unsigned int c) {
 Vector_CPU Vector_CPU::operator*(Vector_CPU &v) {
   std::vector<double> lhs = this->mat;
   std::vector<double> rhs = v.getMat();
-  Vector_CPU out(this->rows);
+  Vector_CPU out(this->rows, v.columns);
   // std::cout<<lhs.size()<<std::endl;
   // std::cout<<rhs.size()<<std::endl;
-  if (this->columns == rhs.size()) {
+  if (this->columns == v.rows) {
     for (int r = 0; r < this->rows; r++) {
-      double sum = 0;
-      for (int c = 0; c < this->columns; c++) {
-        sum += lhs[r * this->columns + c] * rhs[c];
+      for (int c = 0; c < v.columns; c++) {
+        double sum = 0;
+        for (int i = 0; i < v.rows; i++) {
+          sum += lhs[r * this->columns + i] * rhs[c + i * v.columns];
+        }
+        out.mat[r * out.columns + c] = sum;
       }
-      out.mat[r] = sum;
     }
     return out;
   } else {
@@ -101,8 +103,7 @@ double Vector_CPU::operator()(unsigned int r, unsigned int c) {
   if (r < this->rows && c < this->columns) {
     return (mat[r * this->columns + c]);
   } else {
-    printf("please use valid indices: (r,c) where 0=<r<%i and 0=<c<%i\n", this->rows,
-           this->columns);
+    printf("please use valid indices: (r,c) where 0=<r<%i and 0=<c<%i\n", this->rows, this->columns);
     // throw 505;
     return EXIT_FAILURE;
   }
