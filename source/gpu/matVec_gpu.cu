@@ -16,8 +16,8 @@
 #define TILE_DIM_X 32
 #define TILE_DIM_Y 32
 
-#define MATMUL_BLOCK_DIM_X 4
-#define MATMUL_BLOCK_DIM_Y 4
+#define MATMUL_BLOCK_DIM_X 16
+#define MATMUL_BLOCK_DIM_Y 16
 // nvcc -arch=sm_37
 
 // gridDim.x - # of blocks in a grid, in x
@@ -189,35 +189,34 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows, 
 void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2, unsigned int *rows2, unsigned int *cols2,
                               double *output) {
 
-  __shared__ double A[MATMUL_BLOCK_DIM_X][MATMUL_BLOCK_DIM_Y], B[MATMUL_BLOCK_DIM_X][MATMUL_BLOCK_DIM_Y];
+  __shared__ double A[MATMUL_BLOCK_DIM_X][MATMUL_BLOCK_DIM_Y + 1], B[MATMUL_BLOCK_DIM_X][MATMUL_BLOCK_DIM_Y + 1];
 
   int y = blockIdx.y * blockDim.y + threadIdx.y; // row
   int x = blockIdx.x * blockDim.x + threadIdx.x; // col
-  double sum = 0;                                // sum in block
+  double sum = 0.0;                              // sum in block
 
-  // if (y < *rows1 && x < *cols2) {
   for (int i = 0; i < *cols1; i += blockDim.x) {
     int id1, id2;
     if (i + threadIdx.x < *cols1 && y < *rows1) {
       id1 = y * *cols1 + i + threadIdx.x;
       A[threadIdx.x][threadIdx.y] = in1[id1];
     } else {
-      A[threadIdx.x][threadIdx.y] = 0;
+      A[threadIdx.x][threadIdx.y] = 0.0;
     }
     if (i + threadIdx.y < *rows2 && x < *cols2) {
       id2 = (i * *cols2 + threadIdx.y * *cols2) + x;
       B[threadIdx.x][threadIdx.y] = in2[id2];
     } else {
-      B[threadIdx.x][threadIdx.y] = 0;
+      B[threadIdx.x][threadIdx.y] = 0.0;
     }
 
     __syncthreads();
-    // if (blockIdx.x == 1 && blockIdx.y == 2) {
-    //   printf("block(%d, %d), thread(%d,% d), y = %d, x = %d, i=%d, A[%d][%d]=%f=in1[%d]=%f "
-    //          "B[%d][%d]=%f=in2[%d]=%f\n",
-    //          blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, y, x, i, threadIdx.x, threadIdx.y, A[threadIdx.x][threadIdx.y], id1, in1[id1],
-    //          threadIdx.x, threadIdx.y, B[threadIdx.x][threadIdx.y], id2, in2[id2]);
-    // }
+    if (blockIdx.x == 0 && blockIdx.y == 0) {
+      // printf("block(%d, %d), thread(%d,% d), y = %d, x = %d, i=%d, A[%d][%d]=%f=in1[%d]=%f "
+      //        "B[%d][%d]=%f=in2[%d]=%f\n",
+      //        blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, y, x, i, threadIdx.x, threadIdx.y, A[threadIdx.x][threadIdx.y], id1, in1[id1],
+      //        threadIdx.x, threadIdx.y, B[threadIdx.x][threadIdx.y], id2, in2[id2]);
+    }
     for (int j = 0; j < blockDim.x; j++) {
       // if (x + j < *cols2 && y + j < *rows1) {
       int Ax, Ay, Bx, By;
@@ -225,11 +224,11 @@ void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *co
       Ay = threadIdx.y;
       Bx = threadIdx.x;
       By = j;
-      if (blockIdx.x == 1 && blockIdx.y == 2 && threadIdx.x == 0 && threadIdx.y == 0) {
-        printf("OUT block(%d, %d), thread(%d,% d), y = %d, x = %d, i=%d, j=%d, A[%d][%d]=%f * "
-               "B[%d][%d]=%f\n",
-               blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, x, y, i, j, Ax, Ay, A[Ax][Ay], Bx, By, B[Bx][By]);
-      }
+      // if (blockIdx.x == 1 && blockIdx.y == 2 && threadIdx.x == 0 && threadIdx.y == 0) {
+      //   printf("OUT block(%d, %d), thread(%d,% d), y = %d, x = %d, i=%d, j=%d, A[%d][%d]=%f * "
+      //          "B[%d][%d]=%f\n",
+      //          blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, x, y, i, j, Ax, Ay, A[Ax][Ay], Bx, By, B[Bx][By]);
+      // }
       sum += A[Ax][Ay] * B[Bx][By];
       //}
     };
@@ -244,15 +243,17 @@ void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *co
 Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   printf("MATMULT\n");
   Vector_GPU out(this->h_rows, v.h_columns);
-  unsigned int blocksX = ((out.h_rows) / MATMUL_BLOCK_DIM_X);
-  unsigned int blocksY = (out.h_columns / MATMUL_BLOCK_DIM_Y);
-  if (out.h_columns % MATMUL_BLOCK_DIM_X > 0) {
-    blocksX += 1;
-  };
-  if (out.h_rows % MATMUL_BLOCK_DIM_Y > 0) {
-    blocksY += 1;
-  };
   dim3 numOfThreadsInBlock(MATMUL_BLOCK_DIM_X, MATMUL_BLOCK_DIM_Y, 1);
+  unsigned int blocksY = (out.h_rows / MATMUL_BLOCK_DIM_X) + 1;
+  unsigned int blocksX = (out.h_columns / MATMUL_BLOCK_DIM_Y) + 1;
+
+  // if (out.h_columns % MATMUL_BLOCK_DIM_X > 0 || blocksX == 0) {
+  //   blocksX += 2;
+  // };
+  // if (out.h_rows % MATMUL_BLOCK_DIM_Y > 0 || blocksY == 0) {
+  //   blocksY += 2;
+  // };
+
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
   printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
          numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
