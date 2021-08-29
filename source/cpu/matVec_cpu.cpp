@@ -1,15 +1,13 @@
 #include "matVec_cpu.h"
-
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-
 #include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cstdio>
 #include <iostream>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 #include <vector>
 
 // constructors

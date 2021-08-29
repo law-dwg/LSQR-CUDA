@@ -13,13 +13,9 @@
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 32
-#define TILE_DIM_Y 32
-
-#define MATMUL_BLOCK_DIM_X 16
-#define MATMUL_BLOCK_DIM_Y 16
-// nvcc -arch=sm_37
-
+#define TILE_DIM_X 16
+#define TILE_DIM_Y 16
+// nvcc -arch=sm_37 --std=c++17
 // gridDim.x - # of blocks in a grid, in x
 // gridDim.y - # of blocks in a grid, in y
 // blockDim.x - # of threads in a block, in x
@@ -28,17 +24,12 @@
 // CUDA kernels
 void __global__ multiplyNaive(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2, unsigned int *rows2, unsigned int *cols2,
                               double *output) {
-  const unsigned int bid = blockIdx.x                               // 1D
-                           + blockIdx.y * gridDim.x                 // 2D
-                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
-                                       * blockDim.z;                // 3D
-  const unsigned int tid = threadIdx.x                              // 1D
-                           + threadIdx.y * blockDim.x               // 2D
-                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
-  const unsigned int gid = bid * threadsPerBlock + tid;
-  const unsigned int r = blockIdx.y * blockDim.y + threadIdx.y; // the row of M1
-  const unsigned int c = blockIdx.x * blockDim.x + threadIdx.x; // the col of M2
+  const unsigned int bid = blockIdx.x + blockIdx.y * gridDim.x; // 2D blockId
+  const unsigned int threadsPerBlock = blockDim.x * blockDim.y;
+  const unsigned int tid = threadIdx.x + threadIdx.y * blockDim.x; // 2D threadId
+  const unsigned int gid = bid * threadsPerBlock + tid;            // 2D globalId
+  const unsigned int x = blockIdx.y * blockDim.y + threadIdx.y;    // row
+  const unsigned int y = blockIdx.x * blockDim.x + threadIdx.x;    // column
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f *
   // %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
@@ -47,11 +38,11 @@ void __global__ multiplyNaive(double *in1, unsigned int *rows1, unsigned int *co
   if (*cols1 == *rows2) {
     // printf("row: %i \n",r);
     for (int i = 0; i < *cols1; i++) {
-      sum += in1[r * *cols1 + i] * in2[i * *cols2 + c];
+      sum += in1[x * *cols1 + i] * in2[i * *cols2 + y];
       // printf("sum = %f += in1[%d] * in2[%d] = %f * %f\n",sum,r * *cols1 + i,
       // i * *cols2 + c,in1[r * *cols1 + i],in2[i * *cols2 + c]);
     }
-    output[r * *cols2 + c] = sum;
+    output[x * *cols2 + y] = sum;
     // printf("output[%d] = %f\n",r * *cols2 + c, output[r * *cols2 + c]);
   } else {
     printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
@@ -189,7 +180,7 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows, 
 void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2, unsigned int *rows2, unsigned int *cols2,
                               double *output) {
 
-  __shared__ double A[MATMUL_BLOCK_DIM_X][MATMUL_BLOCK_DIM_Y + 1], B[MATMUL_BLOCK_DIM_X][MATMUL_BLOCK_DIM_Y + 1];
+  __shared__ double A[TILE_DIM_X][TILE_DIM_Y + 1], B[TILE_DIM_X][TILE_DIM_Y + 1];
 
   int y = blockIdx.y * blockDim.y + threadIdx.y; // row
   int x = blockIdx.x * blockDim.x + threadIdx.x; // col
@@ -243,14 +234,14 @@ void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *co
 Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   printf("MATMULT\n");
   Vector_GPU out(this->h_rows, v.h_columns);
-  dim3 numOfThreadsInBlock(MATMUL_BLOCK_DIM_X, MATMUL_BLOCK_DIM_Y, 1);
-  unsigned int blocksY = (out.h_rows / MATMUL_BLOCK_DIM_X) + 1;
-  unsigned int blocksX = (out.h_columns / MATMUL_BLOCK_DIM_Y) + 1;
+  dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
+  unsigned int blocksY = (out.h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksX = (out.h_columns / TILE_DIM_Y) + 1;
 
-  // if (out.h_columns % MATMUL_BLOCK_DIM_X > 0 || blocksX == 0) {
+  // if (out.h_columns % TILE_DIM_X > 0 || blocksX == 0) {
   //   blocksX += 2;
   // };
-  // if (out.h_rows % MATMUL_BLOCK_DIM_Y > 0 || blocksY == 0) {
+  // if (out.h_rows % TILE_DIM_Y > 0 || blocksY == 0) {
   //   blocksY += 2;
   // };
 
@@ -373,5 +364,30 @@ Vector_GPU Vector_GPU::transpose() {
   printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
          numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows, this->d_columns);
+  return out;
+};
+
+Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
+  printf("MATMULT\n");
+  Vector_GPU out(this->h_rows, v.h_columns);
+  dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
+  unsigned int blocksY = (out.h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksX = (out.h_columns / TILE_DIM_Y) + 1;
+
+  // if (out.h_columns % TILE_DIM_X > 0 || blocksX == 0) {
+  //   blocksX += 2;
+  // };
+  // if (out.h_rows % TILE_DIM_Y > 0 || blocksY == 0) {
+  //   blocksY += 2;
+  // };
+
+  dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
+  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+         numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+  multiplyNaive<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+  // dim3 grid(1, 1, 1);
+  // dim3 block(out.h_rows, out.h_columns, 1);
+  // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
+  //                                v.d_columns, out.d_mat);
   return out;
 };

@@ -1,8 +1,6 @@
 #include "lsqr_cpu.h"
-
-#include <math.h>
-
 #include <iostream>
+#include <math.h>
 
 double D2Norm(double a, double b) {
   const double scale = std::abs(a) + std::abs(b);
@@ -74,11 +72,9 @@ Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b) {
 
     // 3. Continue the bidiagonialization
     /* Important equations for understanding.
-
     ubar_i+1 = beta_i+1 * u_i+1 = (A*v_i) - (alpha_i*u_i)
     beta_i+1 = ||ubar_i+1||
     u_i+1 =  ubar_i+1 * (1/beta_i+1)
-
     vbar_i+1 = alpha_i+1 * v_i+1 = (A_t*u_i+1) - (beta_i*v_i)
     alpha_i+1 = ||vbar_i+1||
     v_i+1 =  vbar_i+1 * (1/alpha_i+1)
