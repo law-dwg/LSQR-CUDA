@@ -35,8 +35,11 @@ public:
     cudaMemcpy(d_mat, m, sizeof(double) * r * c, cudaMemcpyHostToDevice);
   };
   Vector_GPU(const Vector_GPU &v) : Vector_GPU(v.h_rows, v.h_columns) { // Copy constructor
-    printf("Vector_CPU Copy Constructor was called\n");
+    printf("Vector_GPU Copy Constructor was called\n");
     cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
+  };
+  Vector_GPU(Vector_CPU &v) : Vector_GPU(v.getRows(), v.getColumns(), &v.mat[0]) { // Copy constructor from CPU
+    printf("Vector_GPU/CPU Copy Constructor was called\n");
   };
   Vector_GPU &operator=(const Vector_GPU &v) { // Copy assignment operator
     printf("Vector_GPU Copy assignment operator was called\n");
@@ -83,6 +86,7 @@ public:
   }
 
   ~Vector_GPU() { // Destructor
+    printf("DESTRUCTOR CALLED\n");
     cudaFree(d_mat);
     cudaFree(d_rows);
     cudaFree(d_columns);
@@ -120,8 +124,7 @@ double normalNorm();*/
 // create matrix class for readability / sparsity attribute
 class Matrix_GPU : public Vector_GPU {
 public:
-  Matrix_GPU(unsigned int r, unsigned int c) : Vector_GPU(r, c){};
-  Matrix_GPU(unsigned int r, unsigned int c, double *m) : Vector_GPU(r, c, m){};
+  using Vector_GPU::Vector_GPU; // inherit everything
   Matrix_GPU(unsigned int r, unsigned int c, double sparsity) : Vector_GPU(r, c) {
     int zeros = round(sparsity * r * c);
     int nonZeros = r * c - zeros;
@@ -138,18 +141,11 @@ public:
     std::random_shuffle(mat.begin(), mat.end());
     cudaMemcpy(d_mat, &mat[0], sizeof(double) * c * r, cudaMemcpyHostToDevice);
   };
-  Matrix_GPU(const Matrix_GPU &v) : Vector_GPU(v){};
-  Matrix_GPU(const Vector_GPU &v) : Vector_GPU(v){};
-  ~Matrix_GPU() { // Destructor
-    cudaFree(d_mat);
-    cudaFree(d_rows);
-    cudaFree(d_columns);
-  };
-  using Vector_GPU::operator=;
   Matrix_GPU &operator=(const Matrix_GPU rhs) {
     Vector_GPU::operator=(rhs);
     return *this;
   };
+  Matrix_GPU(const Vector_GPU &v) : Vector_GPU(v){};
 };
 
 class Matrix_CSR_GPU : public Vector_GPU {

@@ -37,7 +37,7 @@ Matrix_CPU::Matrix_CPU(unsigned int r, unsigned int c) {
 // operator overloads
 Vector_CPU Vector_CPU::operator*(Vector_CPU &v) {
   std::vector<double> lhs = this->mat;
-  std::vector<double> rhs = v.getMat();
+  std::vector<double> rhs = v.mat;
   Vector_CPU out(this->rows, v.columns);
   // std::cout<<lhs.size()<<std::endl;
   // std::cout<<rhs.size()<<std::endl;

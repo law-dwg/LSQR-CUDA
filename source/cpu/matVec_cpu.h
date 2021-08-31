@@ -39,8 +39,7 @@ public:
   double operator[](unsigned int i);
 
   // member functions
-  std::vector<double> getMat() { return this->mat; };
-  double *getHMat() { return this->mat.data(); };
+  double *getMat() { return this->mat.data(); };
   void print();
   int getRows();
   int getColumns();
