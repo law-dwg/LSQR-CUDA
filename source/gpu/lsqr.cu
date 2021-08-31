@@ -42,16 +42,17 @@ int main() {
   Vector_GPU d1(rows1, columns1, h_in1);
   Vector_GPU d2(rows2, columns2, h_in2);
   Matrix_GPU MD1(10, 10, 0.01);
-  Matrix_GPU MD2(10, 10, 0.5);
-  Matrix_GPU MD3(10, 10, 0.5);
-  MD3 = MD1 * MD2;
+  Matrix_GPU MD2(10, 10, 0.99);
+  Matrix_GPU MD3 = MD1 * MD2;
   Vector_CPU MC1 = MD1.matDeviceToHost();
   Vector_CPU MC2 = MD2.matDeviceToHost();
   Vector_CPU MC3 = MD3.matDeviceToHost();
-
+  //// Vector_CPU MCC3 = MC1 * MC2;
   MC1.print();
   MC2.print();
   MC3.print();
+  /// MCC3.print();
+  /// compareMat(MCC3.getHMat(), MCC3.getRows(), MCC3.getColumns(), MC3.getHMat(), MC3.getRows(), MC3.getColumns());
   cudaDeviceSynchronize();
   // cudaEventRecord(start);
   // Vector_GPU d3 = d1 * d2;

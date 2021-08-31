@@ -337,16 +337,6 @@ Vector_CPU Vector_GPU::matDeviceToHost() {
   return v_cpu;
 }
 
-int Vector_GPU::getRows() {
-  printf("number of rows: %i\n", this->h_rows);
-  return this->h_rows;
-}
-
-int Vector_GPU::getColumns() {
-  printf("number of columns: %i\n", this->h_columns);
-  return this->h_columns;
-}
-
 Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
 
