@@ -270,22 +270,6 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
   return out;
 }
 
-Vector_GPU &Vector_GPU::operator=(const Vector_GPU &v) {
-  // printf("Assignment operator called\n");
-  this->h_rows = v.h_rows;
-  this->h_columns = v.h_columns;
-  cudaFree(this->d_mat);
-  cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns);
-  // dim3 grid(1,1,1);
-  // dim3 block(v.rows * v.columns,1,1);
-  cudaMemcpy(this->d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(this->d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
-  cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
-  // assignment <<<grid,block>>> (this->d_mat,v.d_mat);
-
-  return *this;
-}
-
 Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
   printf("SUBTRACT CALLED\n");
   Vector_GPU out(this->h_rows, this->h_columns);
@@ -298,6 +282,17 @@ Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
     printf("ARRAYS ARE NOT THE SAME SIZE, canot perform operation\n");
   }
   return out;
+}
+
+void Vector_GPU::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> this Vector_GPU
+  printf("ASSIGNMENT #2 called\n");
+  cudaFree(d_mat);
+  h_rows = v.getRows();
+  h_columns = v.getColumns();
+  cudaMalloc((void **)&d_mat, sizeof(double) * v.rows * v.columns);
+  cudaMemcpy(d_rows, &h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_columns, &h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_mat, &v.mat[0], sizeof(double) * h_rows * h_columns, cudaMemcpyHostToDevice);
 }
 
 Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
