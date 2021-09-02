@@ -19,8 +19,8 @@ int main() {
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
 
-  unsigned int rows1 = 70;
-  unsigned int columns1 = 100;
+  unsigned int rows1 = 7;
+  unsigned int columns1 = 7;
   int array_size_1 = rows1 * columns1;
   int byte_size_1 = sizeof(double) * array_size_1;
   double *h_in1 = new double[array_size_1];
@@ -30,8 +30,8 @@ int main() {
     // h_in1[i] = double(rand() % 10 + 1);
     h_in1[i] = double(i);
   }
-  unsigned int rows2 = 100;
-  unsigned int columns2 = 70;
+  unsigned int rows2 = 7;
+  unsigned int columns2 = 3;
   int array_size_2 = rows2 * columns2;
   int byte_size_2 = sizeof(double) * array_size_2;
   double *h_in2 = new double[array_size_2];
@@ -39,13 +39,10 @@ int main() {
     // h_in2[i] = double(rand() %10 + 1);
     h_in2[i] = double(i);
   }
-  Matrix_GPU MD1(10, 10, 0.01);
-  Matrix_GPU MD2(10, 10, 0.99);
-  Matrix_GPU MD3(10, 10, 1);
-  MD3 = MD1 * MD2;
-  // Vector_CPU h1(rows1, columns1, h_in1);
-  // Vector_CPU h2(rows2, columns2, h_in2);
-  // Vector_CPU h3 = h1 * h2;
+  Vector_GPU h1(rows1, columns1, h_in1);
+  Vector_GPU h2(rows2, columns2, h_in2);
+  Vector_GPU h3 = h2;
+  // hc3.print();
   // double *matCpu = new double[h3.rows * h3.columns];
   // matCpu = &h3.mat[0];
   // Vector_GPU d1 = h1;

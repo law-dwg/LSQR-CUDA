@@ -16,12 +16,13 @@ protected:
 public:
   /** Constructors/Destructors and rule of 5 */
   Vector_GPU() { // Default Constructor
+    printf("Vector_GPU Default constructor called\n");
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
     cudaMalloc((void **)&d_mat, sizeof(double));
   };
   Vector_GPU(unsigned int r, unsigned int c) : h_rows(r), h_columns(c) { // Constructor #1
-    // printf("Vector_GPU Constructor #1 was called\n");
+    printf("Vector_GPU Constructor #1 was called\n");
     // allocate to device
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
@@ -31,7 +32,7 @@ public:
     cudaMemcpy(d_columns, &c, sizeof(unsigned int), cudaMemcpyHostToDevice);
   };
   Vector_GPU(unsigned int r, unsigned int c, double *m) : Vector_GPU(r, c) { // Constructor #2
-    // printf("Vector_GPU Constructor #2 was called\n");
+    printf("Vector_GPU Constructor #2 was called\n");
     cudaMemcpy(d_mat, m, sizeof(double) * r * c, cudaMemcpyHostToDevice);
   };
   Vector_GPU(const Vector_GPU &v) : Vector_GPU(v.h_rows, v.h_columns) { // Copy constructor
@@ -57,31 +58,37 @@ public:
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
     cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns);
-    cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int) * v.h_rows, cudaMemcpyDeviceToDevice);
-    cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int) * v.h_columns, cudaMemcpyDeviceToDevice);
+    cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
     cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
+    cudaFree(v.d_mat); // free old memory
     v.h_rows = 0;
     v.h_columns = 0;
-    cudaFree(v.d_rows);
-    cudaFree(v.d_columns);
-    cudaFree(v.d_mat);
+    double temp[0]; // set old to 0, it will be freed in destructor
+    cudaMalloc((void **)&v.d_mat, sizeof(double));
+    cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice);
   };
-  Vector_GPU &operator=(Vector_GPU &&v) { // Move assignment operator
+  Vector_GPU &operator=(Vector_GPU &&v) noexcept { // Move assignment operator
     printf("Vector_GPU Move assignment operator was called\n");
     // Host
-    this->h_rows = v.h_rows;
-    this->h_columns = v.h_columns;
+    h_rows = v.h_rows;
+    h_columns = v.h_columns;
     // Device
-    cudaFree(this->d_mat);
+    cudaFree(d_mat);
     cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns);
     cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
     cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
     cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
+    cudaFree(v.d_mat); // free old memory
     v.h_rows = 0;
     v.h_columns = 0;
-    cudaFree(v.d_rows);
-    cudaFree(v.d_columns);
-    cudaFree(v.d_mat);
+    double temp[0]; // set old to 0, it will be freed in destructor
+    cudaMalloc((void **)&v.d_mat, sizeof(double));
+    cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice);
     return *this;
   }
 
