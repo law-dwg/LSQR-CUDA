@@ -122,9 +122,8 @@ public:
   int getColumns() {
     printf("number of columns: %i\n", h_columns);
     return h_columns;
-  }; /*
-double Dnrm2();
-double normalNorm();*/
+  };
+  double dDnrm2();
   Vector_GPU transpose();
 };
 

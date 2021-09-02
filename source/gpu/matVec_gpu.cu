@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
+#include <math.h>
 #include <stdio.h>  //NULL, printf
 #include <stdlib.h> //srand, rand
 #include <string.h>
@@ -134,11 +135,34 @@ void __global__ add(double *in1, double *in2, double *out) {
   out[gid] = in1[gid] + in2[gid];
   printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
 }
+// # of threads = 1/2 total elements
+void __global__ dnrm2(double *in1, double *out) {
+  __shared__ double sum[TILE_DIM_X];
+  int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
+  int x2 = (blockIdx.x * (blockDim.x * 2) + threadIdx.x) + blockDim.x;
+  // load into shared
+  sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
+  __syncthreads();
+  printf("block(%d, %d) thread(%d, %d) PS[%d] = v[%d]+v[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x, x2,
+         sum[threadIdx.x]);
+  printf("STARTING ITERATION: block(%d, %d) thread(%d, %d)\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y);
+  for (int s = blockDim.x / 2; s > 0; s >>= 1) {
+    if (threadIdx.x < s) {
+      sum[threadIdx.x] += sum[threadIdx.x + s];
+      printf("block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s, threadIdx.x,
+             threadIdx.x + s, sum[threadIdx.x + s]);
+    }
+    __syncthreads();
+  }
+  if (threadIdx.x == 0) {
+    out[blockIdx.x] = sqrt(sum[0]);
+  }
+}
 
 // BLOCK SWEEPS ACROSS TILE (TILE SIZE > BLOCK SIZE)
 // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
 void __global__ transposeTiled(double *in1, double *output, unsigned int *rows, unsigned int *cols) {
-  __shared__ double A[(TILE_DIM_X)][TILE_DIM_Y + 1]; // Add +1 to prevent race-conditions
+  __shared__ double A[(TILE_DIM_X)][TILE_DIM_Y + 1]; // Add +1 to prevent bank-conflicts
 
   int x = blockIdx.x * TILE_DIM_X + threadIdx.x; // col
   int y = blockIdx.y * TILE_DIM_Y + threadIdx.y; // row
@@ -237,14 +261,6 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
   unsigned int blocksY = (out.h_rows / TILE_DIM_X) + 1;
   unsigned int blocksX = (out.h_columns / TILE_DIM_Y) + 1;
-
-  // if (out.h_columns % TILE_DIM_X > 0 || blocksX == 0) {
-  //   blocksX += 2;
-  // };
-  // if (out.h_rows % TILE_DIM_Y > 0 || blocksY == 0) {
-  //   blocksY += 2;
-  // };
-
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
   printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
          numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
@@ -336,21 +352,32 @@ Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
 
   dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
-  // unsigned int blocksX = (this->h_columns / TILE_DIM_X);
-  // unsigned int blocksY = (this->h_rows / TILE_DIM_Y);
   unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
   unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
-  // if (this->h_columns % TILE_DIM_X > 0) {
-  //   blocksX += 1;
-  // };
-  // if (this->h_rows % TILE_DIM_Y > 0) {
-  //   blocksY += 1;
-  // };
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
   printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
          numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows, this->d_columns);
   return out;
+};
+
+double Vector_GPU::dDnrm2() {
+  dim3 blocks((this->h_rows * this->h_columns / TILE_DIM_X / 2), 1);
+  dim3 threads(TILE_DIM_X, 1);
+  double *d_out;
+  double *h_out = new double[this->h_rows * this->h_columns];
+  cudaMalloc(&d_out, sizeof(double) * this->h_rows * this->h_columns);
+  printf("threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
+  dnrm2<<<blocks, threads>>>(this->d_mat, d_out);
+  cudaDeviceSynchronize();
+  printf("BETWEENKERNELS\n");
+  dnrm2<<<1, threads>>>(d_out, d_out);
+  cudaMemcpy(h_out, d_out, sizeof(double) * this->h_rows * this->h_columns, cudaMemcpyDeviceToHost);
+  cudaDeviceSynchronize();
+  for (int i = 0; i < (sizeof(h_out) / sizeof(double)); i++) {
+    printf("%f\n", h_out[i]);
+  }
+  return h_out[0];
 };
 
 Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
