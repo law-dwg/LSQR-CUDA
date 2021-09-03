@@ -18,8 +18,8 @@ int main() {
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
-
-  unsigned int rows1 = 1024;
+  checkDevice();
+  unsigned int rows1 = 1024; // 167 correct 168 wrong
   unsigned int columns1 = 1;
   int array_size_1 = rows1 * columns1;
   int byte_size_1 = sizeof(double) * array_size_1;
@@ -27,7 +27,7 @@ int main() {
 
   for (int i = 0; i < array_size_1; i++) {
     // h_in1[i] = double(rand() % 10 + 1);
-    h_in1[i] = double(i);
+    h_in1[i] = double(1);
   }
 
   Vector_GPU h1(rows1, columns1, h_in1);

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <cooperative_groups.h>
 #include <cuda.h>
 #include <cuda_runtime.h>
 #include <math.h>
@@ -14,7 +15,7 @@
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 16
+#define TILE_DIM_X 64
 #define TILE_DIM_Y 16
 // nvcc -arch=sm_37 --std=c++17
 // gridDim.x - # of blocks in a grid, in x
@@ -135,28 +136,93 @@ void __global__ add(double *in1, double *in2, double *out) {
   out[gid] = in1[gid] + in2[gid];
   printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
 }
+
+__device__ void warpReduce(volatile double *sum, int thread, int blockD) {
+  // printf("COMBINEDCALLED threadIdx.x = %d\n", thread);
+  // if (blockD >= 64)
+  sum[thread] += sum[thread + 32];
+  // if (blockD >= 32)
+  sum[thread] += sum[thread + 16];
+  // if (blockD >= 16)
+  sum[thread] += sum[thread + 8];
+  // if (blockD >= 8)
+  sum[thread] += sum[thread + 4];
+  // if (blockD >= 4)
+  sum[thread] += sum[thread + 2];
+  // if (blockD >= 2)
+  sum[thread] += sum[thread + 1];
+}
+__device__ bool lastBlock(int *counter) {
+  __threadfence(); // ensure that partial result is visible by all blocks
+  int last = 0;
+  if (threadIdx.x == 0)
+    last = atomicAdd(counter, 1);
+  return __syncthreads_or(last == gridDim.x - 1);
+}
+using namespace cooperative_groups;
+__device__ int reduce_sum(thread_group g, int *temp, int val) {
+  int lane = g.thread_rank();
+
+  // Each iteration halves the number of active threads
+  // Each thread adds its partial sum[i] to sum[lane+i]
+  for (int i = g.size() / 2; i > 0; i /= 2) {
+    temp[lane] = val;
+    g.sync(); // wait for all threads to store
+    if (lane < i)
+      val += temp[lane + i];
+    g.sync(); // wait for all threads to load
+  }
+  return val; // note: only thread 0 will return full sum
+}
+__device__ int thread_sum(int *input, int n) {
+  int sum = 0;
+
+  for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n / 4; i += blockDim.x * gridDim.x) {
+    int4 in = ((int4 *)input)[i];
+    sum += in.x + in.y + in.z + in.w;
+  }
+  return sum;
+}
 // # of threads = 1/2 total elements
-void __global__ dnrm2(double *in1, double *out) {
-  __shared__ double sum[TILE_DIM_X];
+void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out) {
+  extern __shared__ double sum[];
+  int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
   int x2 = (blockIdx.x * (blockDim.x * 2) + threadIdx.x) + blockDim.x;
   // load into shared
-  sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
+  // sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
+
+  if (x < (*r * *c) && x2 < (*r * *c)) {
+    sum[threadIdx.x] = in1[x] + in1[x2];
+    // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] + in2[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x,
+    // x, x2, sum[threadIdx.x]);
+  } else if ((x < (*r * *c)) && ((*r * *c) <= x2)) {
+    sum[threadIdx.x] = in1[x];
+    // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x,
+    // sum[threadIdx.x]);
+  } else {
+    printf("BLOCKED: block(%d, %d) thread(%d, %d) gid = %d  x = %d x2 = %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, gid, x, x2);
+    sum[threadIdx.x] = 0;
+  }
   __syncthreads();
-  printf("block(%d, %d) thread(%d, %d) PS[%d] = v[%d]+v[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x, x2,
-         sum[threadIdx.x]);
-  printf("STARTING ITERATION: block(%d, %d) thread(%d, %d)\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y);
-  for (int s = blockDim.x / 2; s > 0; s >>= 1) {
+  // printf("block(%d, %d) thread(%d, %d) PS[%d] = v[%d]+v[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x, x2,
+  //       sum[threadIdx.x]);
+  int s_stop = TILE_DIM_X / 2;
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
     if (threadIdx.x < s) {
       sum[threadIdx.x] += sum[threadIdx.x + s];
-      printf("block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s, threadIdx.x,
-             threadIdx.x + s, sum[threadIdx.x + s]);
+      printf("gid+s = %d block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", gid + s, blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s,
+             threadIdx.x, threadIdx.x + s, sum[threadIdx.x + s]);
     }
     __syncthreads();
   }
+
   if (threadIdx.x == 0) {
-    out[blockIdx.x] = sqrt(sum[0]);
+    out[blockIdx.x] = sum[0];
   }
+  // if (lastBlock(lastBlockCounter)) {
+  //   shArr[thIdx] = thIdx<gridSize ? gOut[thIdx] : 0;
+  //   __syncthreads();
 }
 
 // BLOCK SWEEPS ACROSS TILE (TILE SIZE > BLOCK SIZE)
@@ -362,17 +428,25 @@ Vector_GPU Vector_GPU::transpose() {
 };
 
 double Vector_GPU::dDnrm2() {
-  dim3 blocks((this->h_rows * this->h_columns / TILE_DIM_X / 2), 1);
+  int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
+  // if (blockX % TILE_DIM_X > 0) {
+  //  printf("%d \n", blockX % TILE_DIM_X);
+  //
+  //  blockX += 1;
+  //}
+
+  dim3 blocks(blockX, 1);
   dim3 threads(TILE_DIM_X, 1);
   double *d_out;
-  double *h_out = new double[this->h_rows * this->h_columns];
-  cudaMalloc(&d_out, sizeof(double) * this->h_rows * this->h_columns);
+  double *h_out = new double;
+  cudaMalloc(&d_out, sizeof(double));
   printf("threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
-  dnrm2<<<blocks, threads>>>(this->d_mat, d_out);
+  unsigned s_mem = sizeof(double) * TILE_DIM_X;
+  dnrm2<<<blocks, threads, s_mem>>>(this->d_mat, this->d_rows, this->d_columns, d_out);
   cudaDeviceSynchronize();
   printf("BETWEENKERNELS\n");
-  dnrm2<<<1, threads>>>(d_out, d_out);
-  cudaMemcpy(h_out, d_out, sizeof(double) * this->h_rows * this->h_columns, cudaMemcpyDeviceToHost);
+  dnrm2<<<1, threads, s_mem>>>(d_out, this->d_rows, this->d_columns, d_out);
+  cudaMemcpy(h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
   cudaDeviceSynchronize();
   for (int i = 0; i < (sizeof(h_out) / sizeof(double)); i++) {
     printf("%f\n", h_out[i]);
