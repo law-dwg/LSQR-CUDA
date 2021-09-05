@@ -48,7 +48,7 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 #include "matVec_gpu.cuh"
 using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 32
+#define TILE_DIM_X 128
 #define TILE_DIM_Y 16
 // nvcc -arch=sm_37 --std=c++17
 // gridDim.x - # of blocks in a grid, in x
@@ -99,7 +99,7 @@ void __global__ scale(double *input, double *scalar, double *output, unsigned *r
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,input[gid]);
   if (gid < *r * *c) {
     if (inverse) {
-      output[gid] = input[gid] * (1 / *scalar);
+      output[gid] = input[gid] * (1.0 / *scalar);
       printf("%f = %f / %f\n", output[gid], input[gid], *scalar);
     } else {
       output[gid] = input[gid] * *scalar;
@@ -210,6 +210,22 @@ __device__ double thread_sum(double *input, int n) {
   return sum;
 }
 
+__device__ void warpReduce(volatile double *sum, int thread) {
+  // printf("COMBINEDCALLED threadIdx.x = %d\n", thread);
+  // if (blockD >= 64)
+  sum[thread] += sum[thread + 32];
+  // if (blockD >= 32)
+  sum[thread] += sum[thread + 16];
+  // if (blockD >= 16)
+  sum[thread] += sum[thread + 8];
+  // if (blockD >= 8)
+  sum[thread] += sum[thread + 4];
+  // if (blockD >= 4)
+  sum[thread] += sum[thread + 2];
+  // if (blockD >= 2)
+  sum[thread] += sum[thread + 1];
+}
+
 void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out) {
   extern __shared__ double sum[];
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -233,7 +249,11 @@ void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out
   __syncthreads();
   // printf("block(%d, %d) thread(%d, %d) PS[%d] = v[%d]+v[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x, x2,
   //       sum[threadIdx.x]);
-  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+  int s_stop = 0;
+  if (blockDim.x / 2 > 32) {
+    s_stop = 32;
+  }
+  for (unsigned int s = blockDim.x / 2; s > s_stop; s >>= 1) {
     if (threadIdx.x < s) {
       sum[threadIdx.x] += sum[threadIdx.x + s];
       // printf("gid+s = %d block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", gid + s, blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s,
@@ -241,7 +261,10 @@ void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out
     }
     __syncthreads();
   }
-
+  if (threadIdx.x < 32 && s_stop != 0) {
+    warpReduce(sum, threadIdx.x);
+  }
+  __syncthreads();
   if (threadIdx.x == 0) {
     atomicAdd(out, sum[0]);
   }

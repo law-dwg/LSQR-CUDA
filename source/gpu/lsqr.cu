@@ -8,6 +8,7 @@
 #include <cuda_profiler_api.h>
 #include <cuda_runtime.h>
 #include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdio.h>  //NULL, printf
 #include <stdlib.h> //srand, rand
@@ -35,10 +36,12 @@ int main() {
 
   Vector_CPU h2 = h1.matDeviceToHost();
   double out2 = h2.Dnrm2();
-
-  printf("GPU: %f\n", out);
-  printf("CPU: %f\n", out2);
-
+  typedef std::numeric_limits<double> dbl;
+  printf("GPU: %20f\n", out);
+  printf("CPU: %20f\n", out2);
+  std::cout.precision(dbl::max_digits10);
+  std::cout << out << std::endl;
+  std::cout << out2 << std::endl;
   delete h_in1;                         //, matCpu, matGpu;  //, h_in3, h_out;
   cudaError_t err = cudaGetLastError(); // add
   if (err != cudaSuccess) {
