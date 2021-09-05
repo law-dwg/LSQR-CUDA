@@ -19,7 +19,7 @@ int main() {
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
   checkDevice();
-  unsigned int rows1 = 64; // 167 correct 168 wrong
+  unsigned int rows1 = 7; // 167 correct 168 wrong
   unsigned int columns1 = 1;
   int array_size_1 = rows1 * columns1;
   int byte_size_1 = sizeof(double) * array_size_1;

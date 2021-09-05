@@ -21,6 +21,16 @@ static __inline__ __device__ double atomicAdd(double *address, double val) {
 #endif
 #endif
 
+static __inline__ __device__ double atomicMax(double *address, double val) {
+  unsigned long long int *address_as_ull = (unsigned long long int *)address;
+  unsigned long long int old = *address_as_ull, assumed;
+  do {
+    assumed = old;
+    old = ::atomicCAS(address_as_ull, assumed, __double_as_longlong(::fmaxf(val, __longlong_as_double(assumed))));
+  } while (assumed != old);
+  return __longlong_as_double(old);
+}
+
 #include <assert.h>
 #include <cooperative_groups.h>
 #include <cuda_runtime.h>
@@ -74,7 +84,7 @@ void __global__ multiplyNaive(double *in1, unsigned int *rows1, unsigned int *co
   }
 }
 
-void __global__ scale(double *input, double *scalar, double *output) {
+void __global__ scale(double *input, double *scalar, double *output, unsigned *r, unsigned *c, bool inverse) {
   const unsigned int bid = blockIdx.x                               // 1D
                            + blockIdx.y * gridDim.x                 // 2D
                            + gridDim.x * gridDim.y * blockIdx.z;    // 3D
@@ -87,11 +97,18 @@ void __global__ scale(double *input, double *scalar, double *output) {
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d,
   // value=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,input[gid]);
-  output[gid] = input[gid] * *scalar;
-  printf("%f = %f * %f\n", output[gid], input[gid], *scalar);
+  if (gid < *r * *c) {
+    if (inverse) {
+      output[gid] = input[gid] * (1 / *scalar);
+      printf("%f = %f / %f\n", output[gid], input[gid], *scalar);
+    } else {
+      output[gid] = input[gid] * *scalar;
+      printf("%f = %f * %f\n", output[gid], input[gid], *scalar);
+    }
+  }
 }
 
-void __global__ print(double *input) {
+void __global__ print(double *input, unsigned *r, unsigned *c) {
   const unsigned int bid = blockIdx.x                               // 1D
                            + blockIdx.y * gridDim.x                 // 2D
                            + gridDim.x * gridDim.y * blockIdx.z;    // 3D
@@ -105,7 +122,9 @@ void __global__ print(double *input) {
   // value=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,input[gid]);
   __syncthreads();
-  printf("%f\n", input[gid]);
+  if (gid < *r * *c) {
+    printf("%f\n", input[gid]);
+  }
 }
 
 void __global__ assignment(double *in1, double *in2) {
@@ -175,34 +194,57 @@ __device__ double reduce_sum(thread_group g, double *temp, double val) {
   return val; // note: only thread 0 will return full sum
 }
 __device__ double thread_sum(double *input, int n) {
-  int sum = 0;
-
+  double sum = 0.0;
+  int gid = blockIdx.x * blockDim.x + threadIdx.x;
+  int gid2 = gid + blockDim.x * gridDim.x;
+  printf("i=%d; i1=%d\n", gid, gid2);
+  // if (n < TILE_DIM_X) {
+  //  n = TILE_DIM_X;
+  //}
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n / 4; i += blockDim.x * gridDim.x) {
     double4 in = ((double4 *)input)[i];
+    printf("in.x=%f + in.y=%f + in.z=%f + in.w=%f\n", in.x, in.y, in.z, in.w * in.w);
     sum += in.x * in.x + in.y * in.y + in.z * in.z + in.w * in.w;
+    printf("sum = %f\n", sum);
   }
   return sum;
 }
 
 void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out) {
-  // using cooperative groups as described here: https://developer.nvidia.com/blog/cooperative-groups/
-  double my_sum = thread_sum(in1, *r * *c);
-  extern __shared__ double temp[];
-  auto g = this_thread_block();
-  double block_sum = reduce_sum(g, temp, my_sum);
-  if (g.thread_rank() == 0) {
-    atomicAdd(out, block_sum);
-  }
-}
+  extern __shared__ double sum[];
+  int gid = blockIdx.x * blockDim.x + threadIdx.x;
+  int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
+  int x2 = (blockIdx.x * (blockDim.x * 2) + threadIdx.x) + blockDim.x;
+  // load into shared
+  // sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
 
-__device__ static float atomicMax(float *address, float val) {
-  int *address_as_i = (int *)address;
-  int old = *address_as_i, assumed;
-  do {
-    assumed = old;
-    old = ::atomicCAS(address_as_i, assumed, __float_as_int(::fmaxf(val, __int_as_float(assumed))));
-  } while (assumed != old);
-  return __int_as_float(old);
+  if (x < (*r * *c) && x2 < (*r * *c)) {
+    sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
+    // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] + in2[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x,
+    // x, x2, sum[threadIdx.x]);
+  } else if ((x < (*r * *c)) && ((*r * *c) <= x2)) {
+    sum[threadIdx.x] = in1[x] * in1[x];
+    // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x,
+    // sum[threadIdx.x]);
+  } else {
+    printf("BLOCKED: block(%d, %d) thread(%d, %d) gid = %d  x = %d x2 = %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, gid, x, x2);
+    sum[threadIdx.x] = 0.0;
+  }
+  __syncthreads();
+  // printf("block(%d, %d) thread(%d, %d) PS[%d] = v[%d]+v[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x, x2,
+  //       sum[threadIdx.x]);
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
+    if (threadIdx.x < s) {
+      sum[threadIdx.x] += sum[threadIdx.x + s];
+      // printf("gid+s = %d block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", gid + s, blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s,
+      //        threadIdx.x, threadIdx.x + s, sum[threadIdx.x + s]);
+    }
+    __syncthreads();
+  }
+
+  if (threadIdx.x == 0) {
+    atomicAdd(out, sum[0]);
+  }
 }
 
 void __global__ maxVal(double *in1, unsigned int *r, unsigned int *c, double *out) {
@@ -223,7 +265,7 @@ void __global__ maxVal(double *in1, unsigned int *r, unsigned int *c, double *ou
     // sum[threadIdx.x]);
   } else {
     printf("BLOCKED: block(%d, %d) thread(%d, %d) gid = %d  x = %d x2 = %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, gid, x, x2);
-    maxV[threadIdx.x] = 0;
+    maxV[threadIdx.x] = 0.0;
   }
   __syncthreads();
   // printf("block(%d, %d) thread(%d, %d) PS[%d] = v[%d]+v[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x, x2,
@@ -231,15 +273,16 @@ void __global__ maxVal(double *in1, unsigned int *r, unsigned int *c, double *ou
   int s_stop = TILE_DIM_X / 2;
   for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
     if (threadIdx.x < s) {
-      maxV[threadIdx.x] = fmax(maxV[threadIdx.x], maxV[threadIdx.x + s]);
-      printf("gid+s = %d block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", gid + s, blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s,
-             threadIdx.x, threadIdx.x + s, maxV[threadIdx.x + s]);
+      maxV[threadIdx.x] = fmax(std::abs(maxV[threadIdx.x]), maxV[threadIdx.x + s]);
+      // printf("gid+s = %d block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", gid + s, blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s,
+      //        threadIdx.x, threadIdx.x + s, maxV[threadIdx.x + s]);
     }
     __syncthreads();
   }
 
   if (threadIdx.x == 0) {
-    out[blockIdx.x] = maxV[0];
+    printf("%f\n", maxV[0]);
+    atomicMax(out, std::abs(maxV[0]));
   }
   // if (lastBlock(lastBlockCounter)) {
   //   shArr[thIdx] = thIdx<gridSize ? gOut[thIdx] : 0;
@@ -368,7 +411,7 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
   cudaMalloc((void **)&d_i, sizeof(double));
   cudaMemcpy(d_i, &h_i, sizeof(double), cudaMemcpyHostToDevice);
 
-  scale<<<grid, block>>>(this->d_mat, d_i, out.d_mat);
+  scale<<<grid, block>>>(this->d_mat, d_i, out.d_mat, this->d_rows, this->d_columns, false);
 
   return out;
 }
@@ -415,7 +458,7 @@ void Vector_GPU::printmat() {
   printf("PRINTING\n");
   dim3 block(this->h_rows, this->h_columns, 1);
 
-  print<<<grid, block>>>(this->d_mat);
+  print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
 }
 
 Vector_CPU Vector_GPU::matDeviceToHost() {
@@ -452,24 +495,31 @@ double Vector_GPU::dDnrm2() {
   int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
   dim3 blocks(blockX, 1);
   dim3 threads(TILE_DIM_X, 1);
-  double *d_out, *d_max;
-  double *h_max = new double[threads.x];
+  double *d_out, *d_max, *tempMat1, *tempMat2;
+  double h_max;
   double h_out;
   cudaMalloc(&d_out, sizeof(double));
-  cudaMalloc(&d_max, sizeof(double) * TILE_DIM_X);
-
+  cudaMalloc(&d_max, sizeof(double));
+  cudaMalloc(&tempMat1, sizeof(double) * this->h_rows * this->h_columns);
+  cudaMalloc(&tempMat2, sizeof(double) * this->h_rows * this->h_columns);
+  cudaMemcpy(tempMat1, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToDevice);
+  cudaDeviceSynchronize();
   printf("threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
   unsigned s_mem = sizeof(double) * TILE_DIM_X;
   maxVal<<<blocks, threads, s_mem>>>(this->d_mat, this->d_rows, this->d_columns, d_max);
-  maxVal<<<1, threads, s_mem>>>(this->d_mat, this->d_rows, this->d_columns, d_max);
+
   cudaDeviceSynchronize();
-  cudaMemcpy(h_max, d_max, sizeof(double) * threads.x, cudaMemcpyDeviceToHost);
-  printf("max: %f\n", h_max[0]);
-  dnrm2<<<blocks, threads, s_mem>>>(this->d_mat, this->d_rows, this->d_columns, d_out);
+  scale<<<blocks, threads>>>(tempMat1, d_max, tempMat2, this->d_rows, this->d_columns, true);
+  cudaDeviceSynchronize();
+  print<<<blocks, threads>>>(tempMat2, this->d_rows, this->d_columns);
+  cudaDeviceSynchronize();
+  dnrm2<<<blocks, threads, s_mem>>>(tempMat2, this->d_rows, this->d_columns, d_out);
   cudaDeviceSynchronize();
   cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
-
-  return sqrt(h_out);
+  cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost);
+  printf("h_max=%f\n", h_max);
+  printf("h_out=%f\n", h_out);
+  return h_max * sqrt(h_out);
 };
 
 Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
