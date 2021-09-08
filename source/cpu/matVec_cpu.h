@@ -19,7 +19,7 @@ public:
   };
   Vector_CPU(unsigned int r, unsigned int c) : rows(r), columns(c) {
     // printf("CONSTRUCTOR 2 CALLED\n");
-    this->mat.resize(r * c, 5);
+    this->mat.resize(r * c, 0);
   };
   Vector_CPU(unsigned int r, unsigned int c, double *v) : rows(r), columns(c) {
     // printf("CONSTRUCTOR 3 CALLED\n");

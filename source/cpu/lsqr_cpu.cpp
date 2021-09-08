@@ -16,7 +16,7 @@ double D2Norm(double a, double b) {
   return scale * sqrt(sa * sa + sb * sb);
 };
 
-Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b) {
+Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
   // Iteration
   unsigned int istop, itn = 0;
 
@@ -39,9 +39,9 @@ Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b) {
   /*1. Initialize*/
   Vector_CPU u, v, w, res_v;
   double alpha;
-  Vector_CPU x(A.getColumns(), 1, 0);
+  Vector_CPU x(A.getColumns(), 1);
   double beta = b.Dnrm2();
-
+  std::cout << beta << std::endl;
   if (beta > 0) {
     u = b * (1 / beta);
     v = A.transpose() * u;
@@ -50,6 +50,8 @@ Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b) {
     v = x;
     alpha = 0;
   };
+  std::cout << alpha << std::endl;
+  v.print();
 
   if (alpha > 0) {
     v = v * (1 / alpha);
@@ -107,7 +109,6 @@ Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b) {
     Arnorm = alpha * std::abs(tau);
 
     // 5. Update x,w
-    printf("5. Update x,w\n");
     // save values for stopping criteria
     Vector_CPU dk = w * (1 / rho);
     dknorm = dk.Dnrm2() * dk.Dnrm2() + ddnorm;
@@ -119,6 +120,7 @@ Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b) {
     w = v - (w * (theta / rho));
     // residual
     res_v = b - A * x;
+
     res = res_v.Dnrm2();
 
     // 6. Test for convergence

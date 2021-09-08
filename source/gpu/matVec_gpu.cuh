@@ -123,7 +123,7 @@ public:
     printf("number of columns: %i\n", h_columns);
     return h_columns;
   };
-  double dDnrm2();
+  double Dnrm2();
   Vector_GPU transpose();
 };
 

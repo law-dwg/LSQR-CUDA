@@ -1,4 +1,5 @@
 #pragma once
+#include <limits>
 
 bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG) {
   bool same = true;
@@ -29,6 +30,23 @@ bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG) 
   };
   return same;
 };
+bool compareVal(double *VC, double *VG) {
+  typedef std::numeric_limits<double> dbl;
+  bool same = false;
+  printf("GPU: %20f\n", *VG);
+  printf("CPU: %20f\n", *VC);
+  std::cout.precision(dbl::max_digits10);
+  std::cout << *VC << std::endl;
+  std::cout << *VG << std::endl;
+  std::cout << std::abs(*VC - *VG) << std::endl;
+  if (std::abs(*VC - *VG) < 1e-15) {
+    printf("THEY ARE SAME\n");
+    same = true;
+  } else {
+    printf("THEY ARE NOT SAME\n");
+  }
+  return same;
+}
 
 int checkDevice() {
   // Check Cuda Capabale Device

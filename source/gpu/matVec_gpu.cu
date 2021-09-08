@@ -48,7 +48,7 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 #include "matVec_gpu.cuh"
 using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 128
+#define TILE_DIM_X 16
 #define TILE_DIM_Y 16
 // nvcc -arch=sm_37 --std=c++17
 // gridDim.x - # of blocks in a grid, in x
@@ -100,10 +100,10 @@ void __global__ scale(double *input, double *scalar, double *output, unsigned *r
   if (gid < *r * *c) {
     if (inverse) {
       output[gid] = input[gid] * (1.0 / *scalar);
-      printf("%f = %f / %f\n", output[gid], input[gid], *scalar);
+      // printf("%f = %f / %f\n", output[gid], input[gid], *scalar);
     } else {
       output[gid] = input[gid] * *scalar;
-      printf("%f = %f * %f\n", output[gid], input[gid], *scalar);
+      // printf("%f = %f * %f\n", output[gid], input[gid], *scalar);
     }
   }
 }
@@ -159,7 +159,7 @@ void __global__ subtract(double *in1, double *in2, double *output) {
   // %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
   output[gid] = in1[gid] - in2[gid];
-  printf("%f = %f - %f\n", output[gid], in1[gid], in2[gid]);
+  // printf("%f = %f - %f\n", output[gid], in1[gid], in2[gid]);
 }
 
 void __global__ add(double *in1, double *in2, double *out) {
@@ -176,7 +176,7 @@ void __global__ add(double *in1, double *in2, double *out) {
   // in2=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
   out[gid] = in1[gid] + in2[gid];
-  printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
+  // printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
 }
 
 __device__ double reduce_sum(thread_group g, double *temp, double val) {
@@ -197,15 +197,15 @@ __device__ double thread_sum(double *input, int n) {
   double sum = 0.0;
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int gid2 = gid + blockDim.x * gridDim.x;
-  printf("i=%d; i1=%d\n", gid, gid2);
+  // printf("i=%d; i1=%d\n", gid, gid2);
   // if (n < TILE_DIM_X) {
   //  n = TILE_DIM_X;
   //}
   for (int i = blockIdx.x * blockDim.x + threadIdx.x; i < n / 4; i += blockDim.x * gridDim.x) {
     double4 in = ((double4 *)input)[i];
-    printf("in.x=%f + in.y=%f + in.z=%f + in.w=%f\n", in.x, in.y, in.z, in.w * in.w);
+    // printf("in.x=%f + in.y=%f + in.z=%f + in.w=%f\n", in.x, in.y, in.z, in.w * in.w);
     sum += in.x * in.x + in.y * in.y + in.z * in.z + in.w * in.w;
-    printf("sum = %f\n", sum);
+    // printf("sum = %f\n", sum);
   }
   return sum;
 }
@@ -243,7 +243,7 @@ void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out
     // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x,
     // sum[threadIdx.x]);
   } else {
-    printf("BLOCKED: block(%d, %d) thread(%d, %d) gid = %d  x = %d x2 = %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, gid, x, x2);
+    // printf("BLOCKED: block(%d, %d) thread(%d, %d) gid = %d  x = %d x2 = %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, gid, x, x2);
     sum[threadIdx.x] = 0.0;
   }
   __syncthreads();
@@ -287,7 +287,7 @@ void __global__ maxVal(double *in1, unsigned int *r, unsigned int *c, double *ou
     // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x,
     // sum[threadIdx.x]);
   } else {
-    printf("BLOCKED: block(%d, %d) thread(%d, %d) gid = %d  x = %d x2 = %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, gid, x, x2);
+    // printf("BLOCKED: block(%d, %d) thread(%d, %d) gid = %d  x = %d x2 = %d\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, gid, x, x2);
     maxV[threadIdx.x] = 0.0;
   }
   __syncthreads();
@@ -304,7 +304,7 @@ void __global__ maxVal(double *in1, unsigned int *r, unsigned int *c, double *ou
   }
 
   if (threadIdx.x == 0) {
-    printf("%f\n", maxV[0]);
+    // printf("%f\n", maxV[0]);
     atomicMax(out, std::abs(maxV[0]));
   }
   // if (lastBlock(lastBlockCounter)) {
@@ -514,7 +514,7 @@ Vector_GPU Vector_GPU::transpose() {
   return out;
 };
 
-double Vector_GPU::dDnrm2() {
+double Vector_GPU::Dnrm2() {
   int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
   dim3 blocks(blockX, 1);
   dim3 threads(TILE_DIM_X, 1);
@@ -527,7 +527,7 @@ double Vector_GPU::dDnrm2() {
   cudaMalloc(&tempMat2, sizeof(double) * this->h_rows * this->h_columns);
   cudaMemcpy(tempMat1, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToDevice);
   cudaDeviceSynchronize();
-  printf("threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
+  // printf("threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
   unsigned s_mem = sizeof(double) * TILE_DIM_X;
   maxVal<<<blocks, threads, s_mem>>>(this->d_mat, this->d_rows, this->d_columns, d_max);
 
@@ -540,8 +540,8 @@ double Vector_GPU::dDnrm2() {
   cudaDeviceSynchronize();
   cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
   cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost);
-  printf("h_max=%f\n", h_max);
-  printf("h_out=%f\n", h_out);
+  // printf("h_max=%f\n", h_max);
+  // printf("h_out=%f\n", h_out);
   return h_max * sqrt(h_out);
 };
 

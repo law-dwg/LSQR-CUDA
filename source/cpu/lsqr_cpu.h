@@ -1,4 +1,5 @@
 #pragma once
 #include "matVec_cpu.h"
 
-Vector_CPU lsqr_cpu(Matrix_CPU &A, Vector_CPU &b);
+double D2Norm(double a, double b);
+Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b);

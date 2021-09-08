@@ -39,8 +39,8 @@ Vector_CPU Vector_CPU::operator*(Vector_CPU &v) {
   std::vector<double> lhs = this->mat;
   std::vector<double> rhs = v.mat;
   Vector_CPU out(this->rows, v.columns);
-  // std::cout<<lhs.size()<<std::endl;
-  // std::cout<<rhs.size()<<std::endl;
+  std::cout << lhs.size() << std::endl;
+  std::cout << rhs.size() << std::endl;
   clock_t startC, stopC;
   if (this->columns == v.rows) {
     std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
@@ -89,7 +89,7 @@ Vector_CPU Vector_CPU::operator+(Vector_CPU v) {
   if (this->mat.size() == 0) {
     return v;
   } else if (this->rows == v.rows && this->columns == v.columns) {
-    Vector_CPU out(this->rows, this->columns, 0);
+    Vector_CPU out(this->rows, this->columns);
     for (int i = 0; i < this->mat.size(); i++) {
       out.mat[i] = this->mat[i] + v.mat[i];
     }
@@ -123,7 +123,7 @@ void Vector_CPU::print() {
     if (e % this->columns == 0) {
       (e == 0) ?: printf("\n ");
     };
-    (e == mat.size() - 1) ? printf("%f", this->mat[e]) : printf("%f ", this->mat[e]);
+    (e == mat.size() - 1) ? printf("%.15f", this->mat[e]) : printf("%.15f ", this->mat[e]);
   }
   printf("]\n");
 };
