@@ -8,6 +8,7 @@
 #include <cuda.h>
 #include <cuda_profiler_api.h>
 #include <cuda_runtime.h>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <sstream>
@@ -21,11 +22,47 @@ int main() {
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
   checkDevice();
-
-  double *a_heap = new double[3 * 3]{1.0, -2.2, 0, 3.2, 4.0, 0, 5.0, 0, 6.1};
-  double *b_heap = new double[3 * 1]{0.01, 0.2, -0.2};
-  Vector_CPU A_c(3, 3, a_heap);
-  Vector_CPU b_c(3, 1, b_heap);
+  double *a_heap, *b_heap;
+  int a_rows, b_rows, a_cols, b_cols;
+  a_rows = b_rows = 100;
+  a_cols = 15;
+  b_cols = 1;
+  a_heap = new double[a_rows * a_cols];
+  b_heap = new double[b_rows * b_cols];
+  for (int i = 0; i < (a_rows * a_cols); i++) {
+    if (i < b_rows) {
+      a_heap[i] = i;
+      b_heap[i] = i;
+    } else {
+      a_heap[i] = i;
+    }
+  }
+  std::ofstream myfileA("A.txt");
+  std::ofstream myfileB("b.txt");
+  if (myfileA.is_open()) {
+    for (int count = 0; count < a_rows * a_cols; count++) {
+      if (count != (a_rows * a_cols - 1)) {
+        myfileA << a_heap[count] << " ";
+      } else {
+        myfileA << a_heap[count];
+      }
+    }
+    myfileA.close();
+  } else
+    std::cout << "Unable to open file";
+  if (myfileB.is_open()) {
+    for (int count = 0; count < b_rows * b_cols; count++) {
+      if (count != (b_rows * b_cols - 1)) {
+        myfileB << b_heap[count] << " ";
+      } else {
+        myfileB << b_heap[count];
+      }
+    }
+    myfileB.close();
+  } else
+    std::cout << "Unable to open file";
+  Vector_CPU A_c(a_rows, a_cols, a_heap);
+  Vector_CPU b_c(b_rows, b_cols, b_heap);
   A_c.print();
   b_c.print();
   Vector_GPU A = A_c;
