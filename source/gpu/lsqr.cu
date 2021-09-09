@@ -1,3 +1,4 @@
+#include "matCsr_gpu.cuh"
 #include "matVec_gpu.cuh"
 //#include "../cpu/matVec_cpu.h"
 #include "../cpu/lsqr_cpu.h"
@@ -21,11 +22,12 @@ int main() {
   cudaEvent_t start, stop;
   cudaEventCreate(&start);
   cudaEventCreate(&stop);
-  int a_csr_rows = 3;
-  int a_csr_cols = 3;
+  int a_csr_rows, b_csr_rows, a_csr_cols, b_csr_cols;
+  a_csr_rows = b_csr_rows = a_csr_cols = b_csr_cols = 3;
   double *a_csr_heap = new double[9]{0, 1, 2, 4, 0, 5, 6, 7, 0};
+  double *b_csr_heap = new double[9]{0, 1, 0, 3, 4, 5, 6, 7, 8};
   Matrix_CSR_GPU(a_csr_rows, a_csr_cols, a_csr_heap);
-  delete a_csr_heap;
+  delete a_csr_heap, b_csr_heap;
   // double *a_heap, *b_heap;
   // int a_rows, b_rows, a_cols, b_cols;
   // a_rows = b_rows = 10;
