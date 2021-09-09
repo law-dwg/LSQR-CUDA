@@ -121,32 +121,66 @@ class Matrix_GPU : public Vector_GPU {
   Matrix_GPU(const Vector_GPU &a) : Vector_GPU(a) { std::cout << "Mat_GPU conversion\n"; }
 };
 
-/*
 class Matrix_CSR_GPU {
 public:
-  // nnz = total number of entries (including zeros) = rows * columns
-  unsigned int *rowIdx, *colIdx, *d_rows, *d_columns, h_rows, h_columns;
+  unsigned int *d_rowIdx, *d_colIdx, *d_rows, *d_columns, *d_nnz, h_nnz, h_rows, h_columns;
   double *d_vals;
-  Matrix_CSR_GPU() { // Default Constructor
+  Matrix_CSR_GPU() : h_columns(0), h_rows(0) { // Default Constructor
     printf("Matrix_CSR_GPU Default constructor called\n");
+    cudaMalloc((void **)&d_rowIdx, sizeof(unsigned int));
+    cudaMalloc((void **)&d_colIdx, sizeof(unsigned int));
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
-    cudaMalloc((void **)&d_mat, sizeof(double));
+    cudaMalloc((void **)&d_nnz, sizeof(unsigned int));
+    cudaMalloc((void **)&d_vals, sizeof(double));
+    cudaMemcpy(d_rows, &h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_columns, &h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
   };
   Matrix_CSR_GPU(unsigned int r, unsigned int c) : h_rows(r), h_columns(c) { // Constructor #1
     printf("Matrix_CSR_GPU Constructor #1 was called\n");
-    // allocate to device
+    // allocate
+    cudaMalloc((void **)&d_rowIdx, sizeof(unsigned int));
+    cudaMalloc((void **)&d_colIdx, sizeof(unsigned int));
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
-    cudaMalloc((void **)&d_mat, sizeof(double) * r * c);
+    cudaMalloc((void **)&d_nnz, sizeof(unsigned int));
+    cudaMalloc((void **)&d_vals, sizeof(double));
     // copy to device
     cudaMemcpy(d_rows, &r, sizeof(unsigned int), cudaMemcpyHostToDevice);
     cudaMemcpy(d_columns, &c, sizeof(unsigned int), cudaMemcpyHostToDevice);
   };
-  Matrix_CSR_GPU(unsigned int r, unsigned int c, double *m) : Matrix_CSR_GPU(r, c) { // Constructor #2
+  Matrix_CSR_GPU(unsigned int r, unsigned int c, double *m) : h_rows(r), h_columns(c), h_nnz(0) { // Constructor #2
     printf("Matrix_CSR_GPU Constructor #2 was called\n");
-    cudaMemcpy(d_mat, m, sizeof(double) * r * c, cudaMemcpyHostToDevice);
+    int row, col = 0;
+    std::vector<int> temp_rowIdx, temp_colIdx;
+    std::vector<double> temp_vals;
+    for (int i = 0; i < r * c; ++i) {
+      row = i / c;
+      col = i - (row * c);
+      if (m[i] > 1e-15) {
+        h_nnz += 1;
+        temp_rowIdx.push_back(row);
+        temp_colIdx.push_back(col);
+        temp_vals.push_back(m[i]);
+      }
+    }
+    // allocate
+    cudaMalloc((void **)&d_nnz, sizeof(unsigned int));
+    cudaMalloc((void **)&d_rows, sizeof(unsigned int));
+    cudaMalloc((void **)&d_columns, sizeof(unsigned int));
+    cudaMalloc((void **)&d_rowIdx, sizeof(unsigned int) * h_nnz);
+    cudaMalloc((void **)&d_colIdx, sizeof(unsigned int) * h_nnz);
+    cudaMalloc((void **)&d_vals, sizeof(double) * h_nnz);
+    // copy to device
+    cudaMemcpy(d_nnz, &h_nnz, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_rows, &h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_columns, &h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_rowIdx, temp_rowIdx.data(), sizeof(unsigned int) * h_nnz, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_colIdx, temp_colIdx.data(), sizeof(unsigned int) * h_nnz, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_vals, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice);
+    // printf("nnz = %d, rowIdx.size = %d, colIdx.size = %d\n", h_nnz, temp_rowIdx.size(), temp_colIdx.size());
   };
+  /*
   Matrix_CSR_GPU(const Matrix_CSR_GPU &v) : Matrix_CSR_GPU(v.h_rows, v.h_columns) { // Copy constructor
     printf("Matrix_CSR_GPU Copy Constructor was called\n");
     cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
@@ -210,5 +244,5 @@ public:
     cudaFree(d_rows);
     cudaFree(d_columns);
   };
+  */
 };
-*/
