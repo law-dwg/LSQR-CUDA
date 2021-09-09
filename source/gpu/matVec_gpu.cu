@@ -48,8 +48,8 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 #include "matVec_gpu.cuh"
 using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 16
-#define TILE_DIM_Y 16
+#define TILE_DIM_X 32
+#define TILE_DIM_Y 32
 // nvcc -arch=sm_37 --std=c++17
 // gridDim.x - # of blocks in a grid, in x
 // gridDim.y - # of blocks in a grid, in y
