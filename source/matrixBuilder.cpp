@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <math.h>
 #include <random>
 #include <sstream>
@@ -13,7 +14,6 @@
 #include <string>
 #include <time.h>
 #include <vector>
-
 void writeArrayToFile(std::string dest, unsigned rows, unsigned cols, double *arr) {
   std::ofstream myfileA(dest);
   if (myfileA.is_open()) {
@@ -30,6 +30,14 @@ void writeArrayToFile(std::string dest, unsigned rows, unsigned cols, double *ar
     std::cout << "Unable to open file";
 };
 
+void readArrayFromFile(const char *path, unsigned r, unsigned c, std::vector<double> &mat) {
+  // mat.resize(r*c); // not necessary
+  std::ifstream file(path);
+  assert(file.is_open());
+  std::copy(std::istream_iterator<double>(file), std::istream_iterator<double>(), std::back_inserter(mat));
+  file.close();
+};
+
 double rands() {
   static std::random_device rd;
   static std::mt19937 rng(rd());
@@ -38,7 +46,7 @@ double rands() {
   return dist25(rng);
 }
 
-void matrixBuilder(unsigned int r, unsigned int c, double sparsity, const char *prefix) {
+void matrixBuilder(unsigned int r, unsigned int c, double sparsity, const char *dir, const char *matLetter) {
   // typedef std::mt19937 MyRNG; // the Mersenne Twister with a popular choice of parameters
   // uint32_t seed_val;          // populate somehow
   //
@@ -61,7 +69,7 @@ void matrixBuilder(unsigned int r, unsigned int c, double sparsity, const char *
   std::random_shuffle(mat.begin(), mat.end());
 
   std::stringstream fileName;
-  fileName << prefix << "_" << r << "x" << c << ".txt";
+  fileName << dir << r << "_" << c << "_" << matLetter << ".txt";
   writeArrayToFile(fileName.str(), r, c, mat.data());
 };
 
