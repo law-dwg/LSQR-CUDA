@@ -123,23 +123,24 @@ int main() {
   };
 
   std::set<fs::path>::iterator it = sorted_by_name.begin();
-  while (it != sorted_by_name.end()) {
+  while (it != sorted_by_name.end()) { // iterate through sorted files
     std::string file1, file2;
     file1 = *it;
     ++it;
     file2 = *it;
-    ++it;
+    ++it; // iterate every two files
     std::vector<std::string> files{file1, file2};
     unsigned A_rows, A_cols, b_rows, b_cols;
     std::vector<double> A, b;
     for (auto file : files) {
       fileParserLoader(file, A_rows, A_cols, A, b_rows, b_cols, b);
     }
-    bool A_sizecheck, b_sizecheck, Ab_rowscheck, b_colscheck;
+    bool A_sizecheck, b_sizecheck, Ab_rowscheck, b_colscheck, all_checks;
     A_sizecheck = A.size() == A_rows * A_cols && A_rows != 0 && A_cols != 0;
     b_sizecheck = b.size() == b_rows * b_cols && b_rows != 0 && b_cols == 1;
     Ab_rowscheck = A_rows == b_rows;
-    if (A_sizecheck && b_sizecheck && Ab_rowscheck) {
+    all_checks = A_sizecheck && b_sizecheck && Ab_rowscheck;
+    if (all_checks) {
       continue;
     } else {
       printf("Error, please check the matrix file naming convention (\"NumOfRows_NumOfCols_A.txt\" and "
