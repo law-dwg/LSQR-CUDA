@@ -25,7 +25,7 @@ void writeArrayToFile(std::string dest, unsigned rows, unsigned cols, double *ar
       }
     }
     myfileA.close();
-    std::cout<<"Data written to "<<dest<<std::endl;
+    std::cout << "Data written to " << dest << std::endl;
   } else
     std::cout << "Unable to open file";
 };
@@ -34,7 +34,7 @@ double rands() {
   static std::random_device rd;
   static std::mt19937 rng(rd());
   static std::uniform_int_distribution<std::mt19937::result_type> dist25(1, 25); // distribution in range [1, 6]
-  //std::cout << dist25(rng) << std::endl;
+  // std::cout << dist25(rng) << std::endl;
   return dist25(rng);
 }
 

@@ -6,12 +6,12 @@
 #include "matrixBuilder.h"
 #include <ctime>
 #include <ctype.h>
+#include <filesystem>
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <stdio.h>
 #include <string>
-#include <filesystem>
-#include <set>
 namespace fs = std::filesystem;
 void loading() {
   std::cout << "Loading";
@@ -66,19 +66,31 @@ int main() {
   if (matBuild) {
     std::cout << "\nGreat, lets get started\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-1.0: ";
     sp = valInput<double>(0.0, 1.0);
-    std::cout << "Building A Matrices of sparsity "<<sp<<"\n";
-    for(int i = 100; i < 1000;i+=100){
-        matrixBuilder(i,i,sp,"input/A");
-        matrixBuilder(i,1,0,"input/b");
+    std::cout << "Building A Matrices of sparsity " << sp << "\n";
+    for (int i = 100; i < 1000; i += 100) {
+      matrixBuilder(i, i, sp, "input/A");
+      matrixBuilder(i, 1, 0, "input/b");
     }
   }
+  
   std::string path_name = "input/";
   std::set<fs::path> sorted_by_name;
-
-  for (auto &entry : fs::directory_iterator(path_name))
+  for (auto &entry : fs::directory_iterator(path_name)) // alphabetical listing of files in input
     sorted_by_name.insert(entry.path());
-  for (auto &filename : sorted_by_name)
-    
-    std::cout << filename.c_str() << std::endl;
-    if (){}
+  
+  if (sorted_by_name.size() == 0) {
+    std::cout << "Looks like there are no files in the input folder. Please add your own matricies in \"A_NumOfRowsxNumOfCols.txt\" and "
+                 "\"b_NumOfRowsx1.txt\" format, or rerun the "
+                 "program to autobuild matrices\n"
+              << std::endl;
+    return 0;
+  };
+  
+  auto first = sorted_by_name.begin();
+  for (int i = 0; i < sorted_by_name.size() / 2; ++i) {
+    std::advance(first, i);
+    std::string filename = *first.c_str();
+    // std::cout<<"Running lsqr for matrix size "
+    std::cout << filename << std::endl;
+  }
 }

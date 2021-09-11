@@ -1,6 +1,5 @@
 
-template<typename Mat, typename Vec>
-Vec lsqr_cpu(Mat &A, Vec &b) {
+template <typename Mat, typename Vec> Vec lsqr_cpu(Mat &A, Vec &b) {
   // Iteration
   unsigned int istop, itn = 0;
   double ddnorm, Anorm, Acond, damp, dnorm, dknorm, res2, xnorm, xxnorm, z, sn2, rtol = 0;
