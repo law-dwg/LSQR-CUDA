@@ -8,11 +8,10 @@
 #include "../cpu/matVec_cpu.h"
 class Vector_GPU {
 protected:
+public:
   /** Attributes */
   unsigned int h_rows, h_columns, *d_rows, *d_columns;
   double *d_mat;
-
-public:
   /** Constructors/Destructors and rule of 5 */
   Vector_GPU() { // Default Constructor
     printf("Vector_GPU Default constructor called\n");

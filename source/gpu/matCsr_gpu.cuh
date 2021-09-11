@@ -1,11 +1,11 @@
 #pragma once
+#include "../cpu/matVec_cpu.h"
+#include "matVec_gpu.cuh"
 #include <algorithm>
 #include <stdio.h>  //NULL, printf
 #include <stdlib.h> /* srand, rand */
 #include <time.h>   /* time */
 #include <vector>
-
-#include "../cpu/matVec_cpu.h"
 
 class Matrix_CSR_GPU {
 public:
@@ -56,6 +56,15 @@ public:
       }
     }
     temp_rowPtr.push_back(h_nnz);
+    for (int i = 0; i < temp_rowPtr.size(); ++i) {
+      printf("rowPtr[%d]=%d\n", i, temp_rowPtr[i]);
+    }
+    for (int i = 0; i < temp_colIdx.size(); ++i) {
+      printf("temp_colIdx[%d]=%d\n", i, temp_colIdx[i]);
+    }
+    for (int i = 0; i < temp_vals.size(); ++i) {
+      printf("temp_vals[%d]=%f\n", i, temp_vals[i]);
+    }
     // allocate
     cudaMalloc((void **)&d_nnz, sizeof(unsigned int));
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
@@ -71,7 +80,6 @@ public:
     cudaMemcpy(d_colIdx, temp_colIdx.data(), sizeof(unsigned int) * h_nnz, cudaMemcpyHostToDevice);
     cudaMemcpy(d_vals, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice);
     printf("nnz = %d, rowIdx.size = %d, colIdx.size = %d\n", h_nnz, temp_rowPtr.size(), temp_colIdx.size());
-    
   };
   /*
   Matrix_CSR_GPU(const Matrix_CSR_GPU &v) : Matrix_CSR_GPU(v.h_rows, v.h_columns) { // Copy constructor
@@ -130,12 +138,14 @@ public:
     cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice);
     return *this;
   }
-
+  */
   ~Matrix_CSR_GPU() { // Destructor
     printf("DESTRUCTOR CALLED\n");
-    cudaFree(d_mat);
     cudaFree(d_rows);
     cudaFree(d_columns);
+    cudaFree(d_colIdx);
+    cudaFree(d_rowIdx);
+    cudaFree(d_vals);
   };
-  */
+  void operator*(Vector_GPU &v); // Multiplication
 };

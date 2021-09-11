@@ -92,12 +92,9 @@ Vector_GPU lsqr_gpu(Matrix_GPU &A, Vector_GPU &b) {
   if (conlim > 0) {
     ctol = 1 / conlim;
   };
-
   double dampsq = damp * damp;
-
   double res_old = 1e10;
   double epsilon = 1e-16;
-
   /*1. Initialize*/
   Vector_GPU u, v, w, res_v;
   double alpha;
