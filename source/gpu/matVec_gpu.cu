@@ -48,8 +48,8 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 #include "matVec_gpu.cuh"
 using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 32
-#define TILE_DIM_Y 32
+#define TILE_DIM_X 16
+#define TILE_DIM_Y 16
 // nvcc -arch=sm_37 --std=c++17
 // gridDim.x - # of blocks in a grid, in x
 // gridDim.y - # of blocks in a grid, in y
@@ -143,7 +143,7 @@ void __global__ assignment(double *in1, double *in2) {
   in1[gid] = in2[gid];
 }
 
-void __global__ subtract(double *in1, double *in2, double *output) {
+void __global__ subtract(double *in1, double *in2, unsigned *rows, unsigned *cols, double *output) {
   const unsigned int bid = blockIdx.x                               // 1D
                            + blockIdx.y * gridDim.x                 // 2D
                            + gridDim.x * gridDim.y * blockIdx.z;    // 3D
@@ -158,11 +158,12 @@ void __global__ subtract(double *in1, double *in2, double *output) {
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, %f *
   // %f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
-  output[gid] = in1[gid] - in2[gid];
+  if (gid < *rows * *cols)
+    output[gid] = in1[gid] - in2[gid];
   // printf("%f = %f - %f\n", output[gid], in1[gid], in2[gid]);
 }
 
-void __global__ add(double *in1, double *in2, double *out) {
+void __global__ add(double *in1, double *in2, unsigned *rows, unsigned *cols, double *out) {
   const unsigned int bid = blockIdx.x                               // 1D
                            + blockIdx.y * gridDim.x                 // 2D
                            + gridDim.x * gridDim.y * blockIdx.z;    // 3D
@@ -175,7 +176,8 @@ void __global__ add(double *in1, double *in2, double *out) {
   // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f,
   // in2=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
   //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
-  out[gid] = in1[gid] + in2[gid];
+  if (gid < *rows * *cols)
+    out[gid] = in1[gid] + in2[gid];
   // printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
 }
 
@@ -409,14 +411,14 @@ void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *co
 
 // Operator overloads
 Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
-  printf("MATMULT\n");
+  // printf("MATMULT\n");
   Vector_GPU out(this->h_rows, v.h_columns);
   dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
   unsigned int blocksY = (out.h_rows / TILE_DIM_X) + 1;
   unsigned int blocksX = (out.h_columns / TILE_DIM_Y) + 1;
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
-         numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   multiplyTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
   // dim3 grid(1, 1, 1);
   // dim3 block(out.h_rows, out.h_columns, 1);
@@ -426,10 +428,12 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
 }
 
 Vector_GPU Vector_GPU::operator*(double h_i) {
-  printf("scale\n");
+  // printf("scale\n");
   Vector_GPU out(this->h_rows, this->h_columns);
-  dim3 grid(1, 1, 1);
-  dim3 block(this->h_rows, this->h_columns, 1);
+  unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
+  dim3 grid(blocksX, blocksY, 1);
+  dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
   double *d_i;
   cudaMalloc((void **)&d_i, sizeof(double));
   cudaMemcpy(d_i, &h_i, sizeof(double), cudaMemcpyHostToDevice);
@@ -440,13 +444,14 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
 }
 
 Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
-  printf("SUBTRACT CALLED\n");
+  // printf("SUBTRACT CALLED\n");
   Vector_GPU out(this->h_rows, this->h_columns);
-  dim3 grid(1, 1, 1);
-  std::cout << v.h_rows << "=" << this->h_rows << std::endl;
-  dim3 block(v.h_rows * v.h_columns, 1, 1);
+  unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
+  dim3 grid(blocksX, blocksY, 1);
+  dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
-    subtract<<<grid, block>>>(this->d_mat, v.d_mat, out.d_mat);
+    subtract<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat);
   } else {
     printf("ARRAYS ARE NOT THE SAME SIZE, canot perform operation\n");
   }
@@ -454,7 +459,7 @@ Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
 }
 
 void Vector_GPU::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> this Vector_GPU
-  printf("ASSIGNMENT #2 called\n");
+  // printf("ASSIGNMENT #2 called\n");
   cudaFree(d_mat);
   h_rows = v.getRows();
   h_columns = v.getColumns();
@@ -466,10 +471,12 @@ void Vector_GPU::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> thi
 
 Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
   Vector_GPU out(this->h_rows, this->h_columns);
-  dim3 grid(1, 1, 1);
-  dim3 block(v.h_rows * v.h_columns, 1, 1);
+  unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
+  dim3 grid(blocksX, blocksY, 1);
+  dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
-    add<<<grid, block>>>(this->d_mat, v.d_mat, out.d_mat);
+    add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat);
   } else {
     printf("ARRAYS ARE NOT THE SAME SIZE, canot perform operation\n");
   }
@@ -508,8 +515,8 @@ Vector_GPU Vector_GPU::transpose() {
   unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
   unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
-         numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows, this->d_columns);
   return out;
 };
@@ -534,7 +541,7 @@ double Vector_GPU::Dnrm2() {
   cudaDeviceSynchronize();
   scale<<<blocks, threads>>>(tempMat1, d_max, tempMat2, this->d_rows, this->d_columns, true);
   cudaDeviceSynchronize();
-  print<<<blocks, threads>>>(tempMat2, this->d_rows, this->d_columns);
+  // print<<<blocks, threads>>>(tempMat2, this->d_rows, this->d_columns);
   cudaDeviceSynchronize();
   dnrm2<<<blocks, threads, s_mem>>>(tempMat2, this->d_rows, this->d_columns, d_out);
   cudaDeviceSynchronize();
@@ -546,7 +553,7 @@ double Vector_GPU::Dnrm2() {
 };
 
 Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
-  printf("MATMULT\n");
+  // printf("MATMULT\n");
   Vector_GPU out(this->h_rows, v.h_columns);
   dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
   unsigned int blocksY = (out.h_rows / TILE_DIM_X) + 1;
@@ -560,8 +567,8 @@ Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
   // };
 
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
-         numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   multiplyNaive<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
   // dim3 grid(1, 1, 1);
   // dim3 block(out.h_rows, out.h_columns, 1);

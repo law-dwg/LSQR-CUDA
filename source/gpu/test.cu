@@ -40,8 +40,8 @@ int main() {
 
   double *a_heap, *b_heap;
   int a_rows, b_rows, a_cols, b_cols;
-  a_rows = b_rows = 10;
-  a_cols = 10;
+  a_rows = b_rows = 100;
+  a_cols = 100;
   b_cols = 1;
   a_heap = new double[a_rows * a_cols];
   b_heap = new double[b_rows * b_cols];
@@ -54,25 +54,27 @@ int main() {
     }
   }
 
-  //writeArrayToFile("input/A.txt", a_rows * a_cols, a_heap);
-  //writeArrayToFile("input/b.txt", b_rows * b_cols, b_heap);
+  // writeArrayToFile("input/A.txt", a_rows * a_cols, a_heap);
+  // writeArrayToFile("input/b.txt", b_rows * b_cols, b_heap);
   Vector_CPU A_c(a_rows, a_cols, a_heap);
   Vector_CPU b_c(b_rows, b_cols, b_heap);
   Vector_GPU A_g(a_rows, a_cols, a_heap);
   Vector_GPU b_g(b_rows, b_cols, b_heap);
   // Vector_GPU C_g = ((b_g.transpose() * b_g) * b_g.Dnrm2()) * A_g.Dnrm2();
   // Vector_CPU C_c =  ((b_c.transpose() * b_c) * b_g.Dnrm2()) * A_c.Dnrm2();
-  Vector_GPU C_g = ((A_g + A_g.transpose()) * 3*A_g) - (A_g*1.8)*A_g.Dnrm2();
-  Vector_CPU C_c =  ((A_c + A_c.transpose()) * 3 *A_c) - (A_c*1.8)*A_c.Dnrm2();
+  Vector_GPU C_g = ((A_g + A_g.transpose()) * 3 * A_g) - (A_g * 1.8) * A_g.Dnrm2();
+  Vector_CPU C_c = ((A_c + A_c.transpose()) * 3 * A_c) - (A_c * 1.8) * A_c.Dnrm2();
+  // Vector_GPU C_g = A_g.transpose()*1.8;
+  // Vector_CPU C_c = A_c.transpose()*1.8;
   C_g = C_g.transpose();
   C_c = C_c.transpose();
   Vector_CPU C_g_out = C_g.matDeviceToHost();
   C_g_out.print();
   C_c.print();
   bool ans = compareMat(C_g_out.getMat(), C_g_out.getRows(), C_g_out.getColumns(), C_c.getMat(), C_c.getRows(), C_c.getColumns());
-  //Matrix_GPU c_c(b_rows, b_cols, b_heap);
-  //Matrix_GPU A = A_c;
-  //Vector_GPU b = b_c;
+  // Matrix_GPU c_c(b_rows, b_cols, b_heap);
+  // Matrix_GPU A = A_c;
+  // Vector_GPU b = b_c;
   // printf("STARTING LSQR\n");
   // Vector_GPU x_G = lsqr_gpu(A, b);
   // Vector_CPU x_C = lsqr_cpu(A_c, b_c);

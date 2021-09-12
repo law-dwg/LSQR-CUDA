@@ -39,7 +39,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   double alpha;
   Vec x(A.getColumns(), 1);
   double beta = b.Dnrm2();
-  std::cout << beta << std::endl;
+  //std::cout << beta << std::endl;
   if (beta > 0) {
     u = b * (1 / beta);
     v = A.transpose() * u;
@@ -167,7 +167,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     // x.print();
     // printf("%f\n", Arnorm);
   } while (istop == 0 && itn < 2 * A.getColumns());
-
+  printf("ran through %d iterations \n",itn);
   return x;
 }
 
@@ -185,7 +185,7 @@ int main() {
     std::cout << "\nGreat, lets get started\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-1.0: ";
     sp = valInput<double>(0.0, 1.0);
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 10; i < 50; i += 10) {
+    for (int i = 50; i < 60; i += 10) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -203,7 +203,7 @@ int main() {
               << std::endl;
     return 0;
   };
-
+  checkDevice();
   std::set<fs::path>::iterator it = sorted_by_name.begin();
   while (it != sorted_by_name.end()) { // iterate through sorted files
     std::string file1, file2;
@@ -236,15 +236,11 @@ int main() {
     // A_c.print();
     // b_c.print();
     Vector_CPU x_c = lsqr<Vector_CPU, Vector_CPU>(A_c, b_c);
+    cudaDeviceSynchronize();
     std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_CPU.txt";
     writeArrayToFile(file_out, x_c.getRows(), x_c.getColumns(), x_c.getMat());
     Vector_GPU A_g(A_rows, A_cols, A.data());
     Vector_GPU b_g(b_rows, b_cols, b.data());
-    Vector_GPU test_g = A_g*b_g;
-    Vector_CPU test_g_out = test_g.matDeviceToHost();
-    Vector_CPU test_c = A_c* b_c;
-    test_c.print();
-    test_g_out.print();
     Vector_GPU x_g = lsqr<Vector_GPU,Vector_GPU>(A_g, b_g);
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
     Vector_CPU x_g_out = x_g.matDeviceToHost();
