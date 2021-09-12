@@ -1,8 +1,8 @@
-#include "../cpu/lsqr_cpu.h"
+//#include "../cpu/lsqr_cpu.h"
 #include "../cpu/matVec_cpu.h"
 #include "device_launch_parameters.h"
 #include "lsqr_gpu.cuh"
-#include "matCsr_gpu.cuh"
+//#include "matCsr_gpu.cuh"
 #include "matVec_gpu.cuh"
 #include <assert.h>
 #include <chrono>
@@ -54,22 +54,34 @@ int main() {
     }
   }
 
-  writeArrayToFile("input/A.txt", a_rows * a_cols, a_heap);
-  writeArrayToFile("input/b.txt", b_rows * b_cols, b_heap);
+  //writeArrayToFile("input/A.txt", a_rows * a_cols, a_heap);
+  //writeArrayToFile("input/b.txt", b_rows * b_cols, b_heap);
   Vector_CPU A_c(a_rows, a_cols, a_heap);
   Vector_CPU b_c(b_rows, b_cols, b_heap);
-  Matrix_GPU c_c(b_rows, b_cols, b_heap);
-  Matrix_GPU A = A_c;
-  Vector_GPU b = b_c;
-  printf("STARTING LSQR\n");
-  Vector_GPU x_G = lsqr_gpu(A, b);
-  Vector_CPU x_C = lsqr_cpu(A_c, b_c);
-  Vector_CPU x_G_out = x_G.matDeviceToHost();
-  bool ans = compareMat(x_G_out.getMat(), x_G_out.getRows(), x_G_out.getColumns(), x_C.getMat(), x_C.getRows(), x_C.getColumns());
-  x_G_out.print();
-  x_C.print();
-  writeArrayToFile("output/x_c.txt", x_G_out.getRows() * x_G_out.getColumns(), x_G_out.getMat());
-  writeArrayToFile("output/x_g.txt", x_C.getRows() * x_C.getColumns(), x_C.getMat());
+  Vector_GPU A_g(a_rows, a_cols, a_heap);
+  Vector_GPU b_g(b_rows, b_cols, b_heap);
+  // Vector_GPU C_g = ((b_g.transpose() * b_g) * b_g.Dnrm2()) * A_g.Dnrm2();
+  // Vector_CPU C_c =  ((b_c.transpose() * b_c) * b_g.Dnrm2()) * A_c.Dnrm2();
+  Vector_GPU C_g = ((A_g + A_g.transpose()) * 3*A_g) - (A_g*1.8)*A_g.Dnrm2();
+  Vector_CPU C_c =  ((A_c + A_c.transpose()) * 3 *A_c) - (A_c*1.8)*A_c.Dnrm2();
+  C_g = C_g.transpose();
+  C_c = C_c.transpose();
+  Vector_CPU C_g_out = C_g.matDeviceToHost();
+  C_g_out.print();
+  C_c.print();
+  bool ans = compareMat(C_g_out.getMat(), C_g_out.getRows(), C_g_out.getColumns(), C_c.getMat(), C_c.getRows(), C_c.getColumns());
+  //Matrix_GPU c_c(b_rows, b_cols, b_heap);
+  //Matrix_GPU A = A_c;
+  //Vector_GPU b = b_c;
+  // printf("STARTING LSQR\n");
+  // Vector_GPU x_G = lsqr_gpu(A, b);
+  // Vector_CPU x_C = lsqr_cpu(A_c, b_c);
+  // Vector_CPU x_G_out = x_G.matDeviceToHost();
+  // bool ans = compareMat(x_G_out.getMat(), x_G_out.getRows(), x_G_out.getColumns(), x_C.getMat(), x_C.getRows(), x_C.getColumns());
+  // x_G_out.print();
+  // x_C.print();
+  // writeArrayToFile("output/x_c.txt", x_G_out.getRows() * x_G_out.getColumns(), x_G_out.getMat());
+  // writeArrayToFile("output/x_g.txt", x_C.getRows() * x_C.getColumns(), x_C.getMat());
   delete a_heap, b_heap;
   cudaError_t err = cudaGetLastError(); // add
   if (err != cudaSuccess) {

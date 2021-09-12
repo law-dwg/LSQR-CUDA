@@ -1,4 +1,5 @@
 #include "cpu/lsqr_cpu.h"
+#include "gpu/lsqr_gpu.cuh"
 #include "cpu/matVec_cpu.h"
 #include "gpu/matVec_gpu.cuh"
 #include "matrixBuilder.h"
@@ -15,20 +16,6 @@
 #include <vector>
 
 namespace fs = std::filesystem;
-
-double D2Norm(double a, double b) {
-  const double scale = std::abs(a) + std::abs(b);
-  const double zero = 0.0;
-
-  if (scale == zero) {
-    return zero;
-  }
-
-  const double sa = a / scale;
-  const double sb = b / scale;
-
-  return scale * sqrt(sa * sa + sb * sb);
-};
 
 template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   // Iteration
@@ -61,8 +48,8 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     v = x;
     alpha = 0;
   };
-  std::cout << alpha << std::endl;
-  v.print();
+  //std::cout << alpha << std::endl;
+  //v.print();
 
   if (alpha > 0) {
     v = v * (1 / alpha);
@@ -198,7 +185,7 @@ int main() {
     std::cout << "\nGreat, lets get started\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-1.0: ";
     sp = valInput<double>(0.0, 1.0);
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 500; i < 5000; i += 500) {
+    for (int i = 10; i < 50; i += 10) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -246,12 +233,22 @@ int main() {
     printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     Vector_CPU A_c(A_rows, A_cols, A.data());
     Vector_CPU b_c(b_rows, b_cols, b.data());
-    Vector_GPU A_g = A_c;
-    Vector_GPU b_g = b_c;
     // A_c.print();
     // b_c.print();
-    Vector_GPU x_c = lsqr<Vector_GPU, Vector_GPU>(A_g, b_g);
+    Vector_CPU x_c = lsqr<Vector_CPU, Vector_CPU>(A_c, b_c);
     std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_CPU.txt";
     writeArrayToFile(file_out, x_c.getRows(), x_c.getColumns(), x_c.getMat());
+    Vector_GPU A_g(A_rows, A_cols, A.data());
+    Vector_GPU b_g(b_rows, b_cols, b.data());
+    Vector_GPU test_g = A_g*b_g;
+    Vector_CPU test_g_out = test_g.matDeviceToHost();
+    Vector_CPU test_c = A_c* b_c;
+    test_c.print();
+    test_g_out.print();
+    Vector_GPU x_g = lsqr<Vector_GPU,Vector_GPU>(A_g, b_g);
+    file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
+    Vector_CPU x_g_out = x_g.matDeviceToHost();
+    writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
+    
   }
 }

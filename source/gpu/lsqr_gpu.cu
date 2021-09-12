@@ -1,10 +1,25 @@
 #include "lsqr_gpu.cuh"
+#include "../matrixBuilder.h"
 #include "matVec_gpu.cuh"
 #include <limits>
 
+//double D2Norm(double a, double b) {
+//  const double scale = std::abs(a) + std::abs(b);
+//  const double zero = 0.0;
+//
+//  if (scale == zero) {
+//    return zero;
+//  }
+//
+//  const double sa = a / scale;
+//  const double sb = b / scale;
+//
+//  return scale * sqrt(sa * sa + sb * sb);
+//};
+
 bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG) {
   bool same = true;
-  double epsilon = 1e-14;
+  double epsilon = 1e-9;
   if (rowC != rowG || colC != colG || !same) {
     printf("MATRICIES SIZE  DO NOT MATCH matCPU(%d x %d) != matGPU(%d, %d)\n", rowC, colC, rowG, rowC);
     same = false;
@@ -81,7 +96,7 @@ int checkDevice() {
   return deviceCount;
 };
 
-Vector_GPU lsqr_gpu(Matrix_GPU &A, Vector_GPU &b) {
+Vector_GPU lsqr_gpu(Vector_GPU &A, Vector_GPU &b) {
   unsigned int istop, itn = 0;
   double ddnorm, Anorm, Acond, damp, dnorm, dknorm, res2, xnorm, xxnorm, z, sn2, rtol = 0;
   double rho, phi, c, s, theta, tau, res, res1;
@@ -156,12 +171,12 @@ Vector_GPU lsqr_gpu(Matrix_GPU &A, Vector_GPU &b) {
     printf("4. Construct and apply next orthogonal transformation\n");
 
     rho = D2Norm(rhobar, beta); // rho_i
-    c = rhobar / rho;           // c_i
-    s = beta / rho;             // s_i
-    theta = s * alpha;          // theta_i+1
-    rhobar = -c * alpha;        // rhobar_i+1
-    phi = c * phibar;           // phi_i = c_i*phibar_i
-    phibar = s * phibar;        // phibar_i+1 = s_i*phibar_i
+    c = rhobar / rho;               // c_i
+    s = beta / rho;                 // s_i
+    theta = s * alpha;              // theta_i+1
+    rhobar = -c * alpha;            // rhobar_i+1
+    phi = c * phibar;               // phi_i = c_i*phibar_i
+    phibar = s * phibar;            // phibar_i+1 = s_i*phibar_i
 
     // used for stopping critera
     tau = s * phi;

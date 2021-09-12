@@ -1,11 +1,19 @@
+#ifdef _WIN32
+#include <Windows.h>
+#else
+#include <unistd.h>
+#endif
 #include "matrixBuilder.h"
 #include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cstdio>
+#include <ctime>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <math.h>
 #include <random>
 #include <sstream>
@@ -14,14 +22,33 @@
 #include <string>
 #include <time.h>
 #include <vector>
+
+double D2Norm(double a, double b) {
+  const double scale = std::abs(a) + std::abs(b);
+  const double zero = 0.0;
+
+  if (scale == zero) {
+    return zero;
+  }
+
+  const double sa = a / scale;
+  const double sb = b / scale;
+
+  return scale * sqrt(sa * sa + sb * sb);
+};
+
 void writeArrayToFile(std::string dest, unsigned rows, unsigned cols, double *arr) {
+  typedef std::numeric_limits<double> dbl;
   std::ofstream myfileA(dest);
   if (myfileA.is_open()) {
     for (int count = 0; count < rows * cols; count++) {
-      if (count != ((rows * cols) - 1)) {
-        myfileA << arr[count] << " ";
+      if (count % cols == 0 && count != 0) {
+        myfileA << "\n";
+      }
+      if ((count % cols) == (cols - 1)) {
+        myfileA << std::setprecision(16) << arr[count];
       } else {
-        myfileA << arr[count];
+        myfileA << std::setprecision(16) << arr[count] << " ";
       }
     }
     myfileA.close();
@@ -73,7 +100,62 @@ void matrixBuilder(unsigned int r, unsigned int c, double sparsity, const char *
   writeArrayToFile(fileName.str(), r, c, mat.data());
 };
 
-// int main() {
-//   matrixBuilder(10, 10, 0.01, "input/A");
-//   return 0;
-// }
+void loading() {
+  std::cout << "Loading";
+  std::cout.flush();
+  for (;;) {
+    for (int i = 0; i < 3; i++) {
+      std::cout << ".";
+      std::cout.flush();
+      sleep(1);
+    }
+    std::cout << "\b\b\b   \b\b\b";
+  }
+}
+
+bool yesNo() {
+  while (true) {
+    std::string s;
+    std::cin >> std::ws;
+    getline(std::cin, s);
+    if (s.empty())
+      continue;
+    switch (toupper(s[0])) {
+    case 'Y':
+      return true;
+    case 'N':
+      return false;
+    }
+    std::cout << "Invalid input, please enter Y for yes and N for no: ";
+  }
+}
+
+void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vector<double> &A, unsigned &b_r, unsigned &b_c, std::vector<double> &b) {
+  std::string path = file.c_str(); // keep path for reading data
+
+  // parse filename
+  std::vector<std::string> delim{"/\\", ".", "_"};
+  size_t dot = file.find_last_of(delim[1]);           // file extension location
+  size_t slash = file.find_last_of(delim[0]);         // file prefix location
+  file.erase(file.begin() + dot, file.end());         // remove file extension
+  file.erase(file.begin(), file.begin() + slash + 1); // remove file prefix
+  size_t unders2 = file.find_last_of(delim[2]);       // underscore at end of filename
+  size_t unders1 = file.find(delim[2]);               // underscore at beginning of filename
+
+  // read and allocate data
+  if (file.substr(unders2 + 1) == "A") {                            // A Matrix
+    A_r = std::stoi(file.substr(0, unders1));                       // read rows from filename
+    A_c = std::stoi(file.substr(unders1 + 1, (unders2 - unders1))); // read cols from filename
+    printf("Loading matrix A(%d,%d)...", A_r, A_c);
+    readArrayFromFile(path.c_str(), A_r, A_c, A);
+    printf(" done\n");
+  } else if (file.substr(unders2 + 1) == "b") {                     // b Vector
+    b_r = std::stoi(file.substr(0, unders1));                       // read rows from filename
+    b_c = std::stoi(file.substr(unders1 + 1, (unders2 - unders1))); // read cols from filename
+    printf("Loading matrix b(%d,%d)...", b_r, b_c);
+    readArrayFromFile(path.c_str(), b_r, b_c, b);
+    printf(" done\n");
+  } else { // err
+    printf("Error while trying to read %s, please rename to either \"NumOfRows_1_b.txt\" or \"NumOfRows_NumOfCols_A.txt\" \n", path);
+  }
+}

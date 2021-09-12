@@ -15,7 +15,7 @@ public:
   Vector_CPU(){};
   Vector_CPU(unsigned int p) : columns(1), rows(p) {
     printf("CONSTRUCTOR 1 CALLED\n");
-    this->mat.resize(p, 5.0);
+    this->mat.resize(p, 0.0);
   };
   Vector_CPU(unsigned int r, unsigned int c) : rows(r), columns(c) {
     // printf("CONSTRUCTOR 2 CALLED\n");
@@ -41,8 +41,8 @@ public:
   // member functions
   double *getMat() { return this->mat.data(); };
   void print();
-  int getRows();
-  int getColumns();
+  int getRows() { return this->rows; };
+  int getColumns() { return this->columns; };
   double Dnrm2();
   double normalNorm();
   Vector_CPU transpose();
