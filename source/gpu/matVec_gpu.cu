@@ -58,8 +58,8 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 
 using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 16
-#define TILE_DIM_Y 16
+#define TILE_DIM_X 32
+#define TILE_DIM_Y 32
 // nvcc -arch=sm_37 --std=c++17
 // gridDim.x - # of blocks in a grid, in x
 // gridDim.y - # of blocks in a grid, in y
@@ -544,22 +544,20 @@ Vector_GPU Vector_GPU::transpose() {
 };
 
 double Vector_GPU::Dnrm2() {
+  dim3 threads(TILE_DIM_X, 1);
   int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
   dim3 blocks(blockX, 1);
-  dim3 threads(TILE_DIM_X, 1);
-  double *d_out, *d_max, *tempMat1, *tempMat2;
+  double *d_out, *d_max, *tempMat;
   double zero = 0.0;
   double h_max;
   double h_out;
   gpuErrchk(cudaMalloc(&d_out, sizeof(double)));
   gpuErrchk(cudaMalloc(&d_max, sizeof(double)));
-  cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice);
-  gpuErrchk(cudaMalloc(&tempMat1, sizeof(double) * this->h_rows * this->h_columns));
-  gpuErrchk(cudaMalloc(&tempMat2, sizeof(double) * this->h_rows * this->h_columns));
-  gpuErrchk(cudaMemcpy(tempMat1, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToDevice));
+  gpuErrchk(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice));
+  gpuErrchk(cudaMalloc(&tempMat, sizeof(double) * this->h_rows * this->h_columns));
 
-  printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
+  // printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
 
   // ERROR HERE
@@ -567,15 +565,14 @@ double Vector_GPU::Dnrm2() {
   // gpuErrchk(cudaPeekAtLastError());
   gpuErrchk(cudaDeviceSynchronize());
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
-  scale<<<blocks, threads>>>(tempMat1, d_max, tempMat2, this->d_rows, this->d_columns, true);
-  cudaDeviceSynchronize();
-  // print<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns);
-  dnrm2<<<blocks, threads>>>(tempMat2, this->d_rows, this->d_columns, d_out);
-  cudaDeviceSynchronize();
-  cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
-  cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost);
-  // printf("h_max=%f\n", h_max);
-  // printf("h_out=%f\n", h_out);
+  scale<<<blocks, threads>>>(this->d_mat, d_max, tempMat, this->d_rows, this->d_columns, true);
+  gpuErrchk(cudaDeviceSynchronize());
+  dnrm2<<<blocks, threads>>>(tempMat, this->d_rows, this->d_columns, d_out);
+  gpuErrchk(cudaDeviceSynchronize());
+  cudaFree(tempMat);
+  gpuErrchk(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
+
   assert(!(h_out != h_out));
   assert(h_out > 0);
   return std::abs(h_max) * sqrt(h_out);

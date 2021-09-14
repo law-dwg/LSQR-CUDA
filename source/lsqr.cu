@@ -59,13 +59,11 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
 
   /*1. Initialize*/
   Vec x(A.getColumns(), 1);
-  printf("itn=%d ln62 Dnrm2\n", itn);
   beta = b.Dnrm2();
   // std::cout << beta << std::endl;
   if (beta > 0) {
     u = b * (1 / beta);
     v = A.transpose() * u;
-    printf("itn=%d ln68 Dnrm2\n", itn);
     alpha = v.Dnrm2();
   } else {
     v = x;
@@ -90,11 +88,10 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   // 2. For i=1,2,3....
   printf("2. For i=1,2,3....\n");
   do {
-    // printf("itn=%d alpha=%f beta=%f Arnorm=%f res=%f rho=%f u.dnrm2()=%f\n", itn, alpha, beta, Arnorm, res, rho, u.Dnrm2());
+    // printf("itn = %d\n", itn);
     cudaDeviceSynchronize();
     itn++;
     Vec A_T = A.transpose();
-    // printf("itn=%d ln 95 AT.Dnrm2() = %f\n", itn, A_T.Dnrm2());
 
     // 3. Continue the bidiagonialization
     /* Important equations for understanding.
@@ -107,33 +104,13 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     */
     // printf("3. Continue the bidiagonialization\n");
     u = A * v - u * alpha; // ubar_i+1
-    cudaDeviceSynchronize();
-    printf("itn=%d ln112 Dnrm2\n", itn);
-    beta = u.Dnrm2(); // beta_i+1 = ||ubar_i+1||
-    cudaDeviceSynchronize();
+    beta = u.Dnrm2();      // beta_i+1 = ||ubar_i+1||
     if (beta > 0) {
-      // printf("itn=%d ln110 1/beta = %f beta = %f\n", itn, 1 / beta, beta);
-      // u.print();
-      double betainv = 1 / beta;
-      u = u * (1 / beta); // u_i+1
-      cudaDeviceSynchronize();
-      printf("itn=%d ln121 Dnrm2\n", itn);
-      double test = u.Dnrm2();
-      // printf("itn=%d ln114 u.dnrm2 = %f test = %f\n", itn, u.Dnrm2(), test);
-      cudaDeviceSynchronize();
-      Vec vbeta = v * beta;
-      Vec A_Tu = A_T * u;
-      cudaDeviceSynchronize();
-      v = (A_Tu) - (vbeta); // vbar_i+1
-      cudaDeviceSynchronize();
-      // printf("itn=%d ln116 v.dnrm2 = %f\n", itn, v.Dnrm2());
-      cudaDeviceSynchronize();
-      printf("itn=%d ln131 Dnrm2\n", itn);
-      alpha = v.Dnrm2(); // alpha_i+1
-      cudaDeviceSynchronize();
+      u = u * (1 / beta);         // u_i+1
+      v = (A_T * u) - (v * beta); // vbar_i+1
+      alpha = v.Dnrm2();          // alpha_i+1
       if (alpha > 0) {
         v = v * (1 / alpha); // v_i+1
-        cudaDeviceSynchronize();
       }
     }
 
@@ -155,10 +132,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     // 5. Update x,w
     // save values for stopping criteria
     Vec dk = w * (1 / rho);
-    cudaDeviceSynchronize();
-    printf("itn=%d ln160 Dnrm2\n", itn);
     double dknrm2 = dk.Dnrm2();
-    cudaDeviceSynchronize();
     dknorm = dknrm2 * dknrm2 + ddnorm;
 
     /* Important equations
@@ -168,18 +142,14 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     x = x + w * (phi / rho);
     w = v - (w * (theta / rho));
     // residual
-    Vec Ax = A * x;
-    cudaDeviceSynchronize();
-    res_v = b - Ax;
-    cudaDeviceSynchronize();
+    res_v = b - (A * x);
     res = res_v.Dnrm2();
-    cudaDeviceSynchronize();
+
     // 6. Test for convergence
     // printf("6. Test for convergence\n");
     /*Test 1 for convergence
     stop if ||r|| =< btol*||b|| + atol*||A||*||x||
     */
-    printf("itn=%d ln183 Dnrm2s\n");
     if (res <= (btol * b.Dnrm2() + atol * A.Dnrm2() * x.Dnrm2())) {
       istop = 1;
     }
@@ -187,7 +157,6 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     /*Test 2 for convergence
     stop if ||A_T*r||/||A||*||r|| <= atol
     */
-    printf("itn=%d ln190 Dnrm2\n", itn);
     if (Arnorm / (A.Dnrm2() * res) <= atol) {
       istop = 2;
     }
@@ -243,7 +212,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 10; i < 300; i += 10) {
+    for (int i = 100; i < 600; i += 100) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -297,7 +266,7 @@ int main() {
     std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_CPU.txt";
     writeArrayToFile(file_out, x_c.getRows(), x_c.getColumns(), x_c.getMat());
     printf("---------------------------------------------\n");
-    printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
+    printf("Running lsqr-GPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     Vector_GPU A_g(A_rows, A_cols, A.data());
     Vector_GPU b_g(b_rows, b_cols, b.data());
     Vector_GPU x_g = lsqr<Vector_GPU>(A_g, b_g);
