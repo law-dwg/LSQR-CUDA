@@ -33,7 +33,7 @@ double D2Norm(double a, double b) {
 
   const double sa = a / scale;
   const double sb = b / scale;
-
+  // printf("D2N: %f\n", scale * sqrt(sa * sa + sb * sb));
   return scale * sqrt(sa * sa + sb * sb);
 };
 

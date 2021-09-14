@@ -1,6 +1,5 @@
 #ifndef CAFFE_COMMON_CUH_
 #define CAFFE_COMMON_CUH_
-
 #include <cuda.h>
 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
@@ -46,6 +45,17 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 #include "../cpu/matVec_cpu.h"
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"
+
+#define gpuErrchk(ans)                                                                                                                               \
+  { gpuAssert((ans), __FILE__, __LINE__); }
+inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) {
+  if (code != cudaSuccess) {
+    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+    if (abort)
+      exit(code);
+  }
+}
+
 using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
 #define TILE_DIM_X 16
@@ -103,7 +113,7 @@ void __global__ scale(double *input, double *scalar, double *output, unsigned *r
       // printf("%f = %f / %f\n", output[gid], input[gid], *scalar);
     } else {
       output[gid] = input[gid] * *scalar;
-      // printf("%f = %f * %f\n", output[gid], input[gid], *scalar);
+      // printf("out[%d] = %f = %f * %f\n", gid, output[gid], input[gid], *scalar);
     }
   }
 }
@@ -229,7 +239,7 @@ __device__ void warpReduce(volatile double *sum, int thread) {
 }
 
 void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out) {
-  extern __shared__ double sum[];
+  __shared__ double sum[TILE_DIM_X];
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
   int x2 = (blockIdx.x * (blockDim.x * 2) + threadIdx.x) + blockDim.x;
@@ -252,28 +262,30 @@ void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out
   // printf("block(%d, %d) thread(%d, %d) PS[%d] = v[%d]+v[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x, x2,
   //       sum[threadIdx.x]);
   int s_stop = 0;
-  if (blockDim.x / 2 > 32) {
-    s_stop = 32;
-  }
-  for (unsigned int s = blockDim.x / 2; s > s_stop; s >>= 1) {
+  // if (blockDim.x / 2 > 32) {
+  //  s_stop = 32;
+  //}
+  for (unsigned int s = blockDim.x / 2; s > 0; s >>= 1) {
     if (threadIdx.x < s) {
       sum[threadIdx.x] += sum[threadIdx.x + s];
+      sum[threadIdx.x + s] = 0;
       // printf("gid+s = %d block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", gid + s, blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s,
-      //        threadIdx.x, threadIdx.x + s, sum[threadIdx.x + s]);
+      //       threadIdx.x, threadIdx.x + s, sum[threadIdx.x + s]);
     }
     __syncthreads();
   }
-  if (threadIdx.x < 32 && s_stop != 0) {
-    warpReduce(sum, threadIdx.x);
-  }
-  __syncthreads();
+  // if (threadIdx.x < 32 && s_stop != 0) {
+  //   warpReduce(sum, threadIdx.x);
+  // }
+  // __syncthreads();
   if (threadIdx.x == 0) {
+    // printf("sum[0]=%f\n",sum[0]);
     atomicAdd(out, sum[0]);
   }
 }
 
 void __global__ maxVal(double *in1, unsigned int *r, unsigned int *c, double *out) {
-  extern __shared__ double maxV[];
+  __shared__ double maxV[TILE_DIM_X];
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
   int x2 = (blockIdx.x * (blockDim.x * 2) + threadIdx.x) + blockDim.x;
@@ -300,7 +312,7 @@ void __global__ maxVal(double *in1, unsigned int *r, unsigned int *c, double *ou
     if (threadIdx.x < s) {
       maxV[threadIdx.x] = fmax(std::abs(maxV[threadIdx.x]), maxV[threadIdx.x + s]);
       // printf("gid+s = %d block(%d, %d) thread(%d, %d) s=%d PS[%d] += PS[%d] =%f\n", gid + s, blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, s,
-      //        threadIdx.x, threadIdx.x + s, maxV[threadIdx.x + s]);
+      //         threadIdx.x, threadIdx.x + s, maxV[threadIdx.x + s]);
     }
     __syncthreads();
   }
@@ -420,6 +432,7 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
   //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   multiplyTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+  cudaDeviceSynchronize();
   // dim3 grid(1, 1, 1);
   // dim3 block(out.h_rows, out.h_columns, 1);
   // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
@@ -428,7 +441,7 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
 }
 
 Vector_GPU Vector_GPU::operator*(double h_i) {
-  // printf("scale\n");
+  // printf("scale %f\n", h_i);
   Vector_GPU out(this->h_rows, this->h_columns);
   unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
   unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
@@ -439,6 +452,7 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
   cudaMemcpy(d_i, &h_i, sizeof(double), cudaMemcpyHostToDevice);
 
   scale<<<grid, block>>>(this->d_mat, d_i, out.d_mat, this->d_rows, this->d_columns, false);
+  cudaDeviceSynchronize();
 
   return out;
 }
@@ -452,8 +466,10 @@ Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
   dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     subtract<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat);
+    cudaDeviceSynchronize();
   } else {
-    printf("ARRAYS ARE NOT THE SAME SIZE, canot perform operation\n");
+    printf("SUBTRACT: ARRAYS ARE NOT THE SAME SIZE, canot perform operation %d!=%d\n", this->h_rows, v.h_rows);
+    // assert(h_rows == v.h_rows);
   }
   return out;
 }
@@ -477,18 +493,23 @@ Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
   dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat);
+    cudaDeviceSynchronize();
   } else {
-    printf("ARRAYS ARE NOT THE SAME SIZE, canot perform operation\n");
+    printf("ADDITION: ARRAYS ARE NOT THE SAME SIZE, canot perform operation %d!=%d\n", this->h_rows, v.h_rows);
+    // assert(this->h_rows == v.h_rows);
   }
   return out;
 }
 
 void Vector_GPU::printmat() {
-  dim3 grid(1, 1, 1);
-  printf("PRINTING\n");
-  dim3 block(this->h_rows, this->h_columns, 1);
+  unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
+  dim3 grid(blocksX, blocksY, 1);
+  dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
 
   print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
+  // gpuErrchk(cudaPeekAtLastError());
+  gpuErrchk(cudaDeviceSynchronize());
 }
 
 Vector_CPU Vector_GPU::matDeviceToHost() {
@@ -518,6 +539,7 @@ Vector_GPU Vector_GPU::transpose() {
   // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
   //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows, this->d_columns);
+  cudaDeviceSynchronize();
   return out;
 };
 
@@ -526,30 +548,37 @@ double Vector_GPU::Dnrm2() {
   dim3 blocks(blockX, 1);
   dim3 threads(TILE_DIM_X, 1);
   double *d_out, *d_max, *tempMat1, *tempMat2;
+  double zero = 0.0;
   double h_max;
   double h_out;
-  cudaMalloc(&d_out, sizeof(double));
-  cudaMalloc(&d_max, sizeof(double));
-  cudaMalloc(&tempMat1, sizeof(double) * this->h_rows * this->h_columns);
-  cudaMalloc(&tempMat2, sizeof(double) * this->h_rows * this->h_columns);
-  cudaMemcpy(tempMat1, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToDevice);
-  cudaDeviceSynchronize();
-  // printf("threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
-  unsigned s_mem = sizeof(double) * TILE_DIM_X;
-  maxVal<<<blocks, threads, s_mem>>>(this->d_mat, this->d_rows, this->d_columns, d_max);
+  gpuErrchk(cudaMalloc(&d_out, sizeof(double)));
+  gpuErrchk(cudaMalloc(&d_max, sizeof(double)));
+  cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice);
+  cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice);
+  gpuErrchk(cudaMalloc(&tempMat1, sizeof(double) * this->h_rows * this->h_columns));
+  gpuErrchk(cudaMalloc(&tempMat2, sizeof(double) * this->h_rows * this->h_columns));
+  gpuErrchk(cudaMemcpy(tempMat1, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToDevice));
 
-  cudaDeviceSynchronize();
+  printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
+  // unsigned s_mem = sizeof(double) * TILE_DIM_X;
+
+  // ERROR HERE
+  maxVal<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, d_max);
+  // gpuErrchk(cudaPeekAtLastError());
+  gpuErrchk(cudaDeviceSynchronize());
+  // unsigned s_mem = sizeof(double) * TILE_DIM_X;
   scale<<<blocks, threads>>>(tempMat1, d_max, tempMat2, this->d_rows, this->d_columns, true);
   cudaDeviceSynchronize();
-  // print<<<blocks, threads>>>(tempMat2, this->d_rows, this->d_columns);
-  cudaDeviceSynchronize();
-  dnrm2<<<blocks, threads, s_mem>>>(tempMat2, this->d_rows, this->d_columns, d_out);
+  // print<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns);
+  dnrm2<<<blocks, threads>>>(tempMat2, this->d_rows, this->d_columns, d_out);
   cudaDeviceSynchronize();
   cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost);
   cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost);
   // printf("h_max=%f\n", h_max);
   // printf("h_out=%f\n", h_out);
-  return h_max * sqrt(h_out);
+  assert(!(h_out != h_out));
+  assert(h_out > 0);
+  return std::abs(h_max) * sqrt(h_out);
 };
 
 Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
@@ -570,6 +599,7 @@ Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
   // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
   //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   multiplyNaive<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+  cudaDeviceSynchronize();
   // dim3 grid(1, 1, 1);
   // dim3 block(out.h_rows, out.h_columns, 1);
   // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,

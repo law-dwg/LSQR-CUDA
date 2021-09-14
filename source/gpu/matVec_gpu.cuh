@@ -13,7 +13,7 @@ public:
   unsigned int h_rows, h_columns, *d_rows, *d_columns;
   double *d_mat;
   /** Constructors/Destructors and rule of 5 */
-  Vector_GPU() { // Default Constructor
+  Vector_GPU() : h_rows(0), h_columns(0) { // Default Constructor
     // printf("Vector_GPU Default constructor called\n");
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
@@ -43,7 +43,7 @@ public:
             // printf("Vector_GPU/CPU Copy Constructor was called\n");
         };
   Vector_GPU &operator=(const Vector_GPU &v) { // Copy assignment operator
-    // printf("Vector_GPU Copy assignment operator was called\n");
+    printf("Vector_GPU Copy assignment operator was called\n");
     cudaFree(this->d_mat);
     this->h_rows = v.h_rows;
     this->h_columns = v.h_columns;
@@ -54,7 +54,7 @@ public:
     return *this;
   };
   Vector_GPU(Vector_GPU &&v) noexcept : h_rows(v.h_rows), h_columns(v.h_columns) { // Move constructor
-    // printf("Vector_CPU Move Constructor was called\n");
+    printf("Vector_CPU Move Constructor was called\n");
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
     cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns);

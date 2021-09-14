@@ -18,7 +18,7 @@ public:
     this->mat.resize(p, 0.0);
   };
   Vector_CPU(unsigned int r, unsigned int c) : rows(r), columns(c) {
-    // printf("CONSTRUCTOR 2 CALLED\n");
+    // printf("CONSTRUCTOR 2 \n");
     this->mat.resize(r * c, 0);
   };
   Vector_CPU(unsigned int r, unsigned int c, double *v) : rows(r), columns(c) {

@@ -1,14 +1,14 @@
 #include "cpu/lsqr_cpu.h"
-#include "gpu/lsqr_gpu.cuh"
 #include "cpu/matVec_cpu.h"
+#include "gpu/lsqr_gpu.cuh"
 #include "gpu/matVec_gpu.cuh"
 #include "matrixBuilder.h"
 #include <cassert>
 #include <ctype.h>
+#include <cuda.h>
 #include <filesystem>
 #include <iostream>
 #include <math.h>
-#include <cuda.h>
 #include <set>
 #include <sstream>
 #include <stdio.h>
@@ -17,39 +17,62 @@
 
 namespace fs = std::filesystem;
 
-template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
+template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   // Iteration
-  unsigned int istop, itn;
-  istop = itn = 0;
-  double rho, phi, c, s, theta, tau, res, res1, atol, btol, ddnorm, Anorm, Acond, damp, dnorm, dknorm, res2, xnorm, xxnorm, z, sn2;
-  double ctol, rtol, conlim, cs2, dampsq;
-  rtol = ctol = damp = Anorm = Acond = ddnorm = res2 = xnorm = xxnorm = z = sn2 = 0;
-  cs2 = -1;
-  atol = btol = 1e-8;
-  conlim = 1e8;
-
+  unsigned int istop = 0;
+  unsigned int itn = 0;
+  double rho = 0;
+  double phi = 0;
+  double c = 0;
+  double s = 0;
+  double theta = 0;
+  double tau = 0;
+  double res = 0;
+  double res1 = 0;
+  double ddnorm = 0;
+  double Anorm = 0;
+  double Acond = 0;
+  double damp = 0;
+  double dnorm = 0;
+  double dknorm = 0;
+  double res2 = 0;
+  double xnorm = 0;
+  double xxnorm = 0;
+  double z = 0;
+  double sn2 = 0;
+  double ctol = 0;
+  double rtol = 0;
+  double dampsq = 0;
+  double cs2 = -1;
+  double atol = 1e-8;
+  double btol = 1e-8;
+  double conlim = 1e8;
+  double res_old = 1e10;
+  double epsilon = 1e-16;
+  double alpha = 0;
+  double beta = 0;
+  Vec u, v, w, res_v;
   if (conlim > 0) {
     ctol = 1 / conlim;
   };
   dampsq = damp * damp;
-  double res_old = 1e10;
-  double epsilon = 1e-16;
+
   /*1. Initialize*/
-  Vec u, v, w, res_v;
-  double alpha;
   Vec x(A.getColumns(), 1);
-  double beta = b.Dnrm2();
-  //std::cout << beta << std::endl;
+  printf("itn=%d ln62 Dnrm2\n", itn);
+  beta = b.Dnrm2();
+  // std::cout << beta << std::endl;
   if (beta > 0) {
     u = b * (1 / beta);
     v = A.transpose() * u;
+    printf("itn=%d ln68 Dnrm2\n", itn);
     alpha = v.Dnrm2();
   } else {
     v = x;
     alpha = 0;
   };
-  //std::cout << alpha << std::endl;
-  //v.print();
+  // std::cout << alpha << std::endl;
+  // v.print();
 
   if (alpha > 0) {
     v = v * (1 / alpha);
@@ -67,8 +90,11 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   // 2. For i=1,2,3....
   printf("2. For i=1,2,3....\n");
   do {
+    // printf("itn=%d alpha=%f beta=%f Arnorm=%f res=%f rho=%f u.dnrm2()=%f\n", itn, alpha, beta, Arnorm, res, rho, u.Dnrm2());
+    cudaDeviceSynchronize();
     itn++;
-    Mat A_T = A.transpose();
+    Vec A_T = A.transpose();
+    // printf("itn=%d ln 95 AT.Dnrm2() = %f\n", itn, A_T.Dnrm2());
 
     // 3. Continue the bidiagonialization
     /* Important equations for understanding.
@@ -81,13 +107,33 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     */
     // printf("3. Continue the bidiagonialization\n");
     u = A * v - u * alpha; // ubar_i+1
-    beta = u.Dnrm2();      // beta_i+1 = ||ubar_i+1||
+    cudaDeviceSynchronize();
+    printf("itn=%d ln112 Dnrm2\n", itn);
+    beta = u.Dnrm2(); // beta_i+1 = ||ubar_i+1||
+    cudaDeviceSynchronize();
     if (beta > 0) {
-      u = u * (1 / beta);         // u_i+1
-      v = (A_T * u) - (v * beta); // vbar_i+1
-      alpha = v.Dnrm2();          // alpha_i+1
+      // printf("itn=%d ln110 1/beta = %f beta = %f\n", itn, 1 / beta, beta);
+      // u.print();
+      double betainv = 1 / beta;
+      u = u * (1 / beta); // u_i+1
+      cudaDeviceSynchronize();
+      printf("itn=%d ln121 Dnrm2\n", itn);
+      double test = u.Dnrm2();
+      // printf("itn=%d ln114 u.dnrm2 = %f test = %f\n", itn, u.Dnrm2(), test);
+      cudaDeviceSynchronize();
+      Vec vbeta = v * beta;
+      Vec A_Tu = A_T * u;
+      cudaDeviceSynchronize();
+      v = (A_Tu) - (vbeta); // vbar_i+1
+      cudaDeviceSynchronize();
+      // printf("itn=%d ln116 v.dnrm2 = %f\n", itn, v.Dnrm2());
+      cudaDeviceSynchronize();
+      printf("itn=%d ln131 Dnrm2\n", itn);
+      alpha = v.Dnrm2(); // alpha_i+1
+      cudaDeviceSynchronize();
       if (alpha > 0) {
         v = v * (1 / alpha); // v_i+1
+        cudaDeviceSynchronize();
       }
     }
 
@@ -109,7 +155,12 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     // 5. Update x,w
     // save values for stopping criteria
     Vec dk = w * (1 / rho);
-    dknorm = dk.Dnrm2() * dk.Dnrm2() + ddnorm;
+    cudaDeviceSynchronize();
+    printf("itn=%d ln160 Dnrm2\n", itn);
+    double dknrm2 = dk.Dnrm2();
+    cudaDeviceSynchronize();
+    dknorm = dknrm2 * dknrm2 + ddnorm;
+
     /* Important equations
     x_i = x_i-1 + (phi_i/rho_i) *w_i
     w_i+1 = v_i+1 - (theta_i+1/rho_i)*w_i
@@ -117,15 +168,18 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     x = x + w * (phi / rho);
     w = v - (w * (theta / rho));
     // residual
-    res_v = b - A * x;
-
+    Vec Ax = A * x;
+    cudaDeviceSynchronize();
+    res_v = b - Ax;
+    cudaDeviceSynchronize();
     res = res_v.Dnrm2();
-
+    cudaDeviceSynchronize();
     // 6. Test for convergence
     // printf("6. Test for convergence\n");
     /*Test 1 for convergence
     stop if ||r|| =< btol*||b|| + atol*||A||*||x||
     */
+    printf("itn=%d ln183 Dnrm2s\n");
     if (res <= (btol * b.Dnrm2() + atol * A.Dnrm2() * x.Dnrm2())) {
       istop = 1;
     }
@@ -133,6 +187,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     /*Test 2 for convergence
     stop if ||A_T*r||/||A||*||r|| <= atol
     */
+    printf("itn=%d ln190 Dnrm2\n", itn);
     if (Arnorm / (A.Dnrm2() * res) <= atol) {
       istop = 2;
     }
@@ -166,8 +221,8 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     // printf("istop %i\n", istop);
     // x.print();
     // printf("%f\n", Arnorm);
-  } while (istop == 0 && itn < 2 * A.getColumns());
-  printf("ran through %d iterations \n",itn);
+  } while (istop == 0 && itn < 2 * A.getRows());
+  printf("ran through %d iterations \n", itn);
   return x;
 }
 
@@ -176,16 +231,19 @@ int main() {
   std::string userName;
   std::cout << "Welcome to law-dwg's lsqr cuda and cpp implementations!\nYou can use ctrl+c to kill this program at any time.\n\nBefore we begin, "
                "please type in your name: ";
-  std::cin >> std::ws; // skip leading whitespace
-  std::getline(std::cin, userName);
+  // std::cin >> std::ws; // skip leading whitespace
+  // std::getline(std::cin, userName);
   // start
   std::cout << "Hello " << userName << ", Would you like to build the test matrices from scratch? (y/n): ";
-  bool matBuild = yesNo();
+  // bool matBuild = yesNo();
+  bool matBuild = true;
+
   if (matBuild) { // build matrices
     std::cout << "\nGreat, lets get started\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-1.0: ";
-    sp = valInput<double>(0.0, 1.0);
+    // sp = valInput<double>(0.0, 1.0);
+    sp = 0;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 50; i < 60; i += 10) {
+    for (int i = 10; i < 300; i += 10) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -235,16 +293,17 @@ int main() {
     Vector_CPU b_c(b_rows, b_cols, b.data());
     // A_c.print();
     // b_c.print();
-    Vector_CPU x_c = lsqr<Vector_CPU, Vector_CPU>(A_c, b_c);
-    cudaDeviceSynchronize();
+    Vector_CPU x_c = lsqr<Vector_CPU>(A_c, b_c);
     std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_CPU.txt";
     writeArrayToFile(file_out, x_c.getRows(), x_c.getColumns(), x_c.getMat());
+    printf("---------------------------------------------\n");
+    printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     Vector_GPU A_g(A_rows, A_cols, A.data());
     Vector_GPU b_g(b_rows, b_cols, b.data());
-    Vector_GPU x_g = lsqr<Vector_GPU,Vector_GPU>(A_g, b_g);
+    Vector_GPU x_g = lsqr<Vector_GPU>(A_g, b_g);
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
     Vector_CPU x_g_out = x_g.matDeviceToHost();
     writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
-    
+    cudaDeviceReset();
   }
 }

@@ -161,8 +161,7 @@ double Vector_CPU::Dnrm2() {
       }
     }
   }
-  // printf("sumScaled: %f, magOfLargestEle:
-  // %f\n",sumScaled,magnitudeOfLargestElement);
+  // printf("sumScaled: %f, magOfLargestEle: %f\n", sumScaled, magnitudeOfLargestElement);
   return magnitudeOfLargestElement * sqrt(sumScaled);
 };
 

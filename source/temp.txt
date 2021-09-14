@@ -1,0 +1,1804 @@
+0 ln 42 beta = 129.926903
+2. For i=1,2,3....
+1 ln 83 ualf.dnrm2 = 994.506771
+1 ln 85 AV.dnrm2 = 1184.070388
+1 ln 87 u.drnm2() = 642.634397
+1 ln 89 beta = 642.634397
+1 ln 92 vdrnm2 = 1.000000
+1 ln 95 vdrnm2 = 85.237171
+1 ln 97 alpha=85.237171
+D2N: 1184.070388
+1 ln 102 rho = 1184.070388
+ln 176 END OF iteration=1 res=70.515653
+2 ln 83 ualf.dnrm2 = 85.637900
+2 ln 85 AV.dnrm2 = 106.990973
+2 ln 87 u.drnm2() = 64.784240
+2 ln 89 beta = 64.665980
+2 ln 92 vdrnm2 = 3.582819
+2 ln 95 vdrnm2 = 65.836203
+2 ln 97 alpha=65.836203
+D2N: 96.472689
+2 ln 102 rho = 96.472689
+ln 176 END OF iteration=2 res=47.266889
+3 ln 83 ualf.dnrm2 = 66.345506
+3 ln 85 AV.dnrm2 = 98.809041
+3 ln 87 u.drnm2() = 73.557836
+3 ln 89 beta = 73.587850
+3 ln 92 vdrnm2 = 2.016497
+3 ln 95 vdrnm2 = 64.510799
+3 ln 97 alpha=64.510799
+D2N: 88.329494
+3 ln 102 rho = 88.329494
+ln 176 END OF iteration=3 res=39.383229
+4 ln 83 ualf.dnrm2 = 64.536981
+4 ln 85 AV.dnrm2 = 92.348066
+4 ln 87 u.drnm2() = 66.054165
+4 ln 89 beta = 66.177742
+4 ln 92 vdrnm2 = 1.561669
+4 ln 95 vdrnm2 = 72.483791
+4 ln 97 alpha=72.483791
+D2N: 75.184319
+4 ln 102 rho = 75.184319
+ln 176 END OF iteration=4 res=34.665413
+5 ln 83 ualf.dnrm2 = 72.434938
+5 ln 85 AV.dnrm2 = 99.546682
+5 ln 87 u.drnm2() = 68.285506
+5 ln 89 beta = 68.119082
+5 ln 92 vdrnm2 = 1.037590
+5 ln 95 vdrnm2 = 61.289860
+5 ln 97 alpha=61.289860
+D2N: 76.312368
+5 ln 102 rho = 76.312368
+ln 176 END OF iteration=5 res=30.951534
+6 ln 83 ualf.dnrm2 = 61.368217
+6 ln 85 AV.dnrm2 = 92.740525
+6 ln 87 u.drnm2() = 69.467828
+6 ln 89 beta = 69.348340
+6 ln 92 vdrnm2 = -nan
+6 ln 95 vdrnm2 = 228.197410
+6 ln 97 alpha=228.197410
+D2N: 74.649269
+6 ln 102 rho = 74.649269
+ln 176 END OF iteration=6 res=28.769068
+7 ln 83 ualf.dnrm2 = 228.408541
+7 ln 85 AV.dnrm2 = 1128.828888
+7 ln 87 u.drnm2() = 1105.599652
+7 ln 89 beta = 1105.623896
+7 ln 92 vdrnm2 = -nan
+7 ln 95 vdrnm2 = 366.322322
+7 ln 97 alpha=366.322322
+D2N: 1108.845024
+7 ln 102 rho = 1108.845024
+ln 176 END OF iteration=7 res=28.686207
+8 ln 83 ualf.dnrm2 = 366.280717
+8 ln 85 AV.dnrm2 = 373.700498
+8 ln 87 u.drnm2() = 76.904310
+8 ln 89 beta = 76.881496
+8 ln 92 vdrnm2 = 0.469877
+8 ln 95 vdrnm2 = 65.437475
+8 ln 97 alpha=65.437475
+D2N: 81.787968
+8 ln 102 rho = 81.787968
+ln 176 END OF iteration=8 res=26.981089
+9 ln 83 ualf.dnrm2 = 66.003244
+9 ln 85 AV.dnrm2 = 193.069541
+9 ln 87 u.drnm2() = 182.789087
+9 ln 89 beta = 182.779018
+9 ln 92 vdrnm2 = 1.314783
+9 ln 95 vdrnm2 = 1120.879203
+9 ln 97 alpha=1120.879203
+D2N: 184.137237
+9 ln 102 rho = 184.137237
+ln 176 END OF iteration=9 res=26.784246
+10 ln 83 ualf.dnrm2 = 1121.163713
+10 ln 85 AV.dnrm2 = 1171.799190
+10 ln 87 u.drnm2() = 343.117699
+10 ln 89 beta = 343.147538
+10 ln 92 vdrnm2 = 1.204833
+10 ln 95 vdrnm2 = 69.544676
+10 ln 97 alpha=69.544676
+D2N: 369.074743
+10 ln 102 rho = 369.074743
+ln 176 END OF iteration=10 res=24.922218
+11 ln 83 ualf.dnrm2 = 69.604487
+11 ln 85 AV.dnrm2 = 95.807333
+11 ln 87 u.drnm2() = 77.203427
+11 ln 89 beta = 77.191220
+11 ln 92 vdrnm2 = 1.521818
+11 ln 95 vdrnm2 = 628.007523
+11 ln 97 alpha=628.007523
+D2N: 81.327314
+11 ln 102 rho = 81.327314
+ln 176 END OF iteration=11 res=23.665706
+12 ln 83 ualf.dnrm2 = 627.710225
+12 ln 85 AV.dnrm2 = 1179.587824
+12 ln 87 u.drnm2() = 999.193831
+12 ln 89 beta = 999.203206
+12 ln 92 vdrnm2 = 1.695008
+12 ln 95 vdrnm2 = 123.990728
+12 ln 97 alpha=123.990728
+D2N: 1018.578710
+12 ln 102 rho = 1018.578710
+ln 176 END OF iteration=12 res=23.218808
+13 ln 83 ualf.dnrm2 = 124.007420
+13 ln 85 AV.dnrm2 = 137.822732
+13 ln 87 u.drnm2() = 68.907335
+13 ln 89 beta = 68.853612
+13 ln 92 vdrnm2 = 1.576036
+13 ln 95 vdrnm2 = 117.970573
+13 ln 97 alpha=117.970573
+D2N: 72.939270
+13 ln 102 rho = 72.939270
+ln 176 END OF iteration=13 res=21.927551
+14 ln 83 ualf.dnrm2 = 118.392563
+14 ln 85 AV.dnrm2 = 935.210086
+14 ln 87 u.drnm2() = 928.292098
+14 ln 89 beta = 928.296141
+14 ln 92 vdrnm2 = 1.478378
+14 ln 95 vdrnm2 = 729.309595
+14 ln 97 alpha=729.309595
+D2N: 929.112034
+14 ln 102 rho = 929.112034
+ln 176 END OF iteration=14 res=21.908446
+15 ln 83 ualf.dnrm2 = 729.352056
+15 ln 85 AV.dnrm2 = 734.011399
+15 ln 87 u.drnm2() = 88.764309
+15 ln 89 beta = 88.741149
+15 ln 92 vdrnm2 = 1.509074
+15 ln 95 vdrnm2 = 69.026580
+15 ln 97 alpha=69.026580
+D2N: 93.854874
+15 ln 102 rho = 93.854874
+ln 176 END OF iteration=15 res=20.725192
+16 ln 83 ualf.dnrm2 = 68.968081
+16 ln 85 AV.dnrm2 = 189.113574
+16 ln 87 u.drnm2() = 179.053249
+16 ln 89 beta = 179.046933
+16 ln 92 vdrnm2 = 1.170708
+16 ln 95 vdrnm2 = 1095.697424
+16 ln 97 alpha=1095.697424
+D2N: 180.451849
+16 ln 102 rho = 180.451849
+ln 176 END OF iteration=16 res=20.565389
+17 ln 83 ualf.dnrm2 = 1095.482691
+17 ln 85 AV.dnrm2 = 1172.775712
+17 ln 87 u.drnm2() = 418.936838
+17 ln 89 beta = 418.957649
+17 ln 92 vdrnm2 = 1.105220
+17 ln 95 vdrnm2 = 71.467051
+17 ln 97 alpha=71.467051
+D2N: 440.620761
+17 ln 102 rho = 440.620761
+ln 176 END OF iteration=17 res=19.562644
+18 ln 83 ualf.dnrm2 = 71.353010
+18 ln 85 AV.dnrm2 = 91.843304
+18 ln 87 u.drnm2() = 59.945112
+18 ln 89 beta = 60.009448
+18 ln 92 vdrnm2 = 1.477887
+18 ln 95 vdrnm2 = 129.561651
+18 ln 97 alpha=129.561651
+D2N: 63.961020
+18 ln 102 rho = 63.961020
+ln 176 END OF iteration=18 res=18.361718
+19 ln 83 ualf.dnrm2 = 129.695543
+19 ln 85 AV.dnrm2 = 1013.449879
+19 ln 87 u.drnm2() = 1005.213357
+19 ln 89 beta = 1005.208823
+19 ln 92 vdrnm2 = 1.412108
+19 ln 95 vdrnm2 = 616.626156
+19 ln 97 alpha=616.626156
+D2N: 1006.208152
+19 ln 102 rho = 1006.208152
+ln 176 END OF iteration=19 res=18.343582
+20 ln 83 ualf.dnrm2 = 616.656911
+20 ln 85 AV.dnrm2 = 620.874360
+20 ln 87 u.drnm2() = 73.013387
+20 ln 89 beta = 72.926346
+20 ln 92 vdrnm2 = 1.380569
+20 ln 95 vdrnm2 = 65.064341
+20 ln 97 alpha=65.064341
+D2N: 77.930309
+20 ln 102 rho = 77.930309
+ln 176 END OF iteration=20 res=17.173093
+21 ln 83 ualf.dnrm2 = 64.176271
+21 ln 85 AV.dnrm2 = 88.547615
+21 ln 87 u.drnm2() = 60.896839
+21 ln 89 beta = 60.958804
+21 ln 92 vdrnm2 = 1.619154
+21 ln 95 vdrnm2 = 558.403900
+21 ln 97 alpha=558.403900
+D2N: 65.131997
+21 ln 102 rho = 65.131997
+ln 176 END OF iteration=21 res=16.078224
+22 ln 83 ualf.dnrm2 = 557.876458
+22 ln 85 AV.dnrm2 = 1180.541789
+22 ln 87 u.drnm2() = 1039.964320
+22 ln 89 beta = 1039.932907
+22 ln 92 vdrnm2 = 1.821334
+22 ln 95 vdrnm2 = 111.417581
+22 ln 97 alpha=111.417581
+D2N: 1058.365763
+22 ln 102 rho = 1058.365763
+ln 176 END OF iteration=22 res=15.798982
+23 ln 83 ualf.dnrm2 = 111.432787
+23 ln 85 AV.dnrm2 = 128.316491
+23 ln 87 u.drnm2() = 55.940372
+23 ln 89 beta = 55.926862
+23 ln 92 vdrnm2 = 1.768010
+23 ln 95 vdrnm2 = 114.449167
+23 ln 97 alpha=114.449167
+D2N: 59.636037
+23 ln 102 rho = 59.636037
+ln 176 END OF iteration=23 res=14.817104
+24 ln 83 ualf.dnrm2 = 114.767391
+24 ln 85 AV.dnrm2 = 1027.210003
+24 ln 87 u.drnm2() = 1020.399982
+24 ln 89 beta = 1020.401707
+24 ln 92 vdrnm2 = 1.909330
+24 ln 95 vdrnm2 = 592.427603
+24 ln 97 alpha=592.427603
+D2N: 1021.174989
+24 ln 102 rho = 1021.174989
+ln 176 END OF iteration=24 res=14.805870
+25 ln 83 ualf.dnrm2 = 592.401205
+25 ln 85 AV.dnrm2 = 597.378840
+25 ln 87 u.drnm2() = 71.360698
+25 ln 89 beta = 71.383808
+25 ln 92 vdrnm2 = 1.894183
+25 ln 95 vdrnm2 = 61.217670
+25 ln 97 alpha=61.217670
+D2N: 75.013263
+25 ln 102 rho = 75.013263
+ln 176 END OF iteration=25 res=14.088090
+26 ln 83 ualf.dnrm2 = 61.980021
+26 ln 85 AV.dnrm2 = 241.761927
+26 ln 87 u.drnm2() = 232.147548
+26 ln 89 beta = 232.159788
+26 ln 92 vdrnm2 = 1.947652
+26 ln 95 vdrnm2 = 1111.146511
+26 ln 97 alpha=1111.146511
+D2N: 232.920681
+26 ln 102 rho = 232.920681
+ln 176 END OF iteration=26 res=14.041920
+27 ln 83 ualf.dnrm2 = 1110.887677
+27 ln 85 AV.dnrm2 = 1163.738663
+27 ln 87 u.drnm2() = 343.967248
+27 ln 89 beta = 343.929880
+27 ln 92 vdrnm2 = 1.914603
+27 ln 95 vdrnm2 = 68.599770
+27 ln 97 alpha=68.599770
+D2N: 355.444982
+27 ln 102 rho = 355.444982
+ln 176 END OF iteration=27 res=13.585408
+28 ln 83 ualf.dnrm2 = 68.344587
+28 ln 85 AV.dnrm2 = 118.251896
+28 ln 87 u.drnm2() = 85.809507
+28 ln 89 beta = 85.819940
+28 ln 92 vdrnm2 = 1.917010
+28 ln 95 vdrnm2 = 676.413314
+28 ln 97 alpha=676.413314
+D2N: 87.550171
+28 ln 102 rho = 87.550171
+ln 176 END OF iteration=28 res=13.315541
+29 ln 83 ualf.dnrm2 = 675.833970
+29 ln 85 AV.dnrm2 = 1178.749771
+29 ln 87 u.drnm2() = 963.962610
+29 ln 89 beta = 963.957891
+29 ln 92 vdrnm2 = 1.800585
+29 ln 95 vdrnm2 = 134.999393
+29 ln 97 alpha=134.999393
+D2N: 973.201113
+29 ln 102 rho = 973.201113
+ln 176 END OF iteration=29 res=13.188212
+30 ln 83 ualf.dnrm2 = 135.052475
+30 ln 85 AV.dnrm2 = 164.300147
+30 ln 87 u.drnm2() = 72.622831
+30 ln 89 beta = 72.497933
+30 ln 92 vdrnm2 = 1.812382
+30 ln 95 vdrnm2 = 264.711894
+30 ln 97 alpha=264.711894
+D2N: 74.836463
+30 ln 102 rho = 74.836463
+ln 176 END OF iteration=30 res=12.774189
+31 ln 83 ualf.dnrm2 = 265.150810
+31 ln 85 AV.dnrm2 = 1153.607570
+31 ln 87 u.drnm2() = 1121.360124
+31 ln 89 beta = 1121.389111
+31 ln 92 vdrnm2 = 1.927939
+31 ln 95 vdrnm2 = 277.054771
+31 ln 97 alpha=277.054771
+D2N: 1123.309590
+31 ln 102 rho = 1123.309590
+ln 176 END OF iteration=31 res=12.752289
+32 ln 83 ualf.dnrm2 = 277.029026
+32 ln 85 AV.dnrm2 = 288.937786
+32 ln 87 u.drnm2() = 61.519325
+32 ln 89 beta = 61.545880
+32 ln 92 vdrnm2 = 1.954952
+32 ln 95 vdrnm2 = 122.713162
+32 ln 97 alpha=122.713162
+D2N: 63.640678
+32 ln 102 rho = 63.640678
+ln 176 END OF iteration=32 res=12.331784
+33 ln 83 ualf.dnrm2 = 123.145995
+33 ln 85 AV.dnrm2 = 1010.020952
+33 ln 87 u.drnm2() = 1001.135182
+33 ln 89 beta = 1001.131194
+33 ln 92 vdrnm2 = 1.989762
+33 ln 95 vdrnm2 = 622.070098
+33 ln 97 alpha=622.070098
+D2N: 1001.618034
+33 ln 102 rho = 1001.618034
+ln 176 END OF iteration=33 res=12.325784
+34 ln 83 ualf.dnrm2 = 622.038506
+34 ln 85 AV.dnrm2 = 627.622662
+34 ln 87 u.drnm2() = 64.727716
+34 ln 89 beta = 64.827133
+34 ln 92 vdrnm2 = 2.000651
+34 ln 95 vdrnm2 = 74.273326
+34 ln 97 alpha=74.273326
+D2N: 67.665670
+34 ln 102 rho = 67.665670
+ln 176 END OF iteration=34 res=11.808500
+35 ln 83 ualf.dnrm2 = 74.476367
+35 ln 85 AV.dnrm2 = 657.908855
+35 ln 87 u.drnm2() = 651.629262
+35 ln 89 beta = 651.631309
+35 ln 92 vdrnm2 = 2.009963
+35 ln 95 vdrnm2 = 981.953963
+35 ln 97 alpha=981.953963
+D2N: 651.978900
+35 ln 102 rho = 651.978900
+ln 176 END OF iteration=35 res=11.802204
+36 ln 83 ualf.dnrm2 = 981.870613
+36 ln 85 AV.dnrm2 = 991.189671
+36 ln 87 u.drnm2() = 124.212093
+36 ln 89 beta = 124.164016
+36 ln 92 vdrnm2 = 2.020812
+36 ln 95 vdrnm2 = 65.624430
+36 ln 97 alpha=65.624430
+D2N: 128.236329
+36 ln 102 rho = 128.236329
+ln 176 END OF iteration=36 res=11.427519
+37 ln 83 ualf.dnrm2 = 64.920754
+37 ln 85 AV.dnrm2 = 280.716461
+37 ln 87 u.drnm2() = 267.442025
+37 ln 89 beta = 267.468283
+37 ln 92 vdrnm2 = 2.051922
+37 ln 95 vdrnm2 = 1114.376275
+37 ln 97 alpha=1114.376275
+D2N: 267.971007
+37 ln 102 rho = 267.971007
+ln 176 END OF iteration=37 res=11.406089
+38 ln 83 ualf.dnrm2 = 1114.155706
+38 ln 85 AV.dnrm2 = 1156.146469
+38 ln 87 u.drnm2() = 302.420012
+38 ln 89 beta = 302.325897
+38 ln 92 vdrnm2 = 2.069629
+38 ln 95 vdrnm2 = 79.616205
+38 ln 97 alpha=79.616205
+D2N: 309.929085
+38 ln 102 rho = 309.929085
+ln 176 END OF iteration=38 res=11.126269
+39 ln 83 ualf.dnrm2 = 79.839842
+39 ln 85 AV.dnrm2 = 157.123541
+39 ln 87 u.drnm2() = 119.993651
+39 ln 89 beta = 120.000577
+39 ln 92 vdrnm2 = 2.049443
+39 ln 95 vdrnm2 = 974.333674
+39 ln 97 alpha=974.333674
+D2N: 121.273773
+39 ln 102 rho = 121.273773
+ln 176 END OF iteration=39 res=11.009409
+40 ln 83 ualf.dnrm2 = 974.151934
+40 ln 85 AV.dnrm2 = 1179.897990
+40 ln 87 u.drnm2() = 662.273287
+40 ln 89 beta = 662.266286
+40 ln 92 vdrnm2 = 2.061641
+40 ln 95 vdrnm2 = 81.539560
+40 ln 97 alpha=81.539560
+D2N: 677.070933
+40 ln 102 rho = 677.070933
+ln 176 END OF iteration=40 res=10.768444
+41 ln 83 ualf.dnrm2 = 81.509146
+41 ln 85 AV.dnrm2 = 131.237054
+41 ln 87 u.drnm2() = 77.734459
+41 ln 89 beta = 77.732987
+41 ln 92 vdrnm2 = 1.979196
+41 ln 95 vdrnm2 = 755.766615
+41 ln 97 alpha=755.766615
+D2N: 79.561271
+41 ln 102 rho = 79.561271
+ln 176 END OF iteration=41 res=10.520770
+42 ln 83 ualf.dnrm2 = 755.899530
+42 ln 85 AV.dnrm2 = 1182.057946
+42 ln 87 u.drnm2() = 906.540188
+42 ln 89 beta = 906.543609
+42 ln 92 vdrnm2 = 1.958183
+42 ln 95 vdrnm2 = 86.455170
+42 ln 97 alpha=86.455170
+D2N: 920.744686
+42 ln 102 rho = 920.744686
+ln 176 END OF iteration=42 res=10.358374
+43 ln 83 ualf.dnrm2 = 86.485212
+43 ln 85 AV.dnrm2 = 132.619256
+43 ln 87 u.drnm2() = 78.379783
+43 ln 89 beta = 78.275584
+43 ln 92 vdrnm2 = 1.877351
+43 ln 95 vdrnm2 = 456.219272
+43 ln 97 alpha=456.219272
+D2N: 79.723612
+43 ln 102 rho = 79.723612
+ln 176 END OF iteration=43 res=10.170256
+44 ln 83 ualf.dnrm2 = 456.560397
+44 ln 85 AV.dnrm2 = 1174.148783
+44 ln 87 u.drnm2() = 1080.181545
+44 ln 89 beta = 1080.226856
+44 ln 92 vdrnm2 = 1.827849
+44 ln 95 vdrnm2 = 169.844904
+44 ln 97 alpha=169.844904
+D2N: 1083.689157
+44 ln 102 rho = 1083.689157
+ln 176 END OF iteration=44 res=10.137797
+45 ln 83 ualf.dnrm2 = 169.848901
+45 ln 85 AV.dnrm2 = 193.815963
+45 ln 87 u.drnm2() = 74.243174
+45 ln 89 beta = 74.174840
+45 ln 92 vdrnm2 = 1.792848
+45 ln 95 vdrnm2 = 174.287760
+45 ln 97 alpha=174.287760
+D2N: 75.405186
+45 ln 102 rho = 75.405186
+ln 176 END OF iteration=45 res=9.972726
+46 ln 83 ualf.dnrm2 = 174.653024
+46 ln 85 AV.dnrm2 = 1108.365154
+46 ln 87 u.drnm2() = 1093.168777
+46 ln 89 beta = 1093.181023
+46 ln 92 vdrnm2 = 1.745077
+46 ln 95 vdrnm2 = 422.924444
+46 ln 97 alpha=422.924444
+D2N: 1093.630618
+46 ln 102 rho = 1093.630618
+ln 176 END OF iteration=46 res=9.968639
+47 ln 83 ualf.dnrm2 = 422.909967
+47 ln 85 AV.dnrm2 = 431.931427
+47 ln 87 u.drnm2() = 69.307890
+47 ln 89 beta = 69.237991
+47 ln 92 vdrnm2 = 1.734861
+47 ln 95 vdrnm2 = 84.485726
+47 ln 97 alpha=84.485726
+D2N: 70.291770
+47 ln 102 rho = 70.291770
+ln 176 END OF iteration=47 res=9.819833
+48 ln 83 ualf.dnrm2 = 85.212332
+48 ln 85 AV.dnrm2 = 835.477912
+48 ln 87 u.drnm2() = 829.488199
+48 ln 89 beta = 829.490327
+48 ln 92 vdrnm2 = 1.688820
+48 ln 95 vdrnm2 = 840.793104
+48 ln 97 alpha=840.793104
+D2N: 829.618354
+48 ln 102 rho = 829.618354
+ln 176 END OF iteration=48 res=9.818326
+49 ln 83 ualf.dnrm2 = 840.737331
+49 ln 85 AV.dnrm2 = 845.671666
+49 ln 87 u.drnm2() = 73.489143
+49 ln 89 beta = 73.549222
+49 ln 92 vdrnm2 = 1.683220
+49 ln 95 vdrnm2 = 65.067017
+49 ln 97 alpha=65.067017
+D2N: 75.017721
+49 ln 102 rho = 75.017721
+ln 176 END OF iteration=49 res=9.626902
+50 ln 83 ualf.dnrm2 = 65.040828
+50 ln 85 AV.dnrm2 = 513.433923
+50 ln 87 u.drnm2() = 506.486704
+50 ln 89 beta = 506.485265
+50 ln 92 vdrnm2 = 1.732893
+50 ln 95 vdrnm2 = 1063.231958
+50 ln 97 alpha=1063.231958
+D2N: 506.647268
+50 ln 102 rho = 506.647268
+ln 176 END OF iteration=50 res=9.623832
+51 ln 83 ualf.dnrm2 = 1063.118404
+51 ln 85 AV.dnrm2 = 1072.271547
+51 ln 87 u.drnm2() = 127.440706
+51 ln 89 beta = 127.454410
+51 ln 92 vdrnm2 = 1.725001
+51 ln 95 vdrnm2 = 67.612203
+51 ln 97 alpha=67.612203
+D2N: 130.259179
+51 ln 102 rho = 130.259179
+ln 176 END OF iteration=51 res=9.417164
+52 ln 83 ualf.dnrm2 = 67.539252
+52 ln 85 AV.dnrm2 = 273.882635
+52 ln 87 u.drnm2() = 259.155578
+52 ln 89 beta = 259.117870
+52 ln 92 vdrnm2 = 1.696897
+52 ln 95 vdrnm2 = 1115.043608
+52 ln 97 alpha=1115.043608
+D2N: 259.493384
+52 ln 102 rho = 259.493384
+ln 176 END OF iteration=52 res=9.403574
+53 ln 83 ualf.dnrm2 = 1114.906004
+53 ln 85 AV.dnrm2 = 1158.048415
+53 ln 87 u.drnm2() = 306.783377
+53 ln 89 beta = 306.931351
+53 ln 92 vdrnm2 = 1.687016
+53 ln 95 vdrnm2 = 63.286029
+53 ln 97 alpha=63.286029
+D2N: 312.734205
+53 ln 102 rho = 312.734205
+ln 176 END OF iteration=53 res=9.229419
+54 ln 83 ualf.dnrm2 = 63.146279
+54 ln 85 AV.dnrm2 = 162.937767
+54 ln 87 u.drnm2() = 136.901872
+54 ln 89 beta = 136.893328
+54 ln 92 vdrnm2 = 1.778450
+54 ln 95 vdrnm2 = 1018.639220
+54 ln 97 alpha=1018.639220
+D2N: 137.430114
+54 ln 102 rho = 137.430114
+ln 176 END OF iteration=54 res=9.193392
+55 ln 83 ualf.dnrm2 = 1018.293040
+55 ln 85 AV.dnrm2 = 1178.133570
+55 ln 87 u.drnm2() = 588.089897
+55 ln 89 beta = 588.105860
+55 ln 92 vdrnm2 = 1.755797
+55 ln 95 vdrnm2 = 90.581723
+55 ln 97 alpha=90.581723
+D2N: 594.943998
+55 ln 102 rho = 594.943998
+ln 176 END OF iteration=55 res=9.087706
+56 ln 83 ualf.dnrm2 = 90.683078
+56 ln 85 AV.dnrm2 = 149.453172
+56 ln 87 u.drnm2() = 94.441364
+56 ln 89 beta = 94.427634
+56 ln 92 vdrnm2 = 1.773830
+56 ln 95 vdrnm2 = 724.465221
+56 ln 97 alpha=724.465221
+D2N: 95.415447
+56 ln 102 rho = 95.415447
+ln 176 END OF iteration=56 res=8.993578
+57 ln 83 ualf.dnrm2 = 724.421959
+57 ln 85 AV.dnrm2 = 1180.992543
+57 ln 87 u.drnm2() = 929.868202
+57 ln 89 beta = 929.880618
+57 ln 92 vdrnm2 = 1.765410
+57 ln 95 vdrnm2 = 98.445211
+57 ln 97 alpha=98.445211
+D2N: 935.675695
+57 ln 102 rho = 935.675695
+ln 176 END OF iteration=57 res=8.937831
+58 ln 83 ualf.dnrm2 = 98.379737
+58 ln 85 AV.dnrm2 = 141.129999
+58 ln 87 u.drnm2() = 70.822898
+58 ln 89 beta = 70.787625
+58 ln 92 vdrnm2 = 1.798874
+58 ln 95 vdrnm2 = 563.743428
+58 ln 97 alpha=563.743428
+D2N: 71.627952
+58 ln 102 rho = 71.627952
+ln 176 END OF iteration=58 res=8.832800
+59 ln 83 ualf.dnrm2 = 563.606974
+59 ln 85 AV.dnrm2 = 1178.376691
+59 ln 87 u.drnm2() = 1032.167168
+59 ln 89 beta = 1032.187643
+59 ln 92 vdrnm2 = 1.777284
+59 ln 95 vdrnm2 = 136.705595
+59 ln 97 alpha=136.705595
+D2N: 1035.772418
+59 ln 102 rho = 1035.772418
+ln 176 END OF iteration=59 res=8.802154
+60 ln 83 ualf.dnrm2 = 136.751193
+60 ln 85 AV.dnrm2 = 165.195030
+60 ln 87 u.drnm2() = 55.662852
+60 ln 89 beta = 55.668033
+60 ln 92 vdrnm2 = 1.796522
+60 ln 95 vdrnm2 = 488.238218
+60 ln 97 alpha=488.238218
+D2N: 56.816072
+60 ln 102 rho = 56.816072
+ln 176 END OF iteration=60 res=8.624168
+61 ln 83 ualf.dnrm2 = 488.788936
+61 ln 85 AV.dnrm2 = 1178.591498
+61 ln 87 u.drnm2() = 1070.425795
+61 ln 89 beta = 1070.424059
+61 ln 92 vdrnm2 = 1.842428
+61 ln 95 vdrnm2 = 132.364019
+61 ln 97 alpha=132.364019
+D2N: 1074.869168
+61 ln 102 rho = 1074.869168
+ln 176 END OF iteration=61 res=8.588537
+62 ln 83 ualf.dnrm2 = 132.351360
+62 ln 85 AV.dnrm2 = 161.556663
+62 ln 87 u.drnm2() = 65.594243
+62 ln 89 beta = 65.714107
+62 ln 92 vdrnm2 = 1.875899
+62 ln 95 vdrnm2 = 325.440293
+62 ln 97 alpha=325.440293
+D2N: 66.805341
+62 ln 102 rho = 66.805341
+ln 176 END OF iteration=62 res=8.447770
+63 ln 83 ualf.dnrm2 = 324.904506
+63 ln 85 AV.dnrm2 = 1162.716750
+63 ln 87 u.drnm2() = 1114.182411
+63 ln 89 beta = 1114.150933
+63 ln 92 vdrnm2 = 1.752513
+63 ln 95 vdrnm2 = 236.708757
+63 ln 97 alpha=236.708757
+D2N: 1115.689953
+63 ln 102 rho = 1115.689953
+ln 176 END OF iteration=63 res=8.436027
+64 ln 83 ualf.dnrm2 = 236.700842
+64 ln 85 AV.dnrm2 = 254.930518
+64 ln 87 u.drnm2() = 62.240517
+64 ln 89 beta = 62.158391
+64 ln 92 vdrnm2 = 1.756771
+64 ln 95 vdrnm2 = 221.606710
+64 ln 97 alpha=221.606710
+D2N: 63.388808
+64 ln 102 rho = 63.388808
+ln 176 END OF iteration=64 res=8.271278
+65 ln 83 ualf.dnrm2 = 221.962008
+65 ln 85 AV.dnrm2 = 1136.217032
+65 ln 87 u.drnm2() = 1112.184200
+65 ln 89 beta = 1112.200215
+65 ln 92 vdrnm2 = 1.796172
+65 ln 95 vdrnm2 = 341.795347
+65 ln 97 alpha=341.795347
+D2N: 1113.048656
+65 ln 102 rho = 1113.048656
+ln 176 END OF iteration=65 res=8.264944
+66 ln 83 ualf.dnrm2 = 341.786536
+66 ln 85 AV.dnrm2 = 354.447650
+66 ln 87 u.drnm2() = 64.148063
+66 ln 89 beta = 64.172889
+66 ln 92 vdrnm2 = 1.807431
+66 ln 95 vdrnm2 = 148.420411
+66 ln 97 alpha=148.420411
+D2N: 65.545360
+66 ln 102 rho = 65.545360
+ln 176 END OF iteration=66 res=8.091045
+67 ln 83 ualf.dnrm2 = 148.660506
+67 ln 85 AV.dnrm2 = 1030.824413
+67 ln 87 u.drnm2() = 1017.827792
+67 ln 89 beta = 1017.826751
+67 ln 92 vdrnm2 = 1.800329
+67 ln 95 vdrnm2 = 587.575075
+67 ln 97 alpha=587.575075
+D2N: 1018.275091
+67 ln 102 rho = 1018.275091
+ln 176 END OF iteration=67 res=8.087465
+68 ln 83 ualf.dnrm2 = 587.551077
+68 ln 85 AV.dnrm2 = 597.202885
+68 ln 87 u.drnm2() = 82.983092
+68 ln 89 beta = 82.970577
+68 ln 92 vdrnm2 = 1.807267
+68 ln 95 vdrnm2 = 94.632469
+68 ln 97 alpha=94.632469
+D2N: 84.782475
+68 ln 102 rho = 84.782475
+ln 176 END OF iteration=68 res=7.913579
+69 ln 83 ualf.dnrm2 = 95.379892
+69 ln 85 AV.dnrm2 = 701.807891
+69 ln 87 u.drnm2() = 692.159739
+69 ln 89 beta = 692.168194
+69 ln 92 vdrnm2 = 1.761022
+69 ln 95 vdrnm2 = 954.920897
+69 ln 97 alpha=954.920897
+D2N: 692.441686
+69 ln 102 rho = 692.441686
+ln 176 END OF iteration=69 res=7.910431
+70 ln 83 ualf.dnrm2 = 954.839802
+70 ln 85 AV.dnrm2 = 961.645472
+70 ln 87 u.drnm2() = 91.276728
+70 ln 89 beta = 91.172402
+70 ln 92 vdrnm2 = 1.768119
+70 ln 95 vdrnm2 = 70.165132
+70 ln 97 alpha=70.165132
+D2N: 95.039918
+70 ln 102 rho = 95.039918
+ln 176 END OF iteration=70 res=7.586711
+71 ln 83 ualf.dnrm2 = 70.695190
+71 ln 85 AV.dnrm2 = 551.297641
+71 ln 87 u.drnm2() = 542.534762
+71 ln 89 beta = 542.523210
+71 ln 92 vdrnm2 = 1.843881
+71 ln 95 vdrnm2 = 1042.558323
+71 ln 97 alpha=1042.558323
+D2N: 542.884852
+71 ln 102 rho = 542.884852
+ln 176 END OF iteration=71 res=7.581636
+72 ln 83 ualf.dnrm2 = 1042.461899
+72 ln 85 AV.dnrm2 = 1055.104335
+72 ln 87 u.drnm2() = 146.536409
+72 ln 89 beta = 146.677921
+72 ln 92 vdrnm2 = 1.851394
+72 ln 95 vdrnm2 = 58.886319
+72 ln 97 alpha=58.886319
+D2N: 151.532302
+72 ln 102 rho = 151.532302
+ln 176 END OF iteration=72 res=7.337572
+73 ln 83 ualf.dnrm2 = 58.996279
+73 ln 85 AV.dnrm2 = 401.652922
+73 ln 87 u.drnm2() = 391.044630
+73 ln 89 beta = 391.020609
+73 ln 92 vdrnm2 = 1.794113
+73 ln 95 vdrnm2 = 1096.940183
+73 ln 97 alpha=1096.940183
+D2N: 391.300050
+73 ln 102 rho = 391.300050
+ln 176 END OF iteration=73 res=7.332302
+74 ln 83 ualf.dnrm2 = 1096.817932
+74 ln 85 AV.dnrm2 = 1120.662320
+74 ln 87 u.drnm2() = 217.628123
+74 ln 89 beta = 217.757419
+74 ln 92 vdrnm2 = 1.801071
+74 ln 95 vdrnm2 = 75.089853
+74 ln 97 alpha=75.089853
+D2N: 221.667058
+74 ln 102 rho = 221.667058
+ln 176 END OF iteration=74 res=7.202176
+75 ln 83 ualf.dnrm2 = 74.683388
+75 ln 85 AV.dnrm2 = 242.741030
+75 ln 87 u.drnm2() = 218.743829
+75 ln 89 beta = 218.760191
+75 ln 92 vdrnm2 = 1.761260
+75 ln 95 vdrnm2 = 1105.905956
+75 ln 97 alpha=1105.905956
+D2N: 219.210319
+75 ln 102 rho = 219.210319
+ln 176 END OF iteration=75 res=7.187282
+76 ln 83 ualf.dnrm2 = 1105.658014
+76 ln 85 AV.dnrm2 = 1166.309298
+76 ln 87 u.drnm2() = 362.363126
+76 ln 89 beta = 362.311016
+76 ln 92 vdrnm2 = 1.774649
+76 ln 95 vdrnm2 = 60.685508
+76 ln 97 alpha=60.685508
+D2N: 369.170511
+76 ln 102 rho = 369.170511
+ln 176 END OF iteration=76 res=7.052749
+77 ln 83 ualf.dnrm2 = 60.609399
+77 ln 85 AV.dnrm2 = 212.779099
+77 ln 87 u.drnm2() = 187.232064
+77 ln 89 beta = 187.226879
+77 ln 92 vdrnm2 = 1.761633
+77 ln 95 vdrnm2 = 1116.077132
+77 ln 97 alpha=1116.077132
+D2N: 187.588617
+77 ln 102 rho = 187.588617
+ln 176 END OF iteration=77 res=7.039043
+78 ln 83 ualf.dnrm2 = 1115.875118
+78 ln 85 AV.dnrm2 = 1171.228573
+78 ln 87 u.drnm2() = 345.201744
+78 ln 89 beta = 345.224703
+78 ln 92 vdrnm2 = 1.770585
+78 ln 95 vdrnm2 = 53.152635
+78 ln 97 alpha=53.152635
+D2N: 352.107221
+78 ln 102 rho = 352.107221
+ln 176 END OF iteration=78 res=6.900311
+79 ln 83 ualf.dnrm2 = 53.310000
+79 ln 85 AV.dnrm2 = 271.246109
+79 ln 87 u.drnm2() = 251.728517
+79 ln 89 beta = 251.734288
+79 ln 92 vdrnm2 = 1.717095
+79 ln 95 vdrnm2 = 1108.226555
+79 ln 97 alpha=1108.226555
+D2N: 251.951421
+79 ln 102 rho = 251.951421
+ln 176 END OF iteration=79 res=6.894311
+80 ln 83 ualf.dnrm2 = 1107.949146
+80 ln 85 AV.dnrm2 = 1159.852505
+80 ln 87 u.drnm2() = 330.283644
+80 ln 89 beta = 330.267562
+80 ln 92 vdrnm2 = 1.728066
+80 ln 95 vdrnm2 = 68.209097
+80 ln 97 alpha=68.209097
+D2N: 333.455598
+80 ln 102 rho = 333.455598
+ln 176 END OF iteration=80 res=6.827784
+81 ln 83 ualf.dnrm2 = 67.809662
+81 ln 85 AV.dnrm2 = 269.463122
+81 ln 87 u.drnm2() = 243.534580
+81 ln 89 beta = 243.514786
+81 ln 92 vdrnm2 = 1.746668
+81 ln 95 vdrnm2 = 1103.292506
+81 ln 97 alpha=1103.292506
+D2N: 243.696506
+81 ln 102 rho = 243.696506
+ln 176 END OF iteration=81 res=6.822645
+82 ln 83 ualf.dnrm2 = 1103.092394
+82 ln 85 AV.dnrm2 = 1161.660259
+82 ln 87 u.drnm2() = 350.781832
+82 ln 89 beta = 350.851829
+82 ln 92 vdrnm2 = 1.753994
+82 ln 95 vdrnm2 = 72.932322
+82 ln 97 alpha=72.932322
+D2N: 353.428482
+82 ln 102 rho = 353.428482
+ln 176 END OF iteration=82 res=6.772413
+83 ln 83 ualf.dnrm2 = 73.051447
+83 ln 85 AV.dnrm2 = 262.539745
+83 ln 87 u.drnm2() = 232.492990
+83 ln 89 beta = 232.477487
+83 ln 92 vdrnm2 = 1.740166
+83 ln 95 vdrnm2 = 1122.447259
+83 ln 97 alpha=1122.447259
+D2N: 232.643626
+83 ln 102 rho = 232.643626
+ln 176 END OF iteration=83 res=6.767528
+84 ln 83 ualf.dnrm2 = 1122.343934
+84 ln 85 AV.dnrm2 = 1163.091260
+84 ln 87 u.drnm2() = 288.299065
+84 ln 89 beta = 288.363020
+84 ln 92 vdrnm2 = 1.743696
+84 ln 95 vdrnm2 = 79.908479
+84 ln 97 alpha=79.908479
+D2N: 291.465354
+84 ln 102 rho = 291.465354
+ln 176 END OF iteration=84 res=6.694694
+85 ln 83 ualf.dnrm2 = 79.823886
+85 ln 85 AV.dnrm2 = 298.054843
+85 ln 87 u.drnm2() = 269.322139
+85 ln 89 beta = 269.350282
+85 ln 92 vdrnm2 = 1.670216
+85 ln 95 vdrnm2 = 1105.133412
+85 ln 97 alpha=1105.133412
+D2N: 269.601153
+85 ln 102 rho = 269.601153
+ln 176 END OF iteration=85 res=6.688387
+86 ln 83 ualf.dnrm2 = 1104.900980
+86 ln 85 AV.dnrm2 = 1155.990354
+86 ln 87 u.drnm2() = 323.461969
+86 ln 89 beta = 323.362248
+86 ln 92 vdrnm2 = 1.680623
+86 ln 95 vdrnm2 = 77.283586
+86 ln 97 alpha=77.283586
+D2N: 326.856277
+86 ln 102 rho = 326.856277
+ln 176 END OF iteration=86 res=6.615996
+87 ln 83 ualf.dnrm2 = 77.617875
+87 ln 85 AV.dnrm2 = 302.258531
+87 ln 87 u.drnm2() = 272.825036
+87 ln 89 beta = 272.820446
+87 ln 92 vdrnm2 = 1.691946
+87 ln 95 vdrnm2 = 1118.541452
+87 ln 97 alpha=1118.541452
+D2N: 273.053124
+87 ln 102 rho = 273.053124
+ln 176 END OF iteration=87 res=6.610287
+88 ln 83 ualf.dnrm2 = 1118.329780
+88 ln 85 AV.dnrm2 = 1154.558114
+88 ln 87 u.drnm2() = 265.403442
+88 ln 89 beta = 265.436762
+88 ln 92 vdrnm2 = 1.700632
+88 ln 95 vdrnm2 = 62.621012
+88 ln 97 alpha=62.621012
+D2N: 269.421664
+88 ln 102 rho = 269.421664
+ln 176 END OF iteration=88 res=6.511257
+89 ln 83 ualf.dnrm2 = 62.431807
+89 ln 85 AV.dnrm2 = 455.492437
+89 ln 87 u.drnm2() = 437.848040
+89 ln 89 beta = 437.833142
+89 ln 92 vdrnm2 = 1.693284
+89 ln 95 vdrnm2 = 1085.898642
+89 ln 97 alpha=1085.898642
+D2N: 437.964612
+89 ln 102 rho = 437.964612
+ln 176 END OF iteration=89 res=6.509277
+90 ln 83 ualf.dnrm2 = 1085.785025
+90 ln 85 AV.dnrm2 = 1102.337420
+90 ln 87 u.drnm2() = 154.444648
+90 ln 89 beta = 154.570973
+90 ln 92 vdrnm2 = 1.698161
+90 ln 95 vdrnm2 = 65.567161
+90 ln 97 alpha=65.567161
+D2N: 156.843938
+90 ln 102 rho = 156.843938
+ln 176 END OF iteration=90 res=6.413681
+91 ln 83 ualf.dnrm2 = 65.900989
+91 ln 85 AV.dnrm2 = 787.031266
+91 ln 87 u.drnm2() = 776.435068
+91 ln 89 beta = 776.433161
+91 ln 92 vdrnm2 = 1.681567
+91 ln 95 vdrnm2 = 885.089168
+91 ln 97 alpha=885.089168
+D2N: 776.512816
+91 ln 102 rho = 776.512816
+ln 176 END OF iteration=91 res=6.413014
+92 ln 83 ualf.dnrm2 = 885.035534
+92 ln 85 AV.dnrm2 = 895.651266
+92 ln 87 u.drnm2() = 80.761600
+92 ln 89 beta = 80.733736
+92 ln 92 vdrnm2 = 1.684413
+92 ln 95 vdrnm2 = 119.759173
+92 ln 97 alpha=119.759173
+D2N: 81.722992
+92 ln 102 rho = 81.722992
+ln 176 END OF iteration=92 res=6.334251
+93 ln 83 ualf.dnrm2 = 119.657794
+93 ln 85 AV.dnrm2 = 1017.162754
+93 ln 87 u.drnm2() = 1003.929758
+93 ln 89 beta = 1003.980363
+93 ln 92 vdrnm2 = 0.646161
+93 ln 95 vdrnm2 = 609.645719
+93 ln 97 alpha=609.645719
+D2N: 1004.152226
+93 ln 102 rho = 1004.152226
+ln 176 END OF iteration=93 res=6.333150
+94 ln 83 ualf.dnrm2 = 609.615096
+94 ln 85 AV.dnrm2 = 624.614683
+94 ln 87 u.drnm2() = 78.758297
+94 ln 89 beta = 78.797979
+94 ln 92 vdrnm2 = 1.051639
+94 ln 95 vdrnm2 = 165.341219
+94 ln 97 alpha=165.341219
+D2N: 79.601096
+94 ln 102 rho = 79.601096
+ln 176 END OF iteration=94 res=6.268317
+95 ln 83 ualf.dnrm2 = 165.726271
+95 ln 85 AV.dnrm2 = 1087.915923
+95 ln 87 u.drnm2() = 1069.567795
+95 ln 89 beta = 1069.563406
+95 ln 92 vdrnm2 = 0.969096
+95 ln 95 vdrnm2 = 473.863209
+95 ln 97 alpha=473.863209
+D2N: 1069.819953
+95 ln 102 rho = 1069.819953
+ln 176 END OF iteration=95 res=6.266793
+96 ln 83 ualf.dnrm2 = 473.844001
+96 ln 85 AV.dnrm2 = 489.530951
+96 ln 87 u.drnm2() = 55.379312
+96 ln 89 beta = 55.406745
+96 ln 92 vdrnm2 = 1.057011
+96 ln 95 vdrnm2 = 280.031232
+96 ln 97 alpha=280.031232
+D2N: 56.370104
+96 ln 102 rho = 56.370104
+ln 176 END OF iteration=96 res=6.158075
+97 ln 83 ualf.dnrm2 = 279.971581
+97 ln 85 AV.dnrm2 = 1158.861877
+97 ln 87 u.drnm2() = 1119.150060
+97 ln 89 beta = 1119.143611
+97 ln 92 vdrnm2 = 1.040633
+97 ln 95 vdrnm2 = 253.702621
+97 ln 97 alpha=253.702621
+D2N: 1120.330225
+97 ln 102 rho = 1120.330225
+ln 176 END OF iteration=97 res=6.151445
+98 ln 83 ualf.dnrm2 = 253.699815
+98 ln 85 AV.dnrm2 = 289.729849
+98 ln 87 u.drnm2() = 86.582885
+98 ln 89 beta = 86.660637
+98 ln 92 vdrnm2 = 1.044467
+98 ln 95 vdrnm2 = 341.380765
+98 ln 97 alpha=341.380765
+D2N: 87.443354
+98 ln 102 rho = 87.443354
+ln 176 END OF iteration=98 res=6.095390
+99 ln 83 ualf.dnrm2 = 341.191562
+99 ln 85 AV.dnrm2 = 1156.378191
+99 ln 87 u.drnm2() = 1099.335955
+99 ln 89 beta = 1099.313762
+99 ln 92 vdrnm2 = 1.069492
+99 ln 95 vdrnm2 = 268.688910
+99 ln 97 alpha=268.688910
+D2N: 1100.258039
+99 ln 102 rho = 1100.258039
+ln 176 END OF iteration=99 res=6.090056
+100 ln 83 ualf.dnrm2 = 268.713271
+100 ln 85 AV.dnrm2 = 298.875054
+100 ln 87 u.drnm2() = 69.555723
+100 ln 89 beta = 69.597655
+100 ln 92 vdrnm2 = 1.034667
+100 ln 95 vdrnm2 = 408.214550
+100 ln 97 alpha=408.214550
+D2N: 70.481901
+100 ln 102 rho = 70.481901
+ln 176 END OF iteration=100 res=6.012044
+101 ln 83 ualf.dnrm2 = 407.985445
+101 ln 85 AV.dnrm2 = 1175.895955
+101 ln 87 u.drnm2() = 1097.095183
+101 ln 89 beta = 1097.081014
+101 ln 92 vdrnm2 = 1.059911
+101 ln 95 vdrnm2 = 153.780585
+101 ln 97 alpha=153.780585
+D2N: 1098.973038
+101 ln 102 rho = 1098.973038
+ln 176 END OF iteration=101 res=6.001458
+102 ln 83 ualf.dnrm2 = 153.775083
+102 ln 85 AV.dnrm2 = 203.530597
+102 ln 87 u.drnm2() = 71.148336
+102 ln 89 beta = 71.182213
+102 ln 92 vdrnm2 = 1.034708
+102 ln 95 vdrnm2 = 733.298136
+102 ln 97 alpha=733.298136
+D2N: 71.751412
+102 ln 102 rho = 71.751412
+ln 176 END OF iteration=102 res=5.952660
+103 ln 83 ualf.dnrm2 = 732.423397
+103 ln 85 AV.dnrm2 = 1181.338574
+103 ln 87 u.drnm2() = 918.592895
+103 ln 89 beta = 918.567637
+103 ln 92 vdrnm2 = 1.086491
+103 ln 95 vdrnm2 = 104.061190
+103 ln 97 alpha=104.061190
+D2N: 923.181540
+103 ln 102 rho = 923.181540
+ln 176 END OF iteration=103 res=5.922100
+104 ln 83 ualf.dnrm2 = 104.135516
+104 ln 85 AV.dnrm2 = 197.937311
+104 ln 87 u.drnm2() = 113.721341
+104 ln 89 beta = 113.729961
+104 ln 92 vdrnm2 = 0.998157
+104 ln 95 vdrnm2 = 980.265843
+104 ln 97 alpha=980.265843
+D2N: 114.203651
+104 ln 102 rho = 114.203651
+ln 176 END OF iteration=104 res=5.896845
+105 ln 83 ualf.dnrm2 = 979.727331
+105 ln 85 AV.dnrm2 = 1180.104777
+105 ln 87 u.drnm2() = 644.348297
+105 ln 89 beta = 644.337512
+105 ln 92 vdrnm2 = 1.065559
+105 ln 95 vdrnm2 = 90.564810
+105 ln 97 alpha=90.564810
+D2N: 650.481087
+105 ln 102 rho = 650.481087
+ln 176 END OF iteration=105 res=5.839544
+106 ln 83 ualf.dnrm2 = 90.525703
+106 ln 85 AV.dnrm2 = 250.429040
+106 ln 87 u.drnm2() = 191.927163
+106 ln 89 beta = 191.952701
+106 ln 92 vdrnm2 = 0.996949
+106 ln 95 vdrnm2 = 1081.923672
+106 ln 97 alpha=1081.923672
+D2N: 192.353939
+106 ln 102 rho = 192.353939
+ln 176 END OF iteration=106 res=5.827005
+107 ln 83 ualf.dnrm2 = 1081.522822
+107 ln 85 AV.dnrm2 = 1171.071755
+107 ln 87 u.drnm2() = 426.951186
+107 ln 89 beta = 426.888520
+107 ln 92 vdrnm2 = 1.073875
+107 ln 95 vdrnm2 = 71.052314
+107 ln 97 alpha=71.052314
+D2N: 432.564601
+107 ln 102 rho = 432.564601
+ln 176 END OF iteration=107 res=5.748295
+108 ln 83 ualf.dnrm2 = 71.113132
+108 ln 85 AV.dnrm2 = 420.983842
+108 ln 87 u.drnm2() = 390.675694
+108 ln 89 beta = 390.694364
+108 ln 92 vdrnm2 = 0.953743
+108 ln 95 vdrnm2 = 1091.460064
+108 ln 97 alpha=1091.460064
+D2N: 390.862773
+108 ln 102 rho = 390.862773
+ln 176 END OF iteration=108 res=5.745746
+109 ln 83 ualf.dnrm2 = 1091.317921
+109 ln 85 AV.dnrm2 = 1120.613290
+109 ln 87 u.drnm2() = 211.372682
+109 ln 89 beta = 211.279752
+109 ln 92 vdrnm2 = 1.056201
+109 ln 95 vdrnm2 = 86.684588
+109 ln 97 alpha=86.684588
+D2N: 213.694820
+109 ln 102 rho = 213.694820
+ln 176 END OF iteration=109 res=5.678924
+110 ln 83 ualf.dnrm2 = 86.360714
+110 ln 85 AV.dnrm2 = 708.780099
+110 ln 87 u.drnm2() = 689.005407
+110 ln 89 beta = 689.005941
+110 ln 92 vdrnm2 = 0.995682
+110 ln 95 vdrnm2 = 948.214999
+110 ln 97 alpha=948.214999
+D2N: 689.128486
+110 ln 102 rho = 689.128486
+ln 176 END OF iteration=110 res=5.677885
+111 ln 83 ualf.dnrm2 = 948.159579
+111 ln 85 AV.dnrm2 = 964.750598
+111 ln 87 u.drnm2() = 106.925841
+111 ln 89 beta = 106.991324
+111 ln 92 vdrnm2 = 1.051599
+111 ln 95 vdrnm2 = 135.985167
+111 ln 97 alpha=135.985167
+D2N: 108.475281
+111 ln 102 rho = 108.475281
+ln 176 END OF iteration=111 res=5.597938
+112 ln 83 ualf.dnrm2 = 135.952637
+112 ln 85 AV.dnrm2 = 1030.547957
+112 ln 87 u.drnm2() = 1011.597873
+112 ln 89 beta = 1011.585149
+112 ln 92 vdrnm2 = 1.036936
+112 ln 95 vdrnm2 = 587.097875
+112 ln 97 alpha=587.097875
+D2N: 1011.833483
+112 ln 102 rho = 1011.833483
+ln 176 END OF iteration=112 res=5.596523
+113 ln 83 ualf.dnrm2 = 587.081959
+113 ln 85 AV.dnrm2 = 610.834192
+113 ln 87 u.drnm2() = 90.783334
+113 ln 89 beta = 90.973042
+113 ln 92 vdrnm2 = 1.045097
+113 ln 95 vdrnm2 = 232.289985
+113 ln 97 alpha=232.289985
+D2N: 91.898125
+113 ln 102 rho = 91.898125
+ln 176 END OF iteration=113 res=5.538346
+114 ln 83 ualf.dnrm2 = 231.926851
+114 ln 85 AV.dnrm2 = 1141.165548
+114 ln 87 u.drnm2() = 1108.198741
+114 ln 89 beta = 1108.163183
+114 ln 92 vdrnm2 = 1.137114
+114 ln 95 vdrnm2 = 324.697121
+114 ln 97 alpha=324.697121
+D2N: 1108.650761
+114 ln 102 rho = 1108.650761
+ln 176 END OF iteration=114 res=5.535823
+115 ln 83 ualf.dnrm2 = 324.715665
+115 ln 85 AV.dnrm2 = 362.216730
+115 ln 87 u.drnm2() = 73.359873
+115 ln 89 beta = 73.364056
+115 ln 92 vdrnm2 = 1.027102
+115 ln 95 vdrnm2 = 517.748896
+115 ln 97 alpha=517.748896
+D2N: 73.993227
+115 ln 102 rho = 73.993227
+ln 176 END OF iteration=115 res=5.487057
+116 ln 83 ualf.dnrm2 = 517.705561
+116 ln 85 AV.dnrm2 = 1176.354658
+116 ln 87 u.drnm2() = 1046.559419
+116 ln 89 beta = 1046.558776
+116 ln 92 vdrnm2 = 1.023505
+116 ln 95 vdrnm2 = 154.808658
+116 ln 97 alpha=154.808658
+D2N: 1048.725245
+116 ln 102 rho = 1048.725245
+ln 176 END OF iteration=116 res=5.475308
+117 ln 83 ualf.dnrm2 = 154.788833
+117 ln 85 AV.dnrm2 = 231.119615
+117 ln 87 u.drnm2() = 94.449535
+117 ln 89 beta = 94.482595
+117 ln 92 vdrnm2 = 1.048391
+117 ln 95 vdrnm2 = 920.193245
+117 ln 97 alpha=920.193245
+D2N: 95.004609
+117 ln 102 rho = 95.004609
+ln 176 END OF iteration=117 res=5.444097
+118 ln 83 ualf.dnrm2 = 919.700914
+118 ln 85 AV.dnrm2 = 1181.907213
+118 ln 87 u.drnm2() = 727.117133
+118 ln 89 beta = 727.077025
+118 ln 92 vdrnm2 = 1.055328
+118 ln 95 vdrnm2 = 68.240443
+118 ln 97 alpha=68.240443
+D2N: 733.430732
+118 ln 102 rho = 733.430732
+ln 176 END OF iteration=118 res=5.395137
+119 ln 83 ualf.dnrm2 = 68.206967
+119 ln 85 AV.dnrm2 = 320.502446
+119 ln 87 u.drnm2() = 274.921615
+119 ln 89 beta = 274.940348
+119 ln 92 vdrnm2 = 1.016345
+119 ln 95 vdrnm2 = 1111.764545
+119 ln 97 alpha=1111.764545
+D2N: 275.086401
+119 ln 102 rho = 275.086401
+ln 176 END OF iteration=119 res=5.392162
+120 ln 83 ualf.dnrm2 = 1111.555035
+120 ln 85 AV.dnrm2 = 1154.137067
+120 ln 87 u.drnm2() = 270.314340
+120 ln 89 beta = 270.241427
+120 ln 92 vdrnm2 = 1.058120
+120 ln 95 vdrnm2 = 92.655145
+120 ln 97 alpha=92.655145
+D2N: 272.658358
+120 ln 102 rho = 272.658358
+ln 176 END OF iteration=120 res=5.342536
+121 ln 83 ualf.dnrm2 = 92.857098
+121 ln 85 AV.dnrm2 = 596.542373
+121 ln 87 u.drnm2() = 569.039391
+121 ln 89 beta = 569.040895
+121 ln 92 vdrnm2 = 0.986306
+121 ln 95 vdrnm2 = 1022.489226
+121 ln 97 alpha=1022.489226
+D2N: 569.174021
+121 ln 102 rho = 569.174021
+ln 176 END OF iteration=121 res=5.341239
+122 ln 83 ualf.dnrm2 = 1022.405004
+122 ln 85 AV.dnrm2 = 1039.796672
+122 ln 87 u.drnm2() = 109.984485
+122 ln 89 beta = 110.015552
+122 ln 92 vdrnm2 = 1.050777
+122 ln 95 vdrnm2 = 139.207857
+122 ln 97 alpha=139.207857
+D2N: 112.215979
+122 ln 102 rho = 112.215979
+ln 176 END OF iteration=122 res=5.232512
+123 ln 83 ualf.dnrm2 = 139.312698
+123 ln 85 AV.dnrm2 = 1060.643525
+123 ln 87 u.drnm2() = 1040.146612
+123 ln 89 beta = 1040.149147
+123 ln 92 vdrnm2 = 1.048356
+123 ln 95 vdrnm2 = 531.289469
+123 ln 97 alpha=531.289469
+D2N: 1040.510831
+123 ln 102 rho = 1040.510831
+ln 176 END OF iteration=123 res=5.230623
+124 ln 83 ualf.dnrm2 = 531.269025
+124 ln 85 AV.dnrm2 = 557.142282
+124 ln 87 u.drnm2() = 67.336966
+124 ln 89 beta = 67.161359
+124 ln 92 vdrnm2 = 1.052831
+124 ln 95 vdrnm2 = 396.696751
+124 ln 97 alpha=396.696751
+D2N: 68.606476
+124 ln 102 rho = 68.606476
+ln 176 END OF iteration=124 res=5.116756
+125 ln 83 ualf.dnrm2 = 397.535070
+125 ln 85 AV.dnrm2 = 1172.566309
+125 ln 87 u.drnm2() = 1092.995599
+125 ln 89 beta = 1093.059786
+125 ln 92 vdrnm2 = 0.843771
+125 ln 95 vdrnm2 = 180.143734
+125 ln 97 alpha=180.143734
+D2N: 1096.056313
+125 ln 102 rho = 1096.056313
+ln 176 END OF iteration=125 res=5.102363
+126 ln 83 ualf.dnrm2 = 180.170380
+126 ln 85 AV.dnrm2 = 249.737129
+126 ln 87 u.drnm2() = 89.855522
+126 ln 89 beta = 89.829250
+126 ln 92 vdrnm2 = 1.104078
+126 ln 95 vdrnm2 = 845.963749
+126 ln 97 alpha=845.963749
+D2N: 90.810200
+126 ln 102 rho = 90.810200
+ln 176 END OF iteration=126 res=5.045617
+127 ln 83 ualf.dnrm2 = 845.612221
+127 ln 85 AV.dnrm2 = 1180.634767
+127 ln 87 u.drnm2() = 809.774371
+127 ln 89 beta = 809.803378
+127 ln 92 vdrnm2 = 1.041180
+127 ln 95 vdrnm2 = 112.823233
+127 ln 97 alpha=112.823233
+D2N: 819.243126
+127 ln 102 rho = 819.243126
+ln 176 END OF iteration=127 res=4.985739
+128 ln 83 ualf.dnrm2 = 112.895713
+128 ln 85 AV.dnrm2 = 250.791946
+128 ln 87 u.drnm2() = 164.665139
+128 ln 89 beta = 164.623937
+128 ln 92 vdrnm2 = 1.034664
+128 ln 95 vdrnm2 = 1047.135607
+128 ln 97 alpha=1047.135607
+D2N: 165.507380
+128 ln 102 rho = 165.507380
+ln 176 END OF iteration=128 res=4.958332
+129 ln 83 ualf.dnrm2 = 1047.052291
+129 ln 85 AV.dnrm2 = 1175.194109
+129 ln 87 u.drnm2() = 511.150755
+129 ln 89 beta = 511.239127
+129 ln 92 vdrnm2 = 1.018262
+129 ln 95 vdrnm2 = 76.264341
+129 ln 97 alpha=76.264341
+D2N: 522.532196
+129 ln 102 rho = 522.532196
+ln 176 END OF iteration=129 res=4.848023
+130 ln 83 ualf.dnrm2 = 76.293496
+130 ln 85 AV.dnrm2 = 400.361683
+130 ln 87 u.drnm2() = 362.142508
+130 ln 89 beta = 362.121564
+130 ln 92 vdrnm2 = 1.085193
+130 ln 95 vdrnm2 = 1096.000505
+130 ln 97 alpha=1096.000505
+D2N: 362.464777
+130 ln 102 rho = 362.464777
+ln 176 END OF iteration=130 res=4.843296
+131 ln 83 ualf.dnrm2 = 1095.889975
+131 ln 85 AV.dnrm2 = 1130.223393
+131 ln 87 u.drnm2() = 229.260781
+131 ln 89 beta = 229.368566
+131 ln 92 vdrnm2 = 1.042385
+131 ln 95 vdrnm2 = 84.439226
+131 ln 97 alpha=84.439226
+D2N: 234.272688
+131 ln 102 rho = 234.272688
+ln 176 END OF iteration=131 res=4.738924
+132 ln 83 ualf.dnrm2 = 85.079142
+132 ln 85 AV.dnrm2 = 781.616599
+132 ln 87 u.drnm2() = 761.607176
+132 ln 89 beta = 761.605839
+132 ln 92 vdrnm2 = 1.057997
+132 ln 95 vdrnm2 = 889.700398
+132 ln 97 alpha=889.700398
+D2N: 761.799736
+132 ln 102 rho = 761.799736
+ln 176 END OF iteration=132 res=4.737682
+133 ln 83 ualf.dnrm2 = 889.636729
+133 ln 85 AV.dnrm2 = 908.454173
+133 ln 87 u.drnm2() = 99.663280
+133 ln 89 beta = 99.626060
+133 ln 92 vdrnm2 = 1.053786
+133 ln 95 vdrnm2 = 166.863034
+133 ln 97 alpha=166.863034
+D2N: 101.627994
+133 ln 102 rho = 101.627994
+ln 176 END OF iteration=133 res=4.641708
+134 ln 83 ualf.dnrm2 = 166.978717
+134 ln 85 AV.dnrm2 = 1128.254183
+134 ln 87 u.drnm2() = 1105.142279
+134 ln 89 beta = 1105.148649
+134 ln 92 vdrnm2 = 0.962213
+134 ln 95 vdrnm2 = 365.195673
+134 ln 97 alpha=365.195673
+D2N: 1105.639943
+134 ln 102 rho = 1105.639943
+ln 176 END OF iteration=134 res=4.639589
+135 ln 83 ualf.dnrm2 = 365.191003
+135 ln 85 AV.dnrm2 = 403.114295
+135 ln 87 u.drnm2() = 74.260973
+135 ln 89 beta = 74.264863
+135 ln 92 vdrnm2 = 1.058573
+135 ln 95 vdrnm2 = 521.349416
+135 ln 97 alpha=521.349416
+D2N: 75.058431
+135 ln 102 rho = 75.058431
+ln 176 END OF iteration=135 res=4.589154
+136 ln 83 ualf.dnrm2 = 521.221876
+136 ln 85 AV.dnrm2 = 1176.638833
+136 ln 87 u.drnm2() = 1043.482692
+136 ln 89 beta = 1043.481548
+136 ln 92 vdrnm2 = 1.038135
+136 ln 95 vdrnm2 = 152.312416
+136 ln 97 alpha=152.312416
+D2N: 1046.217364
+136 ln 102 rho = 1046.217364
+ln 176 END OF iteration=136 res=4.576805
+137 ln 83 ualf.dnrm2 = 152.281805
+137 ln 85 AV.dnrm2 = 244.084768
+137 ln 87 u.drnm2() = 111.152496
+137 ln 89 beta = 111.202553
+137 ln 92 vdrnm2 = 1.041260
+137 ln 95 vdrnm2 = 928.959806
+137 ln 97 alpha=928.959806
+D2N: 111.746045
+137 ln 102 rho = 111.746045
+ln 176 END OF iteration=137 res=4.553886
+138 ln 83 ualf.dnrm2 = 928.689087
+138 ln 85 AV.dnrm2 = 1180.556432
+138 ln 87 u.drnm2() = 711.530549
+138 ln 89 beta = 711.467337
+138 ln 92 vdrnm2 = 1.039029
+138 ln 95 vdrnm2 = 85.493975
+138 ln 97 alpha=85.493975
+D2N: 717.328136
+138 ln 102 rho = 717.328136
+ln 176 END OF iteration=138 res=4.515563
+139 ln 83 ualf.dnrm2 = 85.458127
+139 ln 85 AV.dnrm2 = 310.113266
+139 ln 87 u.drnm2() = 252.499713
+139 ln 89 beta = 252.486968
+139 ln 92 vdrnm2 = 1.038104
+139 ln 95 vdrnm2 = 1104.601659
+139 ln 97 alpha=1104.601659
+D2N: 252.722414
+139 ln 102 rho = 252.722414
+ln 176 END OF iteration=139 res=4.511228
+140 ln 83 ualf.dnrm2 = 1104.467435
+140 ln 85 AV.dnrm2 = 1159.422865
+140 ln 87 u.drnm2() = 314.110350
+140 ln 89 beta = 314.166056
+140 ln 92 vdrnm2 = 1.037952
+140 ln 95 vdrnm2 = 93.194910
+140 ln 97 alpha=93.194910
+D2N: 317.762045
+140 ln 102 rho = 317.762045
+ln 176 END OF iteration=140 res=4.458620
+141 ln 83 ualf.dnrm2 = 93.059082
+141 ln 85 AV.dnrm2 = 562.454589
+141 ln 87 u.drnm2() = 531.012232
+141 ln 89 beta = 531.001492
+141 ln 92 vdrnm2 = 1.064960
+141 ln 95 vdrnm2 = 1038.968522
+141 ln 97 alpha=1038.968522
+D2N: 531.185512
+141 ln 102 rho = 531.185512
+ln 176 END OF iteration=141 res=4.457027
+142 ln 83 ualf.dnrm2 = 1038.890234
+142 ln 85 AV.dnrm2 = 1060.349598
+142 ln 87 u.drnm2() = 137.899869
+142 ln 89 beta = 137.994517
+142 ln 92 vdrnm2 = 1.048122
+142 ln 95 vdrnm2 = 123.044795
+142 ln 97 alpha=123.044795
+D2N: 140.677912
+142 ln 102 rho = 140.677912
+ln 176 END OF iteration=142 res=4.369391
+143 ln 83 ualf.dnrm2 = 123.144194
+143 ln 85 AV.dnrm2 = 1028.607837
+143 ln 87 u.drnm2() = 1008.447967
+143 ln 89 beta = 1008.441481
+143 ln 92 vdrnm2 = 1.038489
+143 ln 95 vdrnm2 = 590.257705
+143 ln 97 alpha=590.257705
+D2N: 1008.725084
+143 ln 102 rho = 1008.725084
+ln 176 END OF iteration=143 res=4.368125
+144 ln 83 ualf.dnrm2 = 590.236190
+144 ln 85 AV.dnrm2 = 616.952827
+144 ln 87 u.drnm2() = 79.701607
+144 ln 89 beta = 79.677242
+144 ln 92 vdrnm2 = 1.051650
+144 ln 95 vdrnm2 = 330.356607
+144 ln 97 alpha=330.356607
+D2N: 80.897115
+144 ln 102 rho = 80.897115
+ln 176 END OF iteration=144 res=4.300276
+145 ln 83 ualf.dnrm2 = 330.452632
+145 ln 85 AV.dnrm2 = 1167.071003
+145 ln 87 u.drnm2() = 1107.780252
+145 ln 89 beta = 1107.789633
+145 ln 92 vdrnm2 = 0.977794
+145 ln 95 vdrnm2 = 212.670306
+145 ln 97 alpha=212.670306
+D2N: 1109.263014
+145 ln 102 rho = 1109.263014
+ln 176 END OF iteration=145 res=4.294396
+146 ln 83 ualf.dnrm2 = 212.694239
+146 ln 85 AV.dnrm2 = 278.486519
+146 ln 87 u.drnm2() = 82.595238
+146 ln 89 beta = 82.525506
+146 ln 92 vdrnm2 = 1.061771
+146 ln 95 vdrnm2 = 892.306814
+146 ln 97 alpha=892.306814
+D2N: 83.249801
+146 ln 102 rho = 83.249801
+ln 176 END OF iteration=146 res=4.255912
+147 ln 83 ualf.dnrm2 = 891.953513
+147 ln 85 AV.dnrm2 = 1181.236854
+147 ln 87 u.drnm2() = 756.810429
+147 ln 89 beta = 756.894358
+147 ln 92 vdrnm2 = 1.038511
+147 ln 95 vdrnm2 = 109.031656
+147 ln 97 alpha=109.031656
+D2N: 765.952548
+147 ln 102 rho = 765.952548
+ln 176 END OF iteration=147 res=4.204049
+148 ln 83 ualf.dnrm2 = 108.991988
+148 ln 85 AV.dnrm2 = 283.583145
+148 ln 87 u.drnm2() = 204.059106
+148 ln 89 beta = 204.052333
+148 ln 92 vdrnm2 = 1.037941
+148 ln 95 vdrnm2 = 1081.693318
+148 ln 97 alpha=1081.693318
+D2N: 204.736088
+148 ln 102 rho = 204.736088
+ln 176 END OF iteration=148 res=4.189577
+149 ln 83 ualf.dnrm2 = 1081.479795
+149 ln 85 AV.dnrm2 = 1169.222866
+149 ln 87 u.drnm2() = 411.826033
+149 ln 89 beta = 411.844369
+149 ln 92 vdrnm2 = 1.046340
+149 ln 95 vdrnm2 = 66.070757
+149 ln 97 alpha=66.070757
+D2N: 421.210175
+149 ln 102 rho = 421.210175
+ln 176 END OF iteration=149 res=4.093602
+150 ln 83 ualf.dnrm2 = 66.014504
+150 ln 85 AV.dnrm2 = 640.119070
+150 ln 87 u.drnm2() = 614.439762
+150 ln 89 beta = 614.441237
+150 ln 92 vdrnm2 = 1.029936
+150 ln 95 vdrnm2 = 992.572265
+150 ln 97 alpha=992.572265
+D2N: 614.597434
+150 ln 102 rho = 614.597434
+ln 176 END OF iteration=150 res=4.092530
+151 ln 83 ualf.dnrm2 = 992.508985
+151 ln 85 AV.dnrm2 = 1014.969356
+151 ln 87 u.drnm2() = 130.418188
+151 ln 89 beta = 130.411006
+151 ln 92 vdrnm2 = 1.051325
+151 ln 95 vdrnm2 = 138.060781
+151 ln 97 alpha=138.060781
+D2N: 132.316801
+151 ln 102 rho = 132.316801
+ln 176 END OF iteration=151 res=4.031806
+152 ln 83 ualf.dnrm2 = 138.368433
+152 ln 85 AV.dnrm2 = 1093.501663
+152 ln 87 u.drnm2() = 1071.765054
+152 ln 89 beta = 1071.765588
+152 ln 92 vdrnm2 = 1.024224
+152 ln 95 vdrnm2 = 458.805627
+152 ln 97 alpha=458.805627
+D2N: 1072.019868
+152 ln 102 rho = 1072.019868
+ln 176 END OF iteration=152 res=4.030821
+153 ln 83 ualf.dnrm2 = 458.786553
+153 ln 85 AV.dnrm2 = 494.320592
+153 ln 87 u.drnm2() = 76.950225
+153 ln 89 beta = 77.010878
+153 ln 92 vdrnm2 = 1.051699
+153 ln 95 vdrnm2 = 471.255578
+153 ln 97 alpha=471.255578
+D2N: 77.656452
+153 ln 102 rho = 77.656452
+ln 176 END OF iteration=153 res=3.996293
+154 ln 83 ualf.dnrm2 = 471.271541
+154 ln 85 AV.dnrm2 = 1175.083751
+154 ln 87 u.drnm2() = 1063.448380
+154 ln 89 beta = 1063.422933
+154 ln 92 vdrnm2 = 1.009580
+154 ln 95 vdrnm2 = 163.649280
+154 ln 97 alpha=163.649280
+D2N: 1065.150417
+154 ln 102 rho = 1065.150417
+ln 176 END OF iteration=154 res=3.989613
+155 ln 83 ualf.dnrm2 = 163.664801
+155 ln 85 AV.dnrm2 = 261.058694
+155 ln 87 u.drnm2() = 116.450032
+155 ln 89 beta = 116.479972
+155 ln 92 vdrnm2 = 1.054343
+155 ln 95 vdrnm2 = 933.795123
+155 ln 97 alpha=933.795123
+D2N: 116.851965
+155 ln 102 rho = 116.851965
+ln 176 END OF iteration=155 res=3.976514
+156 ln 83 ualf.dnrm2 = 933.471102
+156 ln 85 AV.dnrm2 = 1179.775682
+156 ln 87 u.drnm2() = 701.053869
+156 ln 89 beta = 701.016121
+156 ln 92 vdrnm2 = 1.047155
+156 ln 95 vdrnm2 = 101.514356
+156 ln 97 alpha=101.514356
+D2N: 704.958539
+156 ln 102 rho = 704.958539
+ln 176 END OF iteration=156 res=3.953565
+157 ln 83 ualf.dnrm2 = 101.460370
+157 ln 85 AV.dnrm2 = 320.184952
+157 ln 87 u.drnm2() = 251.143058
+157 ln 89 beta = 251.166610
+157 ln 92 vdrnm2 = 1.026576
+157 ln 95 vdrnm2 = 1096.362817
+157 ln 97 alpha=1096.362817
+D2N: 251.395316
+157 ln 102 rho = 251.395316
+ln 176 END OF iteration=157 res=3.949851
+158 ln 83 ualf.dnrm2 = 1096.077098
+158 ln 85 AV.dnrm2 = 1160.033688
+158 ln 87 u.drnm2() = 337.494795
+158 ln 89 beta = 337.422048
+158 ln 92 vdrnm2 = 1.070011
+158 ln 95 vdrnm2 = 77.815101
+158 ln 97 alpha=77.815101
+D2N: 340.646002
+158 ln 102 rho = 340.646002
+ln 176 END OF iteration=158 res=3.911261
+159 ln 83 ualf.dnrm2 = 78.219798
+159 ln 85 AV.dnrm2 = 725.169394
+159 ln 87 u.drnm2() = 699.530168
+159 ln 89 beta = 699.528201
+159 ln 92 vdrnm2 = 0.948250
+159 ln 95 vdrnm2 = 936.328893
+159 ln 97 alpha=936.328893
+D2N: 699.609732
+159 ln 102 rho = 699.609732
+ln 176 END OF iteration=159 res=3.910790
+160 ln 83 ualf.dnrm2 = 936.270303
+160 ln 85 AV.dnrm2 = 956.980859
+160 ln 87 u.drnm2() = 92.617360
+160 ln 89 beta = 92.713928
+160 ln 92 vdrnm2 = 1.049375
+160 ln 95 vdrnm2 = 216.202010
+160 ln 97 alpha=216.202010
+D2N: 93.809385
+160 ln 102 rho = 93.809385
+ln 176 END OF iteration=160 res=3.863565
+161 ln 83 ualf.dnrm2 = 216.029111
+161 ln 85 AV.dnrm2 = 1136.821702
+161 ln 87 u.drnm2() = 1102.273001
+161 ln 89 beta = 1102.258289
+161 ln 92 vdrnm2 = 1.108138
+161 ln 95 vdrnm2 = 339.451000
+161 ln 97 alpha=339.451000
+D2N: 1102.750493
+161 ln 102 rho = 1102.750493
+ln 176 END OF iteration=161 res=3.861778
+162 ln 83 ualf.dnrm2 = 339.450749
+162 ln 85 AV.dnrm2 = 391.127933
+162 ln 87 u.drnm2() = 84.079406
+162 ln 89 beta = 84.013806
+162 ln 92 vdrnm2 = 1.036652
+162 ln 95 vdrnm2 = 643.699139
+162 ln 97 alpha=643.699139
+D2N: 84.623625
+162 ln 102 rho = 84.623625
+ln 176 END OF iteration=162 res=3.832983
+163 ln 83 ualf.dnrm2 = 644.257814
+163 ln 85 AV.dnrm2 = 1180.188429
+163 ln 87 u.drnm2() = 973.901220
+163 ln 89 beta = 973.945885
+163 ln 92 vdrnm2 = 0.938643
+163 ln 95 vdrnm2 = 115.793668
+163 ln 97 alpha=115.793668
+D2N: 976.995840
+163 ln 102 rho = 976.995840
+ln 176 END OF iteration=163 res=3.820620
+164 ln 83 ualf.dnrm2 = 115.761550
+164 ln 85 AV.dnrm2 = 262.193283
+164 ln 87 u.drnm2() = 161.926031
+164 ln 89 beta = 161.946620
+164 ln 92 vdrnm2 = 1.099983
+164 ln 95 vdrnm2 = 1084.717429
+164 ln 97 alpha=1084.717429
+D2N: 162.204474
+164 ln 102 rho = 162.204474
+ln 176 END OF iteration=164 res=3.814338
+165 ln 83 ualf.dnrm2 = 1084.268438
+165 ln 85 AV.dnrm2 = 1175.006727
+165 ln 87 u.drnm2() = 416.973423
+165 ln 89 beta = 416.921139
+165 ln 92 vdrnm2 = 1.071492
+165 ln 95 vdrnm2 = 75.843133
+165 ln 97 alpha=75.843133
+D2N: 421.380055
+165 ln 102 rho = 421.380055
+ln 176 END OF iteration=165 res=3.772588
+166 ln 83 ualf.dnrm2 = 75.836751
+166 ln 85 AV.dnrm2 = 618.678873
+166 ln 87 u.drnm2() = 588.020019
+166 ln 89 beta = 588.019835
+166 ln 92 vdrnm2 = 0.956868
+166 ln 95 vdrnm2 = 1008.272380
+166 ln 97 alpha=1008.272380
+D2N: 588.122792
+166 ln 102 rho = 588.122792
+ln 176 END OF iteration=166 res=3.771905
+167 ln 83 ualf.dnrm2 = 1008.196589
+167 ln 85 AV.dnrm2 = 1029.609888
+167 ln 87 u.drnm2() = 110.002907
+167 ln 89 beta = 110.042509
+167 ln 92 vdrnm2 = 1.055109
+167 ln 95 vdrnm2 = 186.812512
+167 ln 97 alpha=186.812512
+D2N: 111.647922
+167 ln 102 rho = 111.647922
+ln 176 END OF iteration=167 res=3.715832
+168 ln 83 ualf.dnrm2 = 186.843868
+168 ln 85 AV.dnrm2 = 1061.367669
+168 ln 87 u.drnm2() = 1029.638795
+168 ln 89 beta = 1029.630970
+168 ln 92 vdrnm2 = 1.009136
+168 ln 95 vdrnm2 = 532.794132
+168 ln 97 alpha=532.794132
+D2N: 1030.114730
+168 ln 102 rho = 1030.114730
+ln 176 END OF iteration=168 res=3.714028
+169 ln 83 ualf.dnrm2 = 532.777498
+169 ln 85 AV.dnrm2 = 566.424801
+169 ln 87 u.drnm2() = 74.657653
+169 ln 89 beta = 74.774661
+169 ln 92 vdrnm2 = 1.050735
+169 ln 95 vdrnm2 = 470.468585
+169 ln 97 alpha=470.468585
+D2N: 76.536318
+169 ln 102 rho = 76.536318
+ln 176 END OF iteration=169 res=3.625503
+170 ln 83 ualf.dnrm2 = 469.837011
+170 ln 85 AV.dnrm2 = 1177.297477
+170 ln 87 u.drnm2() = 1064.347189
+170 ln 89 beta = 1064.297791
+170 ln 92 vdrnm2 = 1.097444
+170 ln 95 vdrnm2 = 143.950982
+170 ln 97 alpha=143.950982
+D2N: 1069.019103
+170 ln 102 rho = 1069.019103
+ln 176 END OF iteration=170 res=3.608887
+171 ln 83 ualf.dnrm2 = 144.000688
+171 ln 85 AV.dnrm2 = 272.027232
+171 ln 87 u.drnm2() = 144.081087
+171 ln 89 beta = 144.070078
+171 ln 92 vdrnm2 = 1.015437
+171 ln 95 vdrnm2 = 998.630877
+171 ln 97 alpha=998.630877
+D2N: 144.702520
+171 ln 102 rho = 144.702520
+ln 176 END OF iteration=171 res=3.592512
+172 ln 83 ualf.dnrm2 = 998.379958
+172 ln 85 AV.dnrm2 = 1177.457538
+172 ln 87 u.drnm2() = 596.679503
+172 ln 89 beta = 596.701667
+172 ln 92 vdrnm2 = 1.044177
+172 ln 95 vdrnm2 = 99.968257
+172 ln 97 alpha=99.968257
+D2N: 603.946336
+172 ln 102 rho = 603.946336
+ln 176 END OF iteration=172 res=3.547776
+173 ln 83 ualf.dnrm2 = 99.838190
+173 ln 85 AV.dnrm2 = 396.351165
+173 ln 87 u.drnm2() = 336.824734
+173 ln 89 beta = 336.835342
+173 ln 92 vdrnm2 = 1.032284
+173 ln 95 vdrnm2 = 1103.658502
+173 ln 97 alpha=1103.658502
+D2N: 337.188921
+173 ln 102 rho = 337.188921
+ln 176 END OF iteration=173 res=3.543913
+174 ln 83 ualf.dnrm2 = 1103.503859
+174 ln 85 AV.dnrm2 = 1137.278420
+174 ln 87 u.drnm2() = 203.341105
+174 ln 89 beta = 203.282793
+174 ln 92 vdrnm2 = 1.055582
+174 ln 95 vdrnm2 = 110.903022
+174 ln 97 alpha=110.903022
+D2N: 209.468596
+174 ln 102 rho = 209.468596
+ln 176 END OF iteration=174 res=3.435398
+175 ln 83 ualf.dnrm2 = 110.913379
+175 ln 85 AV.dnrm2 = 957.117523
+175 ln 87 u.drnm2() = 932.431851
+175 ln 89 beta = 932.440508
+175 ln 92 vdrnm2 = 0.992256
+175 ln 95 vdrnm2 = 700.515882
+175 ln 97 alpha=700.515882
+D2N: 932.824209
+175 ln 102 rho = 932.824209
+ln 176 END OF iteration=175 res=3.433934
+176 ln 83 ualf.dnrm2 = 700.487608
+176 ln 85 AV.dnrm2 = 728.338028
+176 ln 87 u.drnm2() = 74.043361
+176 ln 89 beta = 73.967442
+176 ln 92 vdrnm2 = 1.056291
+176 ln 95 vdrnm2 = 395.055662
+176 ln 97 alpha=395.055662
+D2N: 76.647243
+176 ln 102 rho = 76.647243
+ln 176 END OF iteration=176 res=3.309813
+177 ln 83 ualf.dnrm2 = 395.199625
+177 ln 85 AV.dnrm2 = 1169.551316
+177 ln 87 u.drnm2() = 1085.198129
+177 ln 89 beta = 1085.226960
+177 ln 92 vdrnm2 = 0.967405
+177 ln 95 vdrnm2 = 201.167122
+177 ln 97 alpha=201.167122
+D2N: 1090.155947
+177 ln 102 rho = 1090.155947
+ln 176 END OF iteration=177 res=3.294365
+178 ln 83 ualf.dnrm2 = 201.190492
+178 ln 85 AV.dnrm2 = 293.756249
+178 ln 87 u.drnm2() = 109.795294
+178 ln 89 beta = 109.757876
+178 ln 92 vdrnm2 = 1.068237
+178 ln 95 vdrnm2 = 950.314618
+178 ln 97 alpha=950.314618
+D2N: 111.408738
+178 ln 102 rho = 111.408738
+ln 176 END OF iteration=178 res=3.244002
+179 ln 83 ualf.dnrm2 = 950.351791
+179 ln 85 AV.dnrm2 = 1180.765706
+179 ln 87 u.drnm2() = 676.270962
+179 ln 89 beta = 676.325456
+179 ln 92 vdrnm2 = 1.001759
+179 ln 95 vdrnm2 = 80.464552
+179 ln 97 alpha=80.464552
+D2N: 695.688249
+179 ln 102 rho = 695.688249
+ln 176 END OF iteration=179 res=3.150959
+180 ln 83 ualf.dnrm2 = 80.481813
+180 ln 85 AV.dnrm2 = 420.411066
+180 ln 87 u.drnm2() = 369.754865
+180 ln 89 beta = 369.751942
+180 ln 92 vdrnm2 = 1.088624
+180 ln 95 vdrnm2 = 1088.001349
+180 ln 97 alpha=1088.001349
+D2N: 370.232211
+180 ln 102 rho = 370.232211
+ln 176 END OF iteration=180 res=3.146747
+ran through 180 iterations 
+Data written to output/90_1_x_GPU.txt
