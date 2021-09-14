@@ -432,7 +432,7 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
   //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   multiplyTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
-  cudaDeviceSynchronize();
+  // cudaDeviceSynchronize();
   // dim3 grid(1, 1, 1);
   // dim3 block(out.h_rows, out.h_columns, 1);
   // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
@@ -452,7 +452,7 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
   cudaMemcpy(d_i, &h_i, sizeof(double), cudaMemcpyHostToDevice);
 
   scale<<<grid, block>>>(this->d_mat, d_i, out.d_mat, this->d_rows, this->d_columns, false);
-  cudaDeviceSynchronize();
+  // cudaDeviceSynchronize();
 
   return out;
 }
@@ -466,7 +466,7 @@ Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
   dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     subtract<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
   } else {
     printf("SUBTRACT: ARRAYS ARE NOT THE SAME SIZE, canot perform operation %d!=%d\n", this->h_rows, v.h_rows);
     // assert(h_rows == v.h_rows);
@@ -493,7 +493,7 @@ Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
   dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat);
-    cudaDeviceSynchronize();
+    // cudaDeviceSynchronize();
   } else {
     printf("ADDITION: ARRAYS ARE NOT THE SAME SIZE, canot perform operation %d!=%d\n", this->h_rows, v.h_rows);
     // assert(this->h_rows == v.h_rows);
@@ -539,7 +539,7 @@ Vector_GPU Vector_GPU::transpose() {
   // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
   //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows, this->d_columns);
-  cudaDeviceSynchronize();
+  // cudaDeviceSynchronize();
   return out;
 };
 
