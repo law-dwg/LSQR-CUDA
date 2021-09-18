@@ -1,11 +1,21 @@
 #pragma once
+#include "../cpu/matVec_cpu.h"
+#include "cublas_v2.h"
 #include <algorithm>
 #include <stdio.h>  //NULL, printf
 #include <stdlib.h> /* srand, rand */
 #include <time.h>   /* time */
 #include <vector>
 
-#include "../cpu/matVec_cpu.h"
+extern cudaError_t cudaStat;
+extern cublasStatus_t stat;
+extern cublasHandle_t handle;
+extern cudaStream_t stream;
+extern cublasStatus_t stat1;
+extern cudaError_t cudaStat1;
+extern cublasStatus_t stat2;
+void extern cublasReset();
+
 class Vector_GPU {
 protected:
 public:
@@ -110,9 +120,11 @@ public:
   void printmat();
   Vector_CPU matDeviceToHost();
   Vector_GPU multNai(Vector_GPU &v);
+  // Vector_GPU mulTiled(Vector_GPU &v);
   int getRows() { return h_rows; };
   int getColumns() { return h_columns; };
   double Dnrm2();
+  double Dnrm2Leg();
   Vector_GPU transpose();
 };
 

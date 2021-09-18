@@ -43,8 +43,23 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 #include <sstream>
 
 #include "../cpu/matVec_cpu.h"
+#include "cublas_v2.h"
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"
+
+cudaError_t cudaStat;
+cublasHandle_t handle;
+cudaStream_t stream;
+cublasStatus_t stat1 = cublasCreate(&handle);
+cudaError_t cudaStat1 = cudaStreamCreate(&stream);
+cublasStatus_t stat = cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE);
+cublasStatus_t stat2 = cublasSetStream(handle, stream);
+void cublasReset() {
+  stat1 = cublasCreate(&handle);
+  cudaStat1 = cudaStreamCreate(&stream);
+  stat = cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE);
+  stat2 = cublasSetStream(handle, stream);
+}
 
 #define gpuErrchk(ans)                                                                                                                               \
   { gpuAssert((ans), __FILE__, __LINE__); }
@@ -205,6 +220,7 @@ __device__ double reduce_sum(thread_group g, double *temp, double val) {
   }
   return val; // note: only thread 0 will return full sum
 }
+
 __device__ double thread_sum(double *input, int n) {
   double sum = 0.0;
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -236,6 +252,17 @@ __device__ void warpReduce(volatile double *sum, int thread) {
   sum[thread] += sum[thread + 2];
   // if (blockD >= 2)
   sum[thread] += sum[thread + 1];
+}
+
+void __global__ dnrm2Coop(double *in1, unsigned int *r, unsigned int *c, double *out) {
+  // using cooperative groups as described here: https://developer.nvidia.com/blog/cooperative-groups/
+  double my_sum = thread_sum(in1, *r * *c);
+  __shared__ double temp[TILE_DIM_X];
+  auto g = this_thread_block();
+  double block_sum = reduce_sum(g, temp, my_sum);
+  if (g.thread_rank() == 0) {
+    atomicAdd(out, block_sum);
+  }
 }
 
 void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out) {
@@ -439,6 +466,24 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   //                                v.d_columns, out.d_mat);
   return out;
 }
+// Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
+//   cublasLtMatmul(cublasLtHandle_t               lightHandle,
+//     cublasLtMatmulDesc_t           computeDesc,
+//     const void                    *alpha,
+//     const void                    *A,
+//     cublasLtMatrixLayout_t         Adesc,
+//     const void                    *B,
+//     cublasLtMatrixLayout_t         Bdesc,
+//     const void                    *beta,
+//     const void                    *C,
+//     cublasLtMatrixLayout_t         Cdesc,
+//     void                          *D,
+//     cublasLtMatrixLayout_t         Ddesc,
+//     const cublasLtMatmulAlgo_t    *algo,
+//     void                          *workspace,
+//     size_t                         workspaceSizeInBytes,
+//     cudaStream_t                   stream);
+// }
 
 Vector_GPU Vector_GPU::operator*(double h_i) {
   // printf("scale %f\n", h_i);
@@ -475,7 +520,7 @@ Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
 }
 
 void Vector_GPU::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> this Vector_GPU
-  // printf("ASSIGNMENT #2 called\n");
+  printf("ASSIGNMENT #2 called\n");
   cudaFree(d_mat);
   h_rows = v.getRows();
   h_columns = v.getColumns();
@@ -543,7 +588,7 @@ Vector_GPU Vector_GPU::transpose() {
   return out;
 };
 
-double Vector_GPU::Dnrm2() {
+double Vector_GPU::Dnrm2Leg() {
   dim3 threads(TILE_DIM_X, 1);
   int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
   dim3 blocks(blockX, 1);
@@ -576,6 +621,50 @@ double Vector_GPU::Dnrm2() {
   assert(!(h_out != h_out));
   assert(h_out > 0);
   return std::abs(h_max) * sqrt(h_out);
+};
+
+double Vector_GPU::Dnrm2() {
+  // int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
+  // dim3 blocks(blockX, 1);
+  double h_out;
+  int *version;
+  double *d_out;
+  double zero = 0.0;
+  // double c_d_mat[h_rows*h_columns];
+  int incre = 1;
+  gpuErrchk(cudaMalloc(&d_out, sizeof(double)));
+  // gpuErrchk(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
+  // gpuErrchk(cudaMemcpy(&c_d_mat,d_mat, sizeof(double)*h_rows*h_columns,cudaMemcpyDeviceToHost));
+
+  // for (int i = 0; i<100;++i){
+  //  printf("%f\n",c_d_mat[i]);
+  //}
+  // gpuErrchk(cudaMalloc(&c_d_mat, sizeof(double)*h_rows*h_columns));
+  // gpuErrchk(cudaMemcpy(&c_d_mat, d_mat, sizeof(double) * h_columns * h_rows, cudaMemcpyDeviceToDevice));
+  int size = (this->h_rows * this->h_columns);
+
+  // stat = cublasSetVector(size, sizeof(double), (void **)&c_d_mat, incre, d_d_mat, incre);
+  // if (stat != CUBLAS_STATUS_SUCCESS) {
+  //   printf ("CUBLAS Version failed\n");
+  //   return EXIT_FAILURE;
+  // }
+
+  cublasStatus_t stat3 = cublasDnrm2(handle, size, this->d_mat, incre, d_out);
+  cudaDeviceSynchronize();
+  if (stat3 != CUBLAS_STATUS_SUCCESS) {
+    printf("CUBLAS DNRM2 failed\n");
+    return EXIT_FAILURE;
+  }
+
+  // stat = cublasDestroy(handle);
+  // if (stat != CUBLAS_STATUS_SUCCESS) {
+  //   printf ("CUBLAS destroy failed\n");
+  //   return EXIT_FAILURE;
+  // }
+  // cublasDestroy(handle);
+  gpuErrchk(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
+  assert(!(h_out != h_out));
+  return h_out;
 };
 
 Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
