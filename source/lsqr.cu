@@ -93,7 +93,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   // 2. For i=1,2,3....
   printf("2. For i=1,2,3....\n");
   do {
-    if (itn == A.getRows() / 2 || itn == A.getRows() || itn == ((A.getRows() * 3) / 4))
+    if (itn == A.getRows() / 2 || itn == A.getRows() || itn == (A.getRows() + A.getRows() / 2))
       printf("itn = %d\n", itn);
     itn++;
     Vec A_T = A.transpose();
@@ -108,8 +108,10 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     v_i+1 =  vbar_i+1 * (1/alpha_i+1)
     */
     // printf("3. Continue the bidiagonialization\n");
+    cudaProfilerStart();
     u = A * v - u * alpha; // ubar_i+1
-    beta = u.Dnrm2();      // beta_i+1 = ||ubar_i+1||
+
+    beta = u.Dnrm2(); // beta_i+1 = ||ubar_i+1||
     if (beta > 0) {
       u = u * (1 / beta);         // u_i+1
       v = (A_T * u) - (v * beta); // vbar_i+1
@@ -217,7 +219,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 500; i < 600; i += 100) {
+    for (int i = 1000; i < 2100; i += 100) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -282,7 +284,9 @@ int main() {
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start);
+    cudaProfilerStop();
     Vector_GPU x_g = lsqr<Vector_GPU>(A_g, b_g);
+    cudaProfilerStop();
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     float milliseconds = 0;

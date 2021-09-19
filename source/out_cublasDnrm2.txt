@@ -1,0 +1,189 @@
+Welcome to law-dwg's lsqr cuda and cpp implementations!
+You can use ctrl+c to kill this program at any time.
+
+Before we begin, please type in your name: Hello , Would you like to build the test matrices from scratch? (y/n): 
+Great, lets get started
+
+What sparsity should matrix A have? Please enter a number between 0.0-1.0: Building A Matrices of sparsity 0
+Data written to input/500_500_A.txt
+Data written to input/500_1_b.txt
+Data written to input/600_600_A.txt
+Data written to input/600_1_b.txt
+Data written to input/700_700_A.txt
+Data written to input/700_1_b.txt
+Data written to input/800_800_A.txt
+Data written to input/800_1_b.txt
+Data written to input/900_900_A.txt
+Data written to input/900_1_b.txt
+Data written to input/1000_1000_A.txt
+Data written to input/1000_1_b.txt
+Data written to input/1100_1100_A.txt
+Data written to input/1100_1_b.txt
+Device NVIDIA GeForce 940M has compute capability 5.0.
+Number of multiprocessors: 3
+Clock rate: 1176000 Hz
+Total amount of global memory: 2052608 KB
+Total amount of constant memory: 64 KB
+Total amount of shared memory per block: 48 KB
+Total amount of shared memory per SM: 64 KB
+Warp size: 32
+Maximum number of threads per block: 1024
+Maximum number of blocks per multiprocessor: 2
+Maximum number of threads per multiprocessor: 2048
+Maximum number of warps per multiprocessor: 64
+Maximum Grid size: (2147483647,65535,65535)
+Maximum block dimension: (1024,1024,64)
+Loading matrix A(1000,1000)... done
+Loading matrix b(1000,1)... done
+Running lsqr-CPU implementation
+Ax=b where A(1000,1000) and b(1000,1)
+2. For i=1,2,3....
+itn = 500
+itn = 1000
+itn = 1500
+ran through 2000 iterations 
+CPU time used = 35998 ms for lsqr
+Data written to output/1000_1_x_CPU.txt
+---------------------------------------------
+Running lsqr-GPU implementation
+Ax=b where A(1000,1000) and b(1000,1)
+Vector_GPU Copy assignment operator was called
+2. For i=1,2,3....
+itn = 500
+itn = 1000
+itn = 1500
+ran through 2000 iterations 
+GPU time used = 34305.511719 ms for lsqr
+Data written to output/1000_1_x_GPU.txt
+Loading matrix A(1100,1100)... done
+Loading matrix b(1100,1)... done
+Running lsqr-CPU implementation
+Ax=b where A(1100,1100) and b(1100,1)
+2. For i=1,2,3....
+itn = 550
+itn = 1100
+itn = 1650
+ran through 2200 iterations 
+CPU time used = 63088.6 ms for lsqr
+Data written to output/1100_1_x_CPU.txt
+---------------------------------------------
+Running lsqr-GPU implementation
+Ax=b where A(1100,1100) and b(1100,1)
+Vector_GPU Copy assignment operator was called
+2. For i=1,2,3....
+itn = 550
+itn = 1100
+itn = 1650
+ran through 2200 iterations 
+GPU time used = 44121.265625 ms for lsqr
+Data written to output/1100_1_x_GPU.txt
+Loading matrix b(500,1)... done
+Loading matrix A(500,500)... done
+Running lsqr-CPU implementation
+Ax=b where A(500,500) and b(500,1)
+2. For i=1,2,3....
+itn = 250
+itn = 500
+itn = 750
+ran through 1000 iterations 
+CPU time used = 3388.79 ms for lsqr
+Data written to output/500_1_x_CPU.txt
+---------------------------------------------
+Running lsqr-GPU implementation
+Ax=b where A(500,500) and b(500,1)
+Vector_GPU Copy assignment operator was called
+2. For i=1,2,3....
+itn = 250
+itn = 500
+itn = 750
+ran through 1000 iterations 
+GPU time used = 5951.399414 ms for lsqr
+Data written to output/500_1_x_GPU.txt
+Loading matrix b(600,1)... done
+Loading matrix A(600,600)... done
+Running lsqr-CPU implementation
+Ax=b where A(600,600) and b(600,1)
+2. For i=1,2,3....
+itn = 300
+itn = 600
+itn = 900
+ran through 1200 iterations 
+CPU time used = 6233.48 ms for lsqr
+Data written to output/600_1_x_CPU.txt
+---------------------------------------------
+Running lsqr-GPU implementation
+Ax=b where A(600,600) and b(600,1)
+Vector_GPU Copy assignment operator was called
+2. For i=1,2,3....
+itn = 300
+itn = 600
+itn = 900
+ran through 1200 iterations 
+GPU time used = 9057.830078 ms for lsqr
+Data written to output/600_1_x_GPU.txt
+Loading matrix b(700,1)... done
+Loading matrix A(700,700)... done
+Running lsqr-CPU implementation
+Ax=b where A(700,700) and b(700,1)
+2. For i=1,2,3....
+itn = 350
+itn = 700
+itn = 1050
+ran through 1400 iterations 
+CPU time used = 10021.9 ms for lsqr
+Data written to output/700_1_x_CPU.txt
+---------------------------------------------
+Running lsqr-GPU implementation
+Ax=b where A(700,700) and b(700,1)
+Vector_GPU Copy assignment operator was called
+2. For i=1,2,3....
+itn = 350
+itn = 700
+itn = 1050
+ran through 1400 iterations 
+GPU time used = 13066.801758 ms for lsqr
+Data written to output/700_1_x_GPU.txt
+Loading matrix b(800,1)... done
+Loading matrix A(800,800)... done
+Running lsqr-CPU implementation
+Ax=b where A(800,800) and b(800,1)
+2. For i=1,2,3....
+itn = 400
+itn = 800
+itn = 1200
+ran through 1600 iterations 
+CPU time used = 17086.4 ms for lsqr
+Data written to output/800_1_x_CPU.txt
+---------------------------------------------
+Running lsqr-GPU implementation
+Ax=b where A(800,800) and b(800,1)
+Vector_GPU Copy assignment operator was called
+2. For i=1,2,3....
+itn = 400
+itn = 800
+itn = 1200
+ran through 1600 iterations 
+GPU time used = 18455.542969 ms for lsqr
+Data written to output/800_1_x_GPU.txt
+Loading matrix b(900,1)... done
+Loading matrix A(900,900)... done
+Running lsqr-CPU implementation
+Ax=b where A(900,900) and b(900,1)
+2. For i=1,2,3....
+itn = 450
+itn = 900
+itn = 1350
+ran through 1800 iterations 
+CPU time used = 25451.4 ms for lsqr
+Data written to output/900_1_x_CPU.txt
+---------------------------------------------
+Running lsqr-GPU implementation
+Ax=b where A(900,900) and b(900,1)
+Vector_GPU Copy assignment operator was called
+2. For i=1,2,3....
+itn = 450
+itn = 900
+itn = 1350
+ran through 1800 iterations 
+GPU time used = 27040.441406 ms for lsqr
+Data written to output/900_1_x_GPU.txt
