@@ -1,3 +1,0 @@
-========= CUDA-MEMCHECK
-========= Error: process didn't terminate successfully
-========= No CUDA-MEMCHECK results found
