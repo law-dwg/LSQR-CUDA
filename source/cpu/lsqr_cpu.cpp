@@ -1,4 +1,4 @@
-#include "lsqr_cpu.h"
+#include "lsqr_cpu.hpp"
 #include <fstream>
 #include <iostream>
 #include <math.h>

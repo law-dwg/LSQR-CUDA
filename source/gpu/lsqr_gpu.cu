@@ -1,4 +1,4 @@
-#include "../matrixBuilder.h"
+#include "../cpu/matrixBuilder.hpp"
 #include "lsqr_gpu.cuh"
 #include "matVec_gpu.cuh"
 #include <limits>

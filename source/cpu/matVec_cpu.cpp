@@ -1,4 +1,4 @@
-#include "matVec_cpu.h"
+#include "matVec_cpu.hpp"
 #include <algorithm>
 #include <cassert>
 #include <chrono>

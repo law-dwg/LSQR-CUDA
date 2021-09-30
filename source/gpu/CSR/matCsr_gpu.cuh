@@ -1,5 +1,5 @@
 #pragma once
-#include "../cpu/matVec_cpu.h"
+#include "../cpu/matVec_cpu.hpp"
 #include "matVec_gpu.cuh"
 #include <algorithm>
 #include <stdio.h>  //NULL, printf

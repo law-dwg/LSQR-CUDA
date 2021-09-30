@@ -42,7 +42,7 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 #include <iostream>
 #include <sstream>
 
-#include "../cpu/matVec_cpu.h"
+#include "../cpu/matVec_cpu.hpp"
 #include "cublas_v2.h"
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"

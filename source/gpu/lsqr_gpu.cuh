@@ -1,5 +1,5 @@
 #pragma once
-#include "../cpu/lsqr_cpu.h"
+#include "../cpu/lsqr_cpu.hpp"
 #include "matVec_gpu.cuh"
 
 bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG);

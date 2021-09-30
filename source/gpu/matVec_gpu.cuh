@@ -1,5 +1,5 @@
 #pragma once
-#include "../cpu/matVec_cpu.h"
+#include "../cpu/matVec_cpu.hpp"
 #include "cublas_v2.h"
 #include <algorithm>
 #include <stdio.h>  //NULL, printf
