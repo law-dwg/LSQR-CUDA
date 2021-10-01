@@ -10,7 +10,6 @@ NVCC_OPT_FLAGS_GPU = -Xptxas -O3
 NVCC_BE_QUIET = -Wno-deprecated-gpu-targets
 NVCC_DEBUG_FLAGS = -G
 SOURCES_CU =	$(SRC_GPU)/lsqr.cu \
-				$(SRC_GPU)/lsqr_gpu.cu \
 				$(SRC_GPU)/matVec_gpu.cu
 OBJS_CU := $(SOURCES_CU:%=$(BUILD_DIR)/%.o)
 
@@ -32,7 +31,7 @@ DEBUG_OBJS_CPP := $(SOURCES_CPP:%=$(DEBUG_BUILD_DIR)/%.o)
 
 # Main build
 $(BUILD_DIR)/$(TARGET): $(OBJS_CPP) $(OBJS_CU)
-	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(CC_OPT_FLAGS) $(NVCC_OPT_FLAGS) $(OBJS_CPP) $(OBJS_CU) -o $@
+	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(CC_OPT_FLAGS) $(NVCC_OPT_FLAGS) $(OBJS_CU) $(OBJS_CPP) -o $@
 
 $(BUILD_DIR)/%.cu.o: %.cu %.cuh
 	mkdir -p $(dir $@)
@@ -40,7 +39,7 @@ $(BUILD_DIR)/%.cu.o: %.cu %.cuh
 
 $(BUILD_DIR)/%.cpp.o: %.cpp %.hpp
 	mkdir -p $(dir $@)
-	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(CC_OPT_FLAGS) -c $< -o $@
+	$(NVCC) $(NVCC_COMPUTE_FLAGS) $(CC_OPT_FLAGS) -c $< -o $@
 
 # PHONYS
 .PHONY: debug all clean clean_mats run $(BUILD_DIR)/$(TARGET) test

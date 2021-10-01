@@ -1,7 +1,7 @@
 #include "../cpu/lsqr_cpu.hpp"
 #include "../cpu/matVec_cpu.hpp"
 #include "../cpu/matrixBuilder.hpp"
-#include "lsqr_gpu.cuh"
+// #include "lsqr_gpu.cuh"
 #include "matVec_gpu.cuh"
 #include <cassert>
 #include <chrono>
@@ -21,6 +21,37 @@
 #include <vector>
 
 namespace fs = std::filesystem;
+
+int checkDevice() {
+  // Check Cuda Capabale Device
+  int deviceCount;
+  cudaGetDeviceCount(&deviceCount);
+  int device;
+
+  if (deviceCount > 0) {
+    for (device = 0; device < deviceCount; ++device) {
+      cudaDeviceProp deviceProp;
+      cudaGetDeviceProperties(&deviceProp, device);
+      printf("Device %s has compute capability %d.%d.\n", deviceProp.name, deviceProp.major, deviceProp.minor);
+      printf("Number of multiprocessors: %d\n", deviceProp.multiProcessorCount);
+      printf("Clock rate: %d Hz\n", deviceProp.clockRate);
+      printf("Total amount of global memory: %d KB\n", deviceProp.totalGlobalMem / 1024);
+      printf("Total amount of constant memory: %d KB\n", deviceProp.totalConstMem / 1024);
+      printf("Total amount of shared memory per block: %d KB\n", deviceProp.sharedMemPerBlock / 1024);
+      printf("Total amount of shared memory per SM: %d KB\n", 64);
+      printf("Warp size: %d\n", deviceProp.warpSize);
+      printf("Maximum number of threads per block: %d\n", deviceProp.maxThreadsPerBlock);
+      printf("Maximum number of blocks per multiprocessor: %d\n", deviceProp.maxThreadsPerMultiProcessor / deviceProp.maxThreadsPerBlock);
+      printf("Maximum number of threads per multiprocessor: %d\n", deviceProp.maxThreadsPerMultiProcessor);
+      printf("Maximum number of warps per multiprocessor: %d\n", deviceProp.maxThreadsPerMultiProcessor / 32);
+      printf("Maximum Grid size: (%d,%d,%d)\n", deviceProp.maxGridSize[0], deviceProp.maxGridSize[1], deviceProp.maxGridSize[2]);
+      printf("Maximum block dimension: (%d,%d,%d)\n", deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
+    }
+  } else {
+    printf("NO CUDA DEVICE AVAILABLE");
+  }
+  return deviceCount;
+};
 
 template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   // Iteration
@@ -108,7 +139,6 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     v_i+1 =  vbar_i+1 * (1/alpha_i+1)
     */
     // printf("3. Continue the bidiagonialization\n");
-    cudaProfilerStart();
     u = A * v - u * alpha; // ubar_i+1
 
     beta = u.Dnrm2(); // beta_i+1 = ||ubar_i+1||
@@ -284,9 +314,7 @@ int main() {
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start);
-    cudaProfilerStop();
     Vector_GPU x_g = lsqr<Vector_GPU>(A_g, b_g);
-    cudaProfilerStop();
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     float milliseconds = 0;

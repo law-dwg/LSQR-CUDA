@@ -5,6 +5,10 @@
 
 double D2Norm(double a, double b);
 
+bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG);
+
+bool compareVal(double *VC, double *VG);
+
 void writeArrayToFile(std::string dest, unsigned rows, unsigned cols, double *arr);
 
 void readArrayFromFile(const char *path, unsigned r, unsigned c, std::vector<double> &mat);
