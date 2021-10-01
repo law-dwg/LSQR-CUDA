@@ -384,14 +384,14 @@ void __global__ transposeTiled(double *in1, double *output, unsigned int *rows, 
 }
 
 // BLOCK AND TILE SWEEP TOGETHER (BLOCK_SIZE = TILE_SIZE)
-template <typename T>
-void __global__ multiplyTiled(T *in1, unsigned int *rows1, unsigned int *cols1, T *in2, unsigned int *rows2, unsigned int *cols2, T *output) {
+void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2, unsigned int *rows2, unsigned int *cols2,
+                              double *output) {
 
-  __shared__ T A[TILE_DIM_X][TILE_DIM_Y + 1], B[TILE_DIM_X][TILE_DIM_Y + 1];
+  __shared__ double A[TILE_DIM_X][TILE_DIM_Y + 1], B[TILE_DIM_X][TILE_DIM_Y + 1];
 
   int y = blockIdx.y * blockDim.y + threadIdx.y; // row
   int x = blockIdx.x * blockDim.x + threadIdx.x; // col
-  T sum = 0;                                     // sum in block
+  double sum = 0;                                // sum in block
 
   for (int i = 0; i < *cols1; i += blockDim.x) {
     int id1, id2;
@@ -674,8 +674,7 @@ Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
   // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
   //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
-  multiplyTiled<double>
-      <<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+  multiplyTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
   // cudaDeviceSynchronize();
   // dim3 grid(1, 1, 1);
   // dim3 block(out.h_rows, out.h_columns, 1);
