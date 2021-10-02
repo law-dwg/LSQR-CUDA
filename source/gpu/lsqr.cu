@@ -249,7 +249,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 1000; i < 1100; i += 100) {
+    for (int i = 100; i < 1100; i += 100) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }

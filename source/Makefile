@@ -35,11 +35,11 @@ $(BUILD_DIR)/$(TARGET): $(OBJS_CPP) $(OBJS_CU)
 
 $(BUILD_DIR)/%.cu.o: %.cu %.cuh
 	mkdir -p $(dir $@)
-	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(CC_OPT_FLAGS) $(NVCC_OPT_FLAGS_GPU) -dc $< -o $@
+	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_OPT_FLAGS) -dc $< -o $@
 
 $(BUILD_DIR)/%.cpp.o: %.cpp %.hpp
 	mkdir -p $(dir $@)
-	$(NVCC) $(NVCC_COMPUTE_FLAGS) $(CC_OPT_FLAGS) -c $< -o $@
+	$(CC) $(CC_OPT_FLAGS) -c $< -o $@
 
 # PHONYS
 .PHONY: debug all clean clean_mats run $(BUILD_DIR)/$(TARGET) test
@@ -60,10 +60,12 @@ all: clean clean_mats $(BUILD_DIR)/$(TARGET) run
 
 clean:
 	rm -r $(BUILD_DIR)
-	rm -r $(DEBUG_BUILD_DIR)
 
 clean_mats:
 	rm input/*.txt output/*.txt
+
+clean_debug:
+	rm -r $(DEBUG_BUILD_DIR)
 
 run: $(BUILD_DIR)/$(TARGET)
 	$(BUILD_DIR)/$(TARGET)
