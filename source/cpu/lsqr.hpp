@@ -38,7 +38,11 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   double epsilon = 1e-16;
   double alpha = 0;
   double beta = 0;
+  double bnorm = 0;
   Vec u, v, w, res_v;
+  Vec A_T = A.transpose();
+  Anorm = A.Dnrm2();
+  bnorm = b.Dnrm2();
   if (conlim > 0) {
     ctol = 1 / conlim;
   };
@@ -47,17 +51,14 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   /*1. Initialize*/
   Vec x(A.getColumns(), 1);
   beta = b.Dnrm2();
-  // std::cout << beta << std::endl;
   if (beta > 0) {
     u = b * (1 / beta);
-    v = A.transpose() * u;
+    v = A_T * u;
     alpha = v.Dnrm2();
   } else {
     v = x;
     alpha = 0;
   };
-  // std::cout << alpha << std::endl;
-  // v.print();
 
   if (alpha > 0) {
     v = v * (1 / alpha);
@@ -71,14 +72,13 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   double r1norm = rnorm;
   double r2norm = rnorm;
   double Arnorm = alpha * beta;
-
+  
   // 2. For i=1,2,3....
   printf("2. For i=1,2,3....\n");
   do {
     if (itn == A.getRows() / 2 || itn == A.getRows() || itn == (A.getRows() + A.getRows() / 2))
-      printf("itn = %d\n", itn);
+       printf("itn = %d\n", itn);
     itn++;
-    Vec A_T = A.transpose();
 
     // 3. Continue the bidiagonialization
     /* Important equations for understanding.
@@ -89,9 +89,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     alpha_i+1 = ||vbar_i+1||
     v_i+1 =  vbar_i+1 * (1/alpha_i+1)
     */
-    // printf("3. Continue the bidiagonialization\n");
     u = A * v - u * alpha; // ubar_i+1
-
     beta = u.Dnrm2(); // beta_i+1 = ||ubar_i+1||
     if (beta > 0) {
       u = u * (1 / beta);         // u_i+1
@@ -103,8 +101,6 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     }
 
     // 4. Construct and apply next orthogonal transformation
-    // printf("4. Construct and apply next orthogonal transformation\n");
-
     rho = D2Norm(rhobar, beta); // rho_i
     c = rhobar / rho;           // c_i
     s = beta / rho;             // s_i
@@ -138,14 +134,14 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     /*Test 1 for convergence
     stop if ||r|| =< btol*||b|| + atol*||A||*||x||
     */
-    if (res <= (btol * b.Dnrm2() + atol * A.Dnrm2() * x.Dnrm2())) {
+    if (res <= (btol * bnorm + atol * Anorm * x.Dnrm2())) {
       istop = 1;
     }
 
     /*Test 2 for convergence
     stop if ||A_T*r||/||A||*||r|| <= atol
     */
-    if (Arnorm / (A.Dnrm2() * res) <= atol) {
+    if (Arnorm / (Anorm * res) <= atol) {
       istop = 2;
     }
 
@@ -173,11 +169,6 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
         istop=5;
         printf("%i\n",itn);
     };*/
-
-    // printf("iteration %i\n", itn);
-    // printf("istop %i\n", istop);
-    // x.print();
-    // printf("%f\n", Arnorm);
   } while (istop == 0 && itn < 2 * A.getRows());
   printf("ran through %d iterations \n", itn);
   return x;

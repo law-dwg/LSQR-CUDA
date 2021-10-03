@@ -4,7 +4,7 @@ BUILD_DIR := ./build
 # GPU code
 SRC_GPU := ./gpu
 NVCC := nvcc
-NVCC_FLAGS = -std=c++17 -lcublas
+NVCC_FLAGS = -std=c++17 -lcublas -lcusparse
 NVCC_COMPUTE_FLAGS = -arch=sm_50
 NVCC_OPT_FLAGS = -Xptxas -O3 -use_fast_math
 NVCC_BE_QUIET = -Wno-deprecated-gpu-targets

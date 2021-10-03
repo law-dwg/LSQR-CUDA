@@ -38,24 +38,15 @@ Matrix_CPU::Matrix_CPU(unsigned int r, unsigned int c) {
 Vector_CPU Vector_CPU::operator*(Vector_CPU &v) {
   std::vector<double> lhs = this->mat;
   std::vector<double> rhs = v.mat;
-  Vector_CPU out(this->rows, v.columns);
-  // std::cout << lhs.size() << std::endl;
-  // std::cout << rhs.size() << std::endl;
-  clock_t startC, stopC;
+  Vector_CPU out(this->rows, v.columns); 
   if (this->columns == v.rows) {
-    std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
     for (int r = 0; r < this->rows; r++) {
       for (int c = 0; c < v.columns; c++) {
-        double sum = 0;
         for (int i = 0; i < v.rows; i++) {
-          sum += lhs[r * this->columns + i] * rhs[c + i * v.columns];
+          out.mat[r * out.columns + c] += lhs[r * this->columns + i] * rhs[c + i * v.columns];
         }
-        out.mat[r * out.columns + c] = sum;
-        // printf("sum=%f\n",sum);
       }
     }
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    // std::cout << "CPU " << std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() << "[ms] elapsed" << std::endl;
     return out;
   } else {
     printf("cannot perform this multiplication\n");
