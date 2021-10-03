@@ -17,7 +17,6 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   double res = 0;
   double res1 = 0;
   double ddnorm = 0;
-  double Anorm = 0;
   double Acond = 0;
   double damp = 0;
   double dnorm = 0;
@@ -38,11 +37,11 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   double epsilon = 1e-16;
   double alpha = 0;
   double beta = 0;
-  double bnorm = 0;
-  Vec u, v, w, res_v;
+  const double Anorm = A.Dnrm2();
+  const double bnorm = b.Dnrm2();
   Vec A_T = A.transpose();
-  Anorm = A.Dnrm2();
-  bnorm = b.Dnrm2();
+  Vec u, v, w, res_v;
+
   if (conlim > 0) {
     ctol = 1 / conlim;
   };
@@ -50,7 +49,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
 
   /*1. Initialize*/
   Vec x(A.getColumns(), 1);
-  beta = b.Dnrm2();
+  beta = bnorm;
   if (beta > 0) {
     u = b * (1 / beta);
     v = A_T * u;
@@ -72,12 +71,12 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   double r1norm = rnorm;
   double r2norm = rnorm;
   double Arnorm = alpha * beta;
-  
+
   // 2. For i=1,2,3....
   printf("2. For i=1,2,3....\n");
   do {
     if (itn == A.getRows() / 2 || itn == A.getRows() || itn == (A.getRows() + A.getRows() / 2))
-       printf("itn = %d\n", itn);
+      printf("itn = %d\n", itn);
     itn++;
 
     // 3. Continue the bidiagonialization
@@ -90,7 +89,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     v_i+1 =  vbar_i+1 * (1/alpha_i+1)
     */
     u = A * v - u * alpha; // ubar_i+1
-    beta = u.Dnrm2(); // beta_i+1 = ||ubar_i+1||
+    beta = u.Dnrm2();      // beta_i+1 = ||ubar_i+1||
     if (beta > 0) {
       u = u * (1 / beta);         // u_i+1
       v = (A_T * u) - (v * beta); // vbar_i+1
@@ -135,6 +134,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     stop if ||r|| =< btol*||b|| + atol*||A||*||x||
     */
     if (res <= (btol * bnorm + atol * Anorm * x.Dnrm2())) {
+      printf("istop1\n");
       istop = 1;
     }
 
@@ -142,6 +142,8 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     stop if ||A_T*r||/||A||*||r|| <= atol
     */
     if (Arnorm / (Anorm * res) <= atol) {
+      printf("Anorm = %f\n", Anorm);
+      printf("istop2\n");
       istop = 2;
     }
 

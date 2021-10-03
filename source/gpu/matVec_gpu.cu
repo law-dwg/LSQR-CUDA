@@ -254,7 +254,7 @@ void __global__ dnrm2Coop(double *in1, unsigned int *r, unsigned int *c, double 
   }
 }
 
-void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out) {
+void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *max, double *out) {
   __shared__ double sum[TILE_DIM_X];
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
@@ -263,11 +263,11 @@ void __global__ dnrm2(double *in1, unsigned int *r, unsigned int *c, double *out
   // sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
 
   if (x < (*r * *c) && x2 < (*r * *c)) {
-    sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
+    sum[threadIdx.x] = in1[x] / *max * in1[x] / *max + in1[x2] / *max * in1[x2] / *max;
     // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] + in2[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x,
     // x, x2, sum[threadIdx.x]);
   } else if ((x < (*r * *c)) && ((*r * *c) <= x2)) {
-    sum[threadIdx.x] = in1[x] * in1[x];
+    sum[threadIdx.x] = in1[x] / *max * in1[x] / *max;
     // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x,
     // sum[threadIdx.x]);
   } else {
@@ -433,25 +433,6 @@ void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *co
 
 // Operator overloads
 
-// Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
-//   cublasLtMatmul(cublasLtHandle_t               lightHandle,
-//     cublasLtMatmulDesc_t           computeDesc,
-//     const void                    *alpha,
-//     const void                    *A,
-//     cublasLtMatrixLayout_t         Adesc,
-//     const void                    *B,
-//     cublasLtMatrixLayout_t         Bdesc,
-//     const void                    *beta,
-//     const void                    *C,
-//     cublasLtMatrixLayout_t         Cdesc,
-//     void                          *D,
-//     cublasLtMatrixLayout_t         Ddesc,
-//     const cublasLtMatmulAlgo_t    *algo,
-//     void                          *workspace,
-//     size_t                         workspaceSizeInBytes,
-//     cudaStream_t                   stream);
-// }
-
 Vector_GPU Vector_GPU::operator*(double h_i) {
   // printf("scale %f\n", h_i);
   Vector_GPU out(this->h_rows, this->h_columns);
@@ -555,11 +536,11 @@ Vector_GPU Vector_GPU::transpose() {
   return out;
 };
 
-double Vector_GPU::Dnrm2Leg() {
+double Vector_GPU::Dnrm2() {
   dim3 threads(TILE_DIM_X, 1);
   int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
   dim3 blocks(blockX, 1);
-  double *d_out, *d_max, *tempMat;
+  double *d_out, *d_max;
   double zero = 0.0;
   double h_max;
   double h_out;
@@ -567,71 +548,21 @@ double Vector_GPU::Dnrm2Leg() {
   gpuErrchk(cudaMalloc(&d_max, sizeof(double)));
   gpuErrchk(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
   gpuErrchk(cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice));
-  gpuErrchk(cudaMalloc(&tempMat, sizeof(double) * this->h_rows * this->h_columns));
 
   // printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
 
-  // ERROR HERE
   maxVal<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, d_max);
   // gpuErrchk(cudaPeekAtLastError());
   gpuErrchk(cudaDeviceSynchronize());
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
-  scale<<<blocks, threads>>>(this->d_mat, d_max, tempMat, this->d_rows, this->d_columns, true);
+  dnrm2<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, d_max, d_out);
   gpuErrchk(cudaDeviceSynchronize());
-  dnrm2<<<blocks, threads>>>(tempMat, this->d_rows, this->d_columns, d_out);
-  gpuErrchk(cudaDeviceSynchronize());
-  cudaFree(tempMat);
   gpuErrchk(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   gpuErrchk(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
-
   assert(!(h_out != h_out));
   assert(h_out > 0);
-  return std::abs(h_max) * sqrt(h_out);
-};
-
-double Vector_GPU::Dnrm2() {
-  // int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
-  // dim3 blocks(blockX, 1);
-  double h_out;
-  int *version;
-  double *d_out;
-  double zero = 0.0;
-  // double c_d_mat[h_rows*h_columns];
-  int incre = 1;
-  gpuErrchk(cudaMalloc(&d_out, sizeof(double)));
-  // gpuErrchk(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
-  // gpuErrchk(cudaMemcpy(&c_d_mat,d_mat, sizeof(double)*h_rows*h_columns,cudaMemcpyDeviceToHost));
-
-  // for (int i = 0; i<100;++i){
-  //  printf("%f\n",c_d_mat[i]);
-  //}
-  // gpuErrchk(cudaMalloc(&c_d_mat, sizeof(double)*h_rows*h_columns));
-  // gpuErrchk(cudaMemcpy(&c_d_mat, d_mat, sizeof(double) * h_columns * h_rows, cudaMemcpyDeviceToDevice));
-  int size = (this->h_rows * this->h_columns);
-
-  // stat = cublasSetVector(size, sizeof(double), (void **)&c_d_mat, incre, d_d_mat, incre);
-  // if (stat != CUBLAS_STATUS_SUCCESS) {
-  //   printf ("CUBLAS Version failed\n");
-  //   return EXIT_FAILURE;
-  // }
-
-  cublasStatus_t stat3 = cublasDnrm2(handle, size, this->d_mat, incre, d_out);
-  cudaDeviceSynchronize();
-  if (stat3 != CUBLAS_STATUS_SUCCESS) {
-    printf("CUBLAS DNRM2 failed\n");
-    return EXIT_FAILURE;
-  }
-
-  // stat = cublasDestroy(handle);
-  // if (stat != CUBLAS_STATUS_SUCCESS) {
-  //   printf ("CUBLAS destroy failed\n");
-  //   return EXIT_FAILURE;
-  // }
-  // cublasDestroy(handle);
-  gpuErrchk(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
-  assert(!(h_out != h_out));
-  return h_out;
+  return (std::abs(h_max) * sqrt(h_out));
 };
 
 // Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {

@@ -38,7 +38,7 @@ Matrix_CPU::Matrix_CPU(unsigned int r, unsigned int c) {
 Vector_CPU Vector_CPU::operator*(Vector_CPU &v) {
   std::vector<double> lhs = this->mat;
   std::vector<double> rhs = v.mat;
-  Vector_CPU out(this->rows, v.columns); 
+  Vector_CPU out(this->rows, v.columns);
   if (this->columns == v.rows) {
     for (int r = 0; r < this->rows; r++) {
       for (int c = 0; c < v.columns; c++) {

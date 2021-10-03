@@ -1,7 +1,7 @@
 #ifndef CAFFE_COMMON_CUH_
 #define CAFFE_COMMON_CUH_
-#include <cuda.h>
 #include "cublas_v2.h"
+#include <cuda.h>
 
 cudaError_t cudaStat;
 cublasHandle_t handle;

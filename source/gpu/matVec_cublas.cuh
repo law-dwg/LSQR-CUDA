@@ -23,9 +23,11 @@ public:
   unsigned int h_rows, h_columns, *d_rows, *d_columns;
   double *d_mat;
   /** Constructors/Destructors and rule of 5 */
-  Vector_CUBLAS() : h_rows(0), h_columns(0) { // Default Constructor
-    
-  };
+  Vector_CUBLAS()
+      : h_rows(0), h_columns(0){
+                       // Default Constructor
+
+                   };
   Vector_CUBLAS(unsigned int r, unsigned int c) : h_rows(r), h_columns(c) { // Constructor #1
     // printf("Vector_CUBLAS Constructor #1 was called\n");
     // allocate to device
@@ -108,8 +110,8 @@ public:
 
   /** Operator overloads */
   Vector_CUBLAS operator*(Vector_CUBLAS &v);       // Multiplication
-  Vector_CUBLAS operator*(double i);            // Scale
-  void operator=(Vector_CPU &v);             // Assignment CPU
+  Vector_CUBLAS operator*(double i);               // Scale
+  void operator=(Vector_CPU &v);                   // Assignment CPU
   Vector_CUBLAS operator-(const Vector_CUBLAS &v); // Subtraction
   Vector_CUBLAS operator+(const Vector_CUBLAS &v); // Addittion
 

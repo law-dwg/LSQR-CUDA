@@ -124,7 +124,6 @@ public:
   int getRows() { return h_rows; };
   int getColumns() { return h_columns; };
   double Dnrm2();
-  double Dnrm2Leg();
   Vector_GPU transpose();
 };
 
