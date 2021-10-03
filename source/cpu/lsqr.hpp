@@ -1,65 +1,53 @@
-#include "lsqr_cpu.hpp"
-#include <fstream>
-#include <iostream>
+#pragma once
 #include <math.h>
+#include <stdio.h>
 
-void writeArrayToFile(const char *dest, unsigned size, double *arr) {
-  std::ofstream myfileA(dest);
-  if (myfileA.is_open()) {
-    for (int count = 0; count < size; count++) {
-      if (count != (size - 1)) {
-        myfileA << arr[count] << " ";
-      } else {
-        myfileA << arr[count];
-      }
-    }
-    myfileA.close();
-  } else
-    std::cout << "Unable to open file";
-};
+double D2Norm(double a, double b);
 
-double D2Norm_cpu(double a, double b) {
-  const double scale = std::abs(a) + std::abs(b);
-  const double zero = 0.0;
-
-  if (scale == zero) {
-    return zero;
-  }
-
-  const double sa = a / scale;
-  const double sb = b / scale;
-
-  return scale * sqrt(sa * sa + sb * sb);
-};
-
-Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
+template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   // Iteration
-  unsigned int istop, itn = 0;
-
-  double ddnorm, Anorm, Acond, damp, dnorm, dknorm, res2, xnorm, xxnorm, z, sn2, rtol;
-  ddnorm = Anorm = Acond = damp = dnorm = dknorm = res2 = xnorm = xxnorm = z = sn2 = rtol = 0;
-  double rho, phi, c, s, theta, tau, res, res1;
-  double cs2 = -1;
-  double atol, btol;
-  atol = btol = 1e-8;
-
-  double conlim = 1e8;
+  unsigned int istop = 0;
+  unsigned int itn = 0;
+  double rho = 0;
+  double phi = 0;
+  double c = 0;
+  double s = 0;
+  double theta = 0;
+  double tau = 0;
+  double res = 0;
+  double res1 = 0;
+  double ddnorm = 0;
+  double Anorm = 0;
+  double Acond = 0;
+  double damp = 0;
+  double dnorm = 0;
+  double dknorm = 0;
+  double res2 = 0;
+  double xnorm = 0;
+  double xxnorm = 0;
+  double z = 0;
+  double sn2 = 0;
   double ctol = 0;
+  double rtol = 0;
+  double dampsq = 0;
+  double cs2 = -1;
+  double atol = 1e-8;
+  double btol = 1e-8;
+  double conlim = 1e8;
+  double res_old = 1e10;
+  double epsilon = 1e-16;
+  double alpha = 0;
+  double beta = 0;
+  Vec u, v, w, res_v;
   if (conlim > 0) {
     ctol = 1 / conlim;
   };
-
-  double dampsq = damp * damp;
-
-  double res_old = 1e10;
-  double epsilon = 1e-16;
+  dampsq = damp * damp;
 
   /*1. Initialize*/
-  Vector_CPU u, v, w, res_v;
-  double alpha;
-  Vector_CPU x(A.getColumns(), 1);
-  double beta = b.Dnrm2();
-  std::cout << beta << std::endl;
+  Vec x(A.getColumns(), 1);
+  beta = b.Dnrm2();
+  // std::cout << beta << std::endl;
   if (beta > 0) {
     u = b * (1 / beta);
     v = A.transpose() * u;
@@ -68,8 +56,8 @@ Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
     v = x;
     alpha = 0;
   };
-  std::cout << alpha << std::endl;
-  v.print();
+  // std::cout << alpha << std::endl;
+  // v.print();
 
   if (alpha > 0) {
     v = v * (1 / alpha);
@@ -87,8 +75,10 @@ Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
   // 2. For i=1,2,3....
   printf("2. For i=1,2,3....\n");
   do {
+    if (itn == A.getRows() / 2 || itn == A.getRows() || itn == (A.getRows() + A.getRows() / 2))
+      printf("itn = %d\n", itn);
     itn++;
-    Vector_CPU A_T = A.transpose();
+    Vec A_T = A.transpose();
 
     // 3. Continue the bidiagonialization
     /* Important equations for understanding.
@@ -99,9 +89,10 @@ Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
     alpha_i+1 = ||vbar_i+1||
     v_i+1 =  vbar_i+1 * (1/alpha_i+1)
     */
-    printf("3. Continue the bidiagonialization\n");
+    // printf("3. Continue the bidiagonialization\n");
     u = A * v - u * alpha; // ubar_i+1
-    beta = u.Dnrm2();      // beta_i+1 = ||ubar_i+1||
+
+    beta = u.Dnrm2(); // beta_i+1 = ||ubar_i+1||
     if (beta > 0) {
       u = u * (1 / beta);         // u_i+1
       v = (A_T * u) - (v * beta); // vbar_i+1
@@ -112,15 +103,15 @@ Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
     }
 
     // 4. Construct and apply next orthogonal transformation
-    printf("4. Construct and apply next orthogonal transformation\n");
+    // printf("4. Construct and apply next orthogonal transformation\n");
 
-    rho = D2Norm_cpu(rhobar, beta); // rho_i
-    c = rhobar / rho;               // c_i
-    s = beta / rho;                 // s_i
-    theta = s * alpha;              // theta_i+1
-    rhobar = -c * alpha;            // rhobar_i+1
-    phi = c * phibar;               // phi_i = c_i*phibar_i
-    phibar = s * phibar;            // phibar_i+1 = s_i*phibar_i
+    rho = D2Norm(rhobar, beta); // rho_i
+    c = rhobar / rho;           // c_i
+    s = beta / rho;             // s_i
+    theta = s * alpha;          // theta_i+1
+    rhobar = -c * alpha;        // rhobar_i+1
+    phi = c * phibar;           // phi_i = c_i*phibar_i
+    phibar = s * phibar;        // phibar_i+1 = s_i*phibar_i
 
     // used for stopping critera
     tau = s * phi;
@@ -128,8 +119,10 @@ Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
 
     // 5. Update x,w
     // save values for stopping criteria
-    Vector_CPU dk = w * (1 / rho);
-    dknorm = dk.Dnrm2() * dk.Dnrm2() + ddnorm;
+    Vec dk = w * (1 / rho);
+    double dknrm2 = dk.Dnrm2();
+    dknorm = dknrm2 * dknrm2 + ddnorm;
+
     /* Important equations
     x_i = x_i-1 + (phi_i/rho_i) *w_i
     w_i+1 = v_i+1 - (theta_i+1/rho_i)*w_i
@@ -137,12 +130,11 @@ Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
     x = x + w * (phi / rho);
     w = v - (w * (theta / rho));
     // residual
-    res_v = b - A * x;
-
+    res_v = b - (A * x);
     res = res_v.Dnrm2();
 
     // 6. Test for convergence
-    printf("6. Test for convergence\n");
+    // printf("6. Test for convergence\n");
     /*Test 1 for convergence
     stop if ||r|| =< btol*||b|| + atol*||A||*||x||
     */
@@ -181,11 +173,12 @@ Vector_CPU lsqr_cpu(Vector_CPU &A, Vector_CPU &b) {
         istop=5;
         printf("%i\n",itn);
     };*/
-    printf("iteration %i\n", itn);
-    printf("istop %i\n", istop);
-    x.print();
-    printf("%f\n", Arnorm);
-  } while (istop == 0);
 
+    // printf("iteration %i\n", itn);
+    // printf("istop %i\n", istop);
+    // x.print();
+    // printf("%f\n", Arnorm);
+  } while (istop == 0 && itn < 2 * A.getRows());
+  printf("ran through %d iterations \n", itn);
   return x;
 }

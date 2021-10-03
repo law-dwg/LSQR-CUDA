@@ -23,7 +23,6 @@
 #include <time.h>
 #include <vector>
 
-
 bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG) {
   bool same = true;
   double epsilon = 1e-9;
@@ -71,20 +70,6 @@ bool compareVal(double *VC, double *VG) {
   }
   return same;
 }
-
-double D2Norm(double a, double b) {
-  const double scale = std::abs(a) + std::abs(b);
-  const double zero = 0.0;
-
-  if (scale == zero) {
-    return zero;
-  }
-
-  const double sa = a / scale;
-  const double sb = b / scale;
-  // printf("D2N: %f\n", scale * sqrt(sa * sa + sb * sb));
-  return scale * sqrt(sa * sa + sb * sb);
-};
 
 void writeArrayToFile(std::string dest, unsigned rows, unsigned cols, double *arr) {
   typedef std::numeric_limits<double> dbl;

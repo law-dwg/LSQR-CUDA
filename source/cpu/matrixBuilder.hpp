@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-double D2Norm(double a, double b);
-
 bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG);
 
 bool compareVal(double *VC, double *VG);

@@ -19,7 +19,7 @@ CC = g++
 CC_OPT_FLAGS = -O3
 CC_DEBUG_FLAGS = -g 
 SOURCES_CPP = 	$(SRC_CPU)/matrixBuilder.cpp \
-				$(SRC_CPU)/lsqr_cpu.cpp \
+				$(SRC_CPU)/lsqr.cpp \
 				$(SRC_CPU)/matVec_cpu.cpp
 OBJS_CPP := $(SOURCES_CPP:%=$(BUILD_DIR)/%.o)
 
