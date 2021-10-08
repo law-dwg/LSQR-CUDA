@@ -46,30 +46,7 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 #include "cublas_v2.h"
 #include "device_launch_parameters.h"
 #include "matVec_gpu.cuh"
-
-cudaError_t cudaStat;
-cublasHandle_t handle;
-cudaStream_t stream;
-cublasStatus_t stat1 = cublasCreate(&handle);
-cudaError_t cudaStat1 = cudaStreamCreate(&stream);
-cublasStatus_t stat = cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE);
-cublasStatus_t stat2 = cublasSetStream(handle, stream);
-void cublasReset() {
-  stat1 = cublasCreate(&handle);
-  cudaStat1 = cudaStreamCreate(&stream);
-  stat = cublasSetPointerMode(handle, CUBLAS_POINTER_MODE_DEVICE);
-  stat2 = cublasSetStream(handle, stream);
-}
-
-#define gpuErrchk(ans)                                                                                                                               \
-  { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true) {
-  if (code != cudaSuccess) {
-    fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
-    if (abort)
-      exit(code);
-  }
-}
+#include "utils.cuh"
 
 using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK

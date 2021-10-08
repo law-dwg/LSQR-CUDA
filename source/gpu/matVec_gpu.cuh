@@ -1,20 +1,12 @@
 #pragma once
 #include "../cpu/matVec_cpu.hpp"
 #include "cublas_v2.h"
+#include "utils.cuh"
 #include <algorithm>
 #include <stdio.h>  //NULL, printf
 #include <stdlib.h> /* srand, rand */
 #include <time.h>   /* time */
 #include <vector>
-
-extern cudaError_t cudaStat;
-extern cublasStatus_t stat;
-extern cublasHandle_t handle;
-extern cudaStream_t stream;
-extern cublasStatus_t stat1;
-extern cudaError_t cudaStat1;
-extern cublasStatus_t stat2;
-void extern cublasReset();
 
 class Vector_GPU {
 protected:
