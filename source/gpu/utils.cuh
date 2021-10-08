@@ -1,3 +1,4 @@
+#pragma once
 #include "cublas_v2.h"
 #include <stdio.h> //NULL, printf
 #ifndef gpuErrchk
@@ -11,11 +12,20 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
   }
 }
 #endif
+#ifndef IDX2C
+#define IDX2C(i,j,ld) (((j)*(ld))+(i))
+//static __inline__ void modify (cublasHandle_t handle, float *m, int ldm, int n, int p, int q, float alpha, float beta){
+//    cublasSscal (handle, n-q, &alpha, &m[IDX2C(p,q,ldm)], ldm);
+//    cublasSscal (handle, ldm-p, &beta, &m[IDX2C(p,q,ldm)], 1);
+//}
+#endif
 extern cudaError_t cudaStat;
-extern cublasStatus_t stat;
 extern cublasHandle_t handle;
 extern cudaStream_t stream;
-extern cublasStatus_t stat1;
-extern cudaError_t cudaStat1;
-extern cublasStatus_t stat2;
+extern cublasStatus_t statCreateHandle;
+extern cudaError_t cudaStatCreateStream;
+extern cublasStatus_t statSetStream;
+
+
 void extern cublasReset();
+const char *cublasGetErrorString(cublasStatus_t status);
