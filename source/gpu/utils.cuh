@@ -19,6 +19,7 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 //    cublasSscal (handle, ldm-p, &beta, &m[IDX2C(p,q,ldm)], 1);
 //}
 #endif
+extern cublasStatus_t stat;
 extern cudaError_t cudaStat;
 extern cublasHandle_t handle;
 extern cudaStream_t stream;

@@ -2,8 +2,9 @@
 #include "utils.cuh"
 #include <cuda.h>
 #include <iostream>
-#define MODE CUBLAS_POINTER_MODE_DEVICE
+#define MODE CUBLAS_POINTER_MODE_HOST
 
+cublasStatus_t stat;
 cudaError_t cudaStat;
 cublasHandle_t handle;
 cudaStream_t stream;
