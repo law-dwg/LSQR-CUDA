@@ -2,6 +2,9 @@
 #include "matVec_cublas.cuh"
 #include "utils.cuh"
 #include <assert.h>
+const double ONE = 1.0;
+const double ZERO = 0.0;
+const double NEGONE = -1.0;
 void __global__ print(double *input, unsigned *r, unsigned *c) {
   const unsigned int bid = blockIdx.x                               // 1D
                            + blockIdx.y * gridDim.x                 // 2D
@@ -22,12 +25,11 @@ void __global__ print(double *input, unsigned *r, unsigned *c) {
 }
 /** Operator overloads */
 Vector_CUBLAS Vector_CUBLAS::operator*(Vector_CUBLAS &v) {
-  printf("mult\n");
   Vector_CUBLAS out(this->h_rows, v.h_columns);
-  int m = this->h_rows, n = this->h_columns, k = this->h_columns;
+  int m = out.h_rows;
+  int n = out.h_columns;
+  int k = this->h_columns;
   int lda = m, ldb = k, ldc = m;
-  const double ONE = 1;
-  const double ZERO = 0;
   // printf("m=%d,n=%d,k=%d,lda=%d, ldb=%d, ldc=%d, d_rows=%d, d_cols=%d,\n", m, n, k, lda, ldb, ldc, rows, cols);
   stat = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, &ONE, this->d_mat, lda, v.d_mat, ldb, &ZERO, out.d_mat, ldc);
   if (stat != CUBLAS_STATUS_SUCCESS) {
@@ -37,14 +39,14 @@ Vector_CUBLAS Vector_CUBLAS::operator*(Vector_CUBLAS &v) {
 
   return out;
 };
-Vector_CUBLAS Vector_CUBLAS::operator*(double i){
-  Vector_CUBLAS out(this->h_rows,this->h_columns);
-  stat = cublasDcopy(handle, this->h_rows*this->h_columns, this->d_mat, 1, out.d_mat, 1);
+Vector_CUBLAS Vector_CUBLAS::operator*(double i) {
+  Vector_CUBLAS out(this->h_rows, this->h_columns);
+  stat = cublasDcopy(handle, this->h_rows * this->h_columns, this->d_mat, 1, out.d_mat, 1);
   if (stat != CUBLAS_STATUS_SUCCESS) {
     std::cout << cublasGetErrorString(stat) << std::endl;
     printf("CUBLAS scale failed\n");
   }
-  stat = cublasDscal(handle, this->h_rows*this->h_columns, &i, out.d_mat, 1);
+  stat = cublasDscal(handle, this->h_rows * this->h_columns, &i, out.d_mat, 1);
   if (stat != CUBLAS_STATUS_SUCCESS) {
     std::cout << cublasGetErrorString(stat) << std::endl;
     printf("CUBLAS scale failed\n");
@@ -52,8 +54,36 @@ Vector_CUBLAS Vector_CUBLAS::operator*(double i){
   return out;
 };
 void Vector_CUBLAS::operator=(Vector_CPU &v){};
-Vector_CUBLAS Vector_CUBLAS::operator-(const Vector_CUBLAS &v){};
-Vector_CUBLAS Vector_CUBLAS::operator+(const Vector_CUBLAS &v){};
+Vector_CUBLAS Vector_CUBLAS::operator-(const Vector_CUBLAS &v) {
+  Vector_CUBLAS out(this->h_rows, this->h_columns);
+  if (this->h_rows * this->h_columns == v.h_rows * v.h_columns) {
+    int m = this->h_rows, n = this->h_columns, k = this->h_columns;
+    int lda = m, ldb = k, ldc = m;
+    stat = cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, &ONE, this->d_mat, lda, &NEGONE, v.d_mat, ldb, out.d_mat, ldc); // ADD-SUB-TRANSPOSE
+    if (stat != CUBLAS_STATUS_SUCCESS) {
+      std::cout << cublasGetErrorString(stat) << std::endl;
+      printf("CUBLAS matrix subract failed\n");
+    }
+  } else
+    printf("CUBLAS SUBTRACT ERROR, MATRICES ARENT SAME SIZE\n");
+  return out;
+};
+Vector_CUBLAS Vector_CUBLAS::operator+(const Vector_CUBLAS &v) {
+  Vector_CUBLAS out(this->h_rows, this->h_columns);
+  if (this->h_rows * this->h_columns == v.h_rows * v.h_columns) {
+    int m = this->h_rows, n = this->h_columns, k = this->h_columns;
+    int lda = m, ldb = k, ldc = m;
+    stat = cublasDgeam(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, &ONE, this->d_mat, lda, &ONE, v.d_mat, ldb, out.d_mat, ldc); // ADD-SUB-TRANSPOSE
+    cudaDeviceSynchronize();
+    if (stat != CUBLAS_STATUS_SUCCESS) {
+      std::cout << cublasGetErrorString(stat) << std::endl;
+      printf("CUBLAS matrix addition failed\n");
+    }
+  } else {
+    printf("CUBLAS ADDITION ERROR, MATRICES ARENT SAME SIZE\n");
+  }
+  return out;
+};
 
 /** Member functions */
 // void printmat();
@@ -61,9 +91,9 @@ Vector_CPU Vector_CUBLAS::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
   unsigned int rows;
   unsigned int cols;
-  cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost);
-  cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  gpuErrchk(cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost));
   printf("d_rows = %d, h_rows = %d, d_cols = %d, h_cols = %d\n", rows, h_rows, cols, h_columns);
   if (rows != this->h_rows || cols != this->h_columns) {
     printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
@@ -87,11 +117,11 @@ double Vector_CUBLAS::Dnrm2() {
   //   return EXIT_FAILURE;
   // }
 
-  cublasStatus_t stat3 = cublasDnrm2(handle, size, this->d_mat, incre, d_out);
+  cublasStatus_t stat3 = cublasDnrm2(handle, size, this->d_mat, incre, &h_out);
   gpuErrchk(cudaDeviceSynchronize());
   if (stat3 != CUBLAS_STATUS_SUCCESS) {
     printf("CUBLAS DNRM2 failed\n");
-    return EXIT_FAILURE;
+    // return EXIT_FAILURE;
   }
 
   // stat = cublasDestroy(handle);
@@ -100,7 +130,7 @@ double Vector_CUBLAS::Dnrm2() {
   //   return EXIT_FAILURE;
   // }
   // cublasDestroy(handle);
-  gpuErrchk(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
+  // gpuErrchk(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   assert(!(h_out != h_out));
   return h_out;
 };
@@ -116,4 +146,14 @@ void Vector_CUBLAS::printmat() {
   cudaDeviceSynchronize();
 }
 
-Vector_CUBLAS Vector_CUBLAS::transpose(){};
+Vector_CUBLAS Vector_CUBLAS::transpose() {
+  Vector_CUBLAS out(this->h_columns, this->h_rows);
+  int m = this->h_rows, n = this->h_columns, k = this->h_columns;
+  int lda = m, ldb = k, ldc = m;
+  stat = cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_N, m, n, &ONE, this->d_mat, lda, &ZERO, this->d_mat, ldb, out.d_mat, ldc); // ADD-SUB-TRANSPOSE
+  if (stat != CUBLAS_STATUS_SUCCESS) {
+    std::cout << cublasGetErrorString(stat) << std::endl;
+    printf("CUBLAS matrix transpose failed\n");
+  }
+  return out;
+};
