@@ -1,8 +1,12 @@
+// CPU
 #include "../cpu/lsqr.hpp"
 #include "../cpu/matVec_cpu.hpp"
 #include "../cpu/matrixBuilder.hpp"
-// #include "lsqr_gpu.cuh"
+// GPU
 #include "matVec_gpu.cuh"
+//#include "matVec_cublas.cuh"
+#include "utils.cuh"
+// Libs
 #include <cassert>
 #include <chrono>
 #include <ctime>
@@ -27,7 +31,6 @@ int checkDevice() {
   int deviceCount;
   cudaGetDeviceCount(&deviceCount);
   int device;
-
   if (deviceCount > 0) {
     for (device = 0; device < deviceCount; ++device) {
       cudaDeviceProp deviceProp;
@@ -55,6 +58,8 @@ int checkDevice() {
 
 int main() {
   double sp;
+  // cublasDestroy(handle);
+  // cublasReset();
   std::string userName;
   std::cout << "Welcome to law-dwg's lsqr cuda and cpp implementations!\nYou can use ctrl+c to kill this program at any time.\n\nBefore we begin, "
                "please type in your name: ";
@@ -70,7 +75,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 1000; i < 1100; i += 100) {
+    for (int i = 500; i < 1500; i += 500) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -144,9 +149,9 @@ int main() {
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
     Vector_CPU x_g_out = x_g.matDeviceToHost();
     writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
-    cublasDestroy(handle);
-    cudaDeviceReset();
-    cublasReset();
+    // cublasDestroy(handle);
+    // cudaDeviceReset();
+    // cublasReset();
   }
-  cublasDestroy(handle);
+  // cublasDestroy(handle);
 }

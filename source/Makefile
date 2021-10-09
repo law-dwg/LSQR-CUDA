@@ -10,7 +10,10 @@ NVCC_OPT_FLAGS = -Xptxas -O3 -use_fast_math
 NVCC_BE_QUIET = -Wno-deprecated-gpu-targets
 NVCC_DEBUG_FLAGS = -G
 SOURCES_CU =	$(SRC_GPU)/lsqr.cu \
-				$(SRC_GPU)/matVec_gpu.cu
+				$(SRC_GPU)/matVec_gpu.cu \
+				$(SRC_GPU)/matVec_cublas.cu \
+				$(SRC_GPU)/utils.cu
+				
 OBJS_CU := $(SOURCES_CU:%=$(BUILD_DIR)/%.o)
 
 # CPU code
@@ -46,7 +49,7 @@ $(BUILD_DIR)/%.cpp.o: %.cpp %.hpp
 
 debug: $(DEBUG_BUILD_DIR)/$(DEBUG_TARGET)
 $(DEBUG_BUILD_DIR)/$(DEBUG_TARGET): $(DEBUG_OBJS_CPP) $(DEBUG_OBJS_CU)
-	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_DEBUG_FLAGS) $(OBJS_CPP) $(OBJS_CU) -o $@
+	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_DEBUG_FLAGS) -g $(OBJS_CPP) $(OBJS_CU) -o $@
 
 $(DEBUG_BUILD_DIR)/%.cu.o: %.cu %.cuh
 	mkdir -p $(dir $@)
@@ -56,7 +59,7 @@ $(DEBUG_BUILD_DIR)/%.cpp.o: %.cpp %.hpp
 	mkdir -p $(dir $@)
 	$(CC) $(CC_DEBUG_FLAGS) -c $< -o $@
 
-all: clean clean_mats $(BUILD_DIR)/$(TARGET) run
+all: format clean clean_mats $(BUILD_DIR)/$(TARGET) run
 
 clean:
 	rm -r $(BUILD_DIR)
@@ -71,4 +74,4 @@ run: $(BUILD_DIR)/$(TARGET)
 	$(BUILD_DIR)/$(TARGET)
 
 format:
-	clang-format -i --verbose --style={'ColumnLimit: 150'} $(SRC_GPU)/*/*.* $(SRC_GPU)/*.* $(SRC_CPU)/*.*
+	clang-format -i --verbose --style={'ColumnLimit: 150'} $(SRC_GPU)/*/*.* $(SRC_GPU)/*.* $(SRC_CPU)/*.* test/*/*.cu*

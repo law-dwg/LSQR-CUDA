@@ -70,7 +70,7 @@ public:
     gpuErrchk(cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice));
   };
   Vector_CUBLAS &operator=(Vector_CUBLAS &&v) noexcept { // Move assignment operator
-    printf("Vector_CUBLAS Move assignment operator was called\n");
+    // printf("Vector_CUBLAS Move assignment operator was called\n");
     // Host
     h_rows = v.h_rows;
     h_columns = v.h_columns;
