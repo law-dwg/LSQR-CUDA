@@ -63,7 +63,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
     v = v * (1 / alpha);
   };
   w = v;
-  
+
   double rhobar = alpha;
   double phibar = beta;
 

@@ -1,9 +1,9 @@
+#include "matrixBuilder.hpp"
 #ifdef _WIN32
 #include <Windows.h>
 #else
 #include <unistd.h>
 #endif
-#include "matrixBuilder.hpp"
 #include <algorithm>
 #include <cassert>
 #include <chrono>
@@ -11,7 +11,6 @@
 #include <ctime>
 #include <fstream>
 #include <iomanip>
-#include <iostream>
 #include <iterator>
 #include <limits>
 #include <math.h>
@@ -19,9 +18,7 @@
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string>
 #include <time.h>
-#include <vector>
 
 bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG) {
   bool same = true;

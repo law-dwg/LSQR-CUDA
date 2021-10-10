@@ -1,9 +1,6 @@
-#ifndef CAFFE_COMMON_CUH_
-#define CAFFE_COMMON_CUH_
-#include <cuda.h>
+#include "matVec_gpu.cuh"
 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
-
 #else
 static __inline__ __device__ double atomicAdd(double *address, double val) {
   unsigned long long int *address_as_ull = (unsigned long long int *)address;
@@ -16,8 +13,6 @@ static __inline__ __device__ double atomicAdd(double *address, double val) {
   } while (assumed != old);
   return __longlong_as_double(old);
 }
-
-#endif
 #endif
 
 static __inline__ __device__ double atomicMax(double *address, double val) {
@@ -32,33 +27,21 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 
 #include <assert.h>
 #include <cooperative_groups.h>
-#include <cuda_runtime.h>
-#include <math.h>
-#include <stdio.h>  //NULL, printf
-#include <stdlib.h> //srand, rand
-#include <string.h>
-#include <time.h>
-
 #include <iostream>
+#include <math.h>
 #include <sstream>
-
-#include "../cpu/matVec_cpu.hpp"
-#include "cublas_v2.h"
-#include "device_launch_parameters.h"
-#include "matVec_gpu.cuh"
-#include "utils.cuh"
+#include <string.h>
 
 using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
 #define TILE_DIM_X 16
 #define TILE_DIM_Y 16
-// nvcc -arch=sm_37 --std=c++17
 // gridDim.x - # of blocks in a grid, in x
 // gridDim.y - # of blocks in a grid, in y
 // blockDim.x - # of threads in a block, in x
 // blockDim.y - # of threads in a block, in y
 
-// CUDA kernels
+/** CUDA kernels */
 void __global__ multiplyNaive(double *in1, unsigned int *rows1, unsigned int *cols1, double *in2, unsigned int *rows2, unsigned int *cols2,
                               double *output) {
   const unsigned int x = blockIdx.y * blockDim.y + threadIdx.y; // row
@@ -408,7 +391,7 @@ void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *co
   }
 }
 
-// Operator overloads
+/** Operator overloads */
 
 Vector_GPU Vector_GPU::operator*(double h_i) {
   // printf("scale %f\n", h_i);
@@ -424,6 +407,24 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
   scale<<<grid, block>>>(this->d_mat, d_i, out.d_mat, this->d_rows, this->d_columns, false);
   // cudaDeviceSynchronize();
 
+  return out;
+}
+
+Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
+  // printf("MATMULT\n");
+  Vector_GPU out(this->h_rows, v.h_columns);
+  dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
+  unsigned int blocksY = (out.h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksX = (out.h_columns / TILE_DIM_Y) + 1;
+  dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
+  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+  multiplyTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+  // cudaDeviceSynchronize();
+  // dim3 grid(1, 1, 1);
+  // dim3 block(out.h_rows, out.h_columns, 1);
+  // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
+  //                                v.d_columns, out.d_mat);
   return out;
 }
 
@@ -471,6 +472,7 @@ Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
   return out;
 }
 
+/** Member Functions */
 void Vector_GPU::printmat() {
   unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
   unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
@@ -478,8 +480,8 @@ void Vector_GPU::printmat() {
   dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
 
   print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
-  // gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  // cudaErrCheck(cudaPeekAtLastError());
+  cudaErrCheck(cudaDeviceSynchronize());
 }
 
 Vector_CPU Vector_GPU::matDeviceToHost() {
@@ -521,28 +523,27 @@ double Vector_GPU::Dnrm2() {
   double zero = 0.0;
   double h_max;
   double h_out;
-  gpuErrchk(cudaMalloc(&d_out, sizeof(double)));
-  gpuErrchk(cudaMalloc(&d_max, sizeof(double)));
-  gpuErrchk(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
-  gpuErrchk(cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice));
+  cudaErrCheck(cudaMalloc(&d_out, sizeof(double)));
+  cudaErrCheck(cudaMalloc(&d_max, sizeof(double)));
+  cudaErrCheck(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
+  cudaErrCheck(cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice));
 
   // printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
 
   maxVal<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, d_max);
-  // gpuErrchk(cudaPeekAtLastError());
-  gpuErrchk(cudaDeviceSynchronize());
+  // cudaErrCheck(cudaPeekAtLastError());
+  cudaErrCheck(cudaDeviceSynchronize());
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
   dnrm2<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, d_max, d_out);
-  gpuErrchk(cudaDeviceSynchronize());
-  gpuErrchk(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
-  gpuErrchk(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
+  cudaErrCheck(cudaDeviceSynchronize());
+  cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
+  cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
   assert(!(h_out != h_out));
   assert(h_out > 0);
   return (std::abs(h_max) * sqrt(h_out));
 };
 
-// Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
 Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
   // printf("MATMULT\n");
   Vector_GPU out(this->h_rows, v.h_columns);
@@ -571,22 +572,3 @@ Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
   //                                v.d_columns, out.d_mat);
   return out;
 };
-
-// Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
-Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
-  // printf("MATMULT\n");
-  Vector_GPU out(this->h_rows, v.h_columns);
-  dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
-  unsigned int blocksY = (out.h_rows / TILE_DIM_X) + 1;
-  unsigned int blocksX = (out.h_columns / TILE_DIM_Y) + 1;
-  dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
-  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
-  multiplyTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
-  // cudaDeviceSynchronize();
-  // dim3 grid(1, 1, 1);
-  // dim3 block(out.h_rows, out.h_columns, 1);
-  // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
-  //                                v.d_columns, out.d_mat);
-  return out;
-}

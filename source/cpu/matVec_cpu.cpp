@@ -1,14 +1,11 @@
 #include "matVec_cpu.hpp"
-#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <cstdio>
-#include <iostream>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include <vector>
 
 // constructors
 Matrix_CPU::Matrix_CPU(unsigned int r, unsigned int c) {

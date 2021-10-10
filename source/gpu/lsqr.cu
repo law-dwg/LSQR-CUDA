@@ -11,18 +11,13 @@
 #include <chrono>
 #include <ctime>
 #include <ctype.h>
-#include <cuda.h>
-#include <cuda_profiler_api.h>
-#include <cuda_runtime.h>
 #include <filesystem>
 #include <iostream>
 #include <math.h>
 #include <set>
 #include <sstream>
-#include <stdio.h>
 #include <string>
 #include <time.h>
-#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -43,7 +38,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 500; i <= 1500; i += 500) {
+    for (int i = 500; i <= 1000; i += 500) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -64,7 +59,7 @@ int main() {
   checkDevice();
   std::set<fs::path>::iterator it = sorted_by_name.begin();
   while (it != sorted_by_name.end()) { // iterate through sorted files
-    gpuErrchk(cudaDeviceReset());
+    cudaErrCheck(cudaDeviceReset());
     std::string file1, file2;
     file1 = *it;
     ++it;
@@ -108,15 +103,15 @@ int main() {
     Vector_GPU A_g(A_rows, A_cols, A.data());
     Vector_GPU b_g(b_rows, b_cols, b.data());
     cudaEvent_t start, stop;
-    gpuErrchk(cudaEventCreate(&start));
-    gpuErrchk(cudaEventCreate(&stop));
-    gpuErrchk(cudaEventRecord(start));
+    cudaErrCheck(cudaEventCreate(&start));
+    cudaErrCheck(cudaEventCreate(&stop));
+    cudaErrCheck(cudaEventRecord(start));
     Vector_GPU x_g = lsqr<Vector_GPU>(A_g, b_g);
-    gpuErrchk(cudaDeviceSynchronize());
-    gpuErrchk(cudaEventRecord(stop));
-    gpuErrchk(cudaEventSynchronize(stop));
+    cudaErrCheck(cudaDeviceSynchronize());
+    cudaErrCheck(cudaEventRecord(stop));
+    cudaErrCheck(cudaEventSynchronize(stop));
     float milliseconds = 0;
-    gpuErrchk(cudaEventElapsedTime(&milliseconds, start, stop));
+    cudaErrCheck(cudaEventElapsedTime(&milliseconds, start, stop));
     printf("GPU time used = %f ms for lsqr\n", milliseconds);
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
     Vector_CPU x_g_out = x_g.matDeviceToHost();
@@ -128,24 +123,21 @@ int main() {
     Vector_CUBLAS A_g_cublas(A_rows, A_cols, A.data());
     Vector_CUBLAS b_g_cublas(b_rows, b_cols, b.data());
     cudaEvent_t start2, stop2;
-    gpuErrchk(cudaEventCreate(&start2));
-    gpuErrchk(cudaEventCreate(&stop2));
-    gpuErrchk(cudaEventRecord(start2));
+    cudaErrCheck(cudaEventCreate(&start2));
+    cudaErrCheck(cudaEventCreate(&stop2));
+    cudaErrCheck(cudaEventRecord(start2));
     Vector_CUBLAS x_g_cublas = lsqr<Vector_CUBLAS>(A_g_cublas, b_g_cublas);
-    gpuErrchk(cudaDeviceSynchronize());
-    gpuErrchk(cudaEventRecord(stop2));
-    gpuErrchk(cudaEventSynchronize(stop2));
+    cudaErrCheck(cudaDeviceSynchronize());
+    cudaErrCheck(cudaEventRecord(stop2));
+    cudaErrCheck(cudaEventSynchronize(stop2));
     milliseconds = 0;
-    gpuErrchk(cudaEventElapsedTime(&milliseconds, start2, stop2));
+    cudaErrCheck(cudaEventElapsedTime(&milliseconds, start2, stop2));
     printf("GPU time used = %f ms for lsqr\n", milliseconds);
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU_CUBLAS.txt";
     Vector_CPU x_g_cublas_out = x_g_cublas.matDeviceToHost();
     writeArrayToFile(file_out, x_g_cublas_out.getRows(), x_g_cublas_out.getColumns(), x_g_cublas_out.getMat());
     cublasStop();
 
-    cudaError_t err = cudaGetLastError(); // add
-    if (err != cudaSuccess) {
-      std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-    }
+    cudaLastErrCheck();
   }
 }
