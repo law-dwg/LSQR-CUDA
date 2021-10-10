@@ -3,8 +3,8 @@
 #include "../cpu/matVec_cpu.hpp"
 #include "../cpu/matrixBuilder.hpp"
 // GPU
+#include "matVec_cublas.cuh"
 #include "matVec_gpu.cuh"
-//#include "matVec_cublas.cuh"
 #include "utils.cuh"
 // Libs
 #include <cassert>
@@ -26,40 +26,8 @@
 
 namespace fs = std::filesystem;
 
-int checkDevice() {
-  // Check Cuda Capabale Device
-  int deviceCount;
-  cudaGetDeviceCount(&deviceCount);
-  int device;
-  if (deviceCount > 0) {
-    for (device = 0; device < deviceCount; ++device) {
-      cudaDeviceProp deviceProp;
-      cudaGetDeviceProperties(&deviceProp, device);
-      printf("Device %s has compute capability %d.%d.\n", deviceProp.name, deviceProp.major, deviceProp.minor);
-      printf("Number of multiprocessors: %d\n", deviceProp.multiProcessorCount);
-      printf("Clock rate: %d Hz\n", deviceProp.clockRate);
-      printf("Total amount of global memory: %d KB\n", deviceProp.totalGlobalMem / 1024);
-      printf("Total amount of constant memory: %d KB\n", deviceProp.totalConstMem / 1024);
-      printf("Total amount of shared memory per block: %d KB\n", deviceProp.sharedMemPerBlock / 1024);
-      printf("Total amount of shared memory per SM: %d KB\n", 64);
-      printf("Warp size: %d\n", deviceProp.warpSize);
-      printf("Maximum number of threads per block: %d\n", deviceProp.maxThreadsPerBlock);
-      printf("Maximum number of blocks per multiprocessor: %d\n", deviceProp.maxThreadsPerMultiProcessor / deviceProp.maxThreadsPerBlock);
-      printf("Maximum number of threads per multiprocessor: %d\n", deviceProp.maxThreadsPerMultiProcessor);
-      printf("Maximum number of warps per multiprocessor: %d\n", deviceProp.maxThreadsPerMultiProcessor / 32);
-      printf("Maximum Grid size: (%d,%d,%d)\n", deviceProp.maxGridSize[0], deviceProp.maxGridSize[1], deviceProp.maxGridSize[2]);
-      printf("Maximum block dimension: (%d,%d,%d)\n", deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
-    }
-  } else {
-    printf("NO CUDA DEVICE AVAILABLE");
-  }
-  return deviceCount;
-};
-
 int main() {
   double sp;
-  // cublasDestroy(handle);
-  // cublasReset();
   std::string userName;
   std::cout << "Welcome to law-dwg's lsqr cuda and cpp implementations!\nYou can use ctrl+c to kill this program at any time.\n\nBefore we begin, "
                "please type in your name: ";
@@ -75,7 +43,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 500; i < 1500; i += 500) {
+    for (int i = 100; i < 300; i += 100) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -96,6 +64,8 @@ int main() {
   checkDevice();
   std::set<fs::path>::iterator it = sorted_by_name.begin();
   while (it != sorted_by_name.end()) { // iterate through sorted files
+    gpuErrchk(cudaDeviceReset());
+    cublasStart();
     std::string file1, file2;
     file1 = *it;
     ++it;
@@ -137,21 +107,39 @@ int main() {
     Vector_GPU A_g(A_rows, A_cols, A.data());
     Vector_GPU b_g(b_rows, b_cols, b.data());
     cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start);
+    gpuErrchk(cudaEventCreate(&start));
+    gpuErrchk(cudaEventCreate(&stop));
+    gpuErrchk(cudaEventRecord(start));
     Vector_GPU x_g = lsqr<Vector_GPU>(A_g, b_g);
-    cudaEventRecord(stop);
-    cudaEventSynchronize(stop);
+    gpuErrchk(cudaEventRecord(stop));
+    gpuErrchk(cudaEventSynchronize(stop));
     float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
+    gpuErrchk(cudaEventElapsedTime(&milliseconds, start, stop));
     printf("GPU time used = %f ms for lsqr\n", milliseconds);
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
     Vector_CPU x_g_out = x_g.matDeviceToHost();
     writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
-    // cublasDestroy(handle);
-    // cudaDeviceReset();
-    // cublasReset();
+    printf("---------------------------------------------\n");
+    printf("Running lsqr-GPU-cublas implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
+    Vector_CUBLAS A_g_cublas(A_rows, A_cols, A.data());
+    Vector_CUBLAS b_g_cublas(b_rows, b_cols, b.data());
+    cudaEvent_t start2, stop2;
+    gpuErrchk(cudaEventCreate(&start2));
+    gpuErrchk(cudaEventCreate(&stop2));
+    gpuErrchk(cudaEventRecord(start2));
+    Vector_CUBLAS x_g_cublas = lsqr<Vector_CUBLAS>(A_g_cublas, b_g_cublas);
+    gpuErrchk(cudaEventRecord(stop2));
+    gpuErrchk(cudaEventSynchronize(stop2));
+    milliseconds = 0;
+    gpuErrchk(cudaEventElapsedTime(&milliseconds, start2, stop2));
+    printf("GPU time used = %f ms for lsqr\n", milliseconds);
+    file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU_CUBLAS.txt";
+    Vector_CPU x_g_cublas_out = x_g_cublas.matDeviceToHost();
+    writeArrayToFile(file_out, x_g_cublas_out.getRows(), x_g_cublas_out.getColumns(), x_g_cublas_out.getMat());
+    cublasStop();
+    cudaError_t err = cudaGetLastError(); // add
+    if (err != cudaSuccess) {
+      std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+    }
   }
-  // cublasDestroy(handle);
 }

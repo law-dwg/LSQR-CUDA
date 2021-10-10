@@ -27,5 +27,7 @@ extern cublasStatus_t statCreateHandle;
 extern cudaError_t cudaStatCreateStream;
 extern cublasStatus_t statSetStream;
 
-void extern cublasReset();
+void cublasStart();
+void cublasStop();
+int checkDevice();
 const char *cublasGetErrorString(cublasStatus_t status);

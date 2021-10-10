@@ -13,7 +13,7 @@ SOURCES_CU =	$(SRC_GPU)/lsqr.cu \
 				$(SRC_GPU)/matVec_gpu.cu \
 				$(SRC_GPU)/matVec_cublas.cu \
 				$(SRC_GPU)/utils.cu
-				
+
 OBJS_CU := $(SOURCES_CU:%=$(BUILD_DIR)/%.o)
 
 # CPU code
