@@ -43,7 +43,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 100; i < 300; i += 100) {
+    for (int i = 500; i <= 1500; i += 500) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -65,7 +65,6 @@ int main() {
   std::set<fs::path>::iterator it = sorted_by_name.begin();
   while (it != sorted_by_name.end()) { // iterate through sorted files
     gpuErrchk(cudaDeviceReset());
-    cublasStart();
     std::string file1, file2;
     file1 = *it;
     ++it;
@@ -90,6 +89,7 @@ int main() {
     //          "\"NumOfRows_1_b.txt\" format) and make sure the naming convention (rows * columns) matches the number of values in each file\n");
     //   return 0;
     // }
+    printf("---------------------------------------------\n");
     printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     Vector_CPU A_c(A_rows, A_cols, A.data());
     Vector_CPU b_c(b_rows, b_cols, b.data());
@@ -102,6 +102,7 @@ int main() {
     std::cout << "CPU time used = " << time_elapsed_ms << " ms for lsqr\n";
     std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_CPU.txt";
     writeArrayToFile(file_out, x_c.getRows(), x_c.getColumns(), x_c.getMat());
+
     printf("---------------------------------------------\n");
     printf("Running lsqr-GPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     Vector_GPU A_g(A_rows, A_cols, A.data());
@@ -111,6 +112,7 @@ int main() {
     gpuErrchk(cudaEventCreate(&stop));
     gpuErrchk(cudaEventRecord(start));
     Vector_GPU x_g = lsqr<Vector_GPU>(A_g, b_g);
+    gpuErrchk(cudaDeviceSynchronize());
     gpuErrchk(cudaEventRecord(stop));
     gpuErrchk(cudaEventSynchronize(stop));
     float milliseconds = 0;
@@ -119,8 +121,10 @@ int main() {
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
     Vector_CPU x_g_out = x_g.matDeviceToHost();
     writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
+
     printf("---------------------------------------------\n");
     printf("Running lsqr-GPU-cublas implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
+    cublasStart();
     Vector_CUBLAS A_g_cublas(A_rows, A_cols, A.data());
     Vector_CUBLAS b_g_cublas(b_rows, b_cols, b.data());
     cudaEvent_t start2, stop2;
@@ -128,6 +132,7 @@ int main() {
     gpuErrchk(cudaEventCreate(&stop2));
     gpuErrchk(cudaEventRecord(start2));
     Vector_CUBLAS x_g_cublas = lsqr<Vector_CUBLAS>(A_g_cublas, b_g_cublas);
+    gpuErrchk(cudaDeviceSynchronize());
     gpuErrchk(cudaEventRecord(stop2));
     gpuErrchk(cudaEventSynchronize(stop2));
     milliseconds = 0;
@@ -137,6 +142,7 @@ int main() {
     Vector_CPU x_g_cublas_out = x_g_cublas.matDeviceToHost();
     writeArrayToFile(file_out, x_g_cublas_out.getRows(), x_g_cublas_out.getColumns(), x_g_cublas_out.getMat());
     cublasStop();
+
     cudaError_t err = cudaGetLastError(); // add
     if (err != cudaSuccess) {
       std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;

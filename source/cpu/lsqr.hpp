@@ -52,7 +52,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   beta = bnorm;
   if (beta > 0) {
     u = b * (1 / beta);
-    v = A_T * u;
+    v = A_T * u; // could be sped up with cublas gemm instead of seperate transpose mult calls
     alpha = v.Dnrm2();
   } else {
     v = x;
@@ -61,8 +61,9 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
 
   if (alpha > 0) {
     v = v * (1 / alpha);
-    w = v;
   };
+  w = v;
+  
   double rhobar = alpha;
   double phibar = beta;
 

@@ -20,6 +20,8 @@ public:
     cudaMalloc((void **)&d_rows, sizeof(unsigned int));
     cudaMalloc((void **)&d_columns, sizeof(unsigned int));
     cudaMalloc((void **)&d_mat, sizeof(double));
+    gpuErrchk(cudaMemcpy(d_rows, &ZERO, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_columns, &ZERO, sizeof(unsigned int), cudaMemcpyHostToDevice));
   };
   Vector_GPU(unsigned int r, unsigned int c) : h_rows(r), h_columns(c) { // Constructor #1
     // printf("Vector_GPU Constructor #1 was called\n");
@@ -30,6 +32,7 @@ public:
     // copy to device
     cudaMemcpy(d_rows, &r, sizeof(unsigned int), cudaMemcpyHostToDevice);
     cudaMemcpy(d_columns, &c, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    gpuErrchk(cudaMemset(d_mat, ZERO, r * c * sizeof(double)));
   };
   Vector_GPU(unsigned int r, unsigned int c, double *m) : Vector_GPU(r, c) { // Constructor #2
     // printf("Vector_GPU Constructor #2 was called\n");

@@ -7,11 +7,14 @@
 cublasStatus_t stat;
 cudaError_t cudaStat;
 cublasHandle_t handle;
-cudaStream_t stream;
 cublasStatus_t statCreateHandle;
-cudaError_t cudaStatCreateStream;
-cublasStatus_t statSetStream;
+// cudaStream_t stream;
+// cudaError_t cudaStatCreateStream;
+// cublasStatus_t statSetStream;
 cublasStatus_t statSetPointerMode;
+const double ONE = 1.0;
+const double ZERO = 0.0;
+const double NEGONE = -1.0;
 
 void cublasStart() {
   statCreateHandle = cublasCreate(&handle);
@@ -20,16 +23,16 @@ void cublasStart() {
     printf("CUBLAS create handle failed\n");
     // return EXIT_FAILURE;
   }
-  cudaStatCreateStream = cudaStreamCreate(&stream);
-  if (cudaStatCreateStream != cudaSuccess) {
-    printf("CUBLAS create stream failed\n");
-    // return EXIT_FAILURE;
-  }
-  statSetStream = cublasSetStream(handle, stream);
-  if (statSetStream != CUBLAS_STATUS_SUCCESS) {
-    printf("CUBLAS set pointer failed\n");
-    // return EXIT_FAILURE;
-  }
+  // cudaStatCreateStream = cudaStreamCreate(&stream);
+  // if (cudaStatCreateStream != cudaSuccess) {
+  //   printf("CUBLAS create stream failed\n");
+  //   // return EXIT_FAILURE;
+  // }
+  // statSetStream = cublasSetStream(handle, stream);
+  // if (statSetStream != CUBLAS_STATUS_SUCCESS) {
+  //   printf("CUBLAS set pointer failed\n");
+  //   // return EXIT_FAILURE;
+  // }
   statSetPointerMode = cublasSetPointerMode(handle, MODE);
   if (statSetPointerMode != CUBLAS_STATUS_SUCCESS) {
     printf("CUBLAS set pointer failed\n");
@@ -66,6 +69,7 @@ int checkDevice() {
   }
   return deviceCount;
 };
+
 const char *cublasGetErrorString(cublasStatus_t status) {
   switch (status) {
   case CUBLAS_STATUS_SUCCESS:

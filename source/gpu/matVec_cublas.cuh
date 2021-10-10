@@ -18,6 +18,8 @@ public:
     gpuErrchk(cudaMalloc((void **)&d_rows, sizeof(unsigned int)));
     gpuErrchk(cudaMalloc((void **)&d_columns, sizeof(unsigned int)));
     gpuErrchk(cudaMalloc((void **)&d_mat, sizeof(double)));
+    gpuErrchk(cudaMemcpy(d_rows, &ZERO, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemcpy(d_columns, &ZERO, sizeof(unsigned int), cudaMemcpyHostToDevice));
   };
   Vector_CUBLAS(unsigned int r, unsigned int c) : h_rows(r), h_columns(c) { // Constructor #1
     // printf("Vector_CUBLAS Constructor #1 was called\n");
@@ -28,6 +30,7 @@ public:
     // copy to device
     gpuErrchk(cudaMemcpy(d_rows, &r, sizeof(unsigned int), cudaMemcpyHostToDevice));
     gpuErrchk(cudaMemcpy(d_columns, &c, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    gpuErrchk(cudaMemset(d_mat, ZERO, r * c * sizeof(double)));
   };
   Vector_CUBLAS(unsigned int r, unsigned int c, double *m) : Vector_CUBLAS(r, c) { // Constructor #2
     // printf("Vector_CUBLAS Constructor #2 was called\n");

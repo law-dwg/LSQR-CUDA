@@ -3,9 +3,6 @@
 #include "utils.cuh"
 #include <assert.h>
 #include <stdio.h>
-const double ONE = 1.0;
-const double ZERO = 0.0;
-const double NEGONE = -1.0;
 // void __global__ print(double *input, unsigned *r, unsigned *c) {
 //  const unsigned int bid = blockIdx.x                               // 1D
 //                           + blockIdx.y * gridDim.x                 // 2D
@@ -31,8 +28,9 @@ Vector_CUBLAS Vector_CUBLAS::operator*(Vector_CUBLAS &v) {
   int n = out.h_columns;
   int k = this->h_columns;
   int lda = m, ldb = k, ldc = m;
+  cublasOperation_t OP = (m == 1 || n == 1) ? CUBLAS_OP_T : CUBLAS_OP_N;
   // printf("m=%d,n=%d,k=%d,lda=%d, ldb=%d, ldc=%d, d_rows=%d, d_cols=%d,\n", m, n, k, lda, ldb, ldc, rows, cols);
-  stat = cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, m, n, k, &ONE, this->d_mat, lda, v.d_mat, ldb, &ZERO, out.d_mat, ldc);
+  stat = cublasDgemm(handle, OP, CUBLAS_OP_N, m, n, k, &ONE, this->d_mat, lda, v.d_mat, ldb, &ZERO, out.d_mat, ldc);
   if (stat != CUBLAS_STATUS_SUCCESS) {
     std::cout << cublasGetErrorString(stat) << std::endl;
     printf("CUBLAS matrix mult failed\n");

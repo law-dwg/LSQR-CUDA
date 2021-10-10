@@ -22,10 +22,13 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
 extern cublasStatus_t stat;
 extern cudaError_t cudaStat;
 extern cublasHandle_t handle;
-extern cudaStream_t stream;
 extern cublasStatus_t statCreateHandle;
-extern cudaError_t cudaStatCreateStream;
-extern cublasStatus_t statSetStream;
+// extern cudaStream_t stream;
+// extern cudaError_t cudaStatCreateStream;
+// extern cublasStatus_t statSetStream;
+extern const double ONE;
+extern const double ZERO;
+extern const double NEGONE;
 
 void cublasStart();
 void cublasStop();
