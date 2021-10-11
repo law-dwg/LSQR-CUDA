@@ -1,6 +1,5 @@
 #pragma once
 #include "../cpu/matVec_cpu.hpp"
-#include "cublas_v2.h"
 #include "utils.cuh"
 #include <algorithm>
 #include <stdio.h>  //NULL, printf

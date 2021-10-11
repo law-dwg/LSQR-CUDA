@@ -70,7 +70,6 @@ inline void cublasAssert(cublasStatus_t code, const char *file, int line, bool a
 /** cuSPARSE */
 extern cusparseStatus_t spStat;
 extern cusparseHandle_t spHandle;
-extern cusparseStatus_t statCreateSpHandle;
 void cusparseStart();
 void cusparseStop();
 #ifndef cusparseErrCheck

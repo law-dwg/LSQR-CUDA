@@ -5,6 +5,7 @@
 // GPU
 #include "matVec_cublas.cuh"
 #include "matVec_gpu.cuh"
+#include "mat_cusparse.cuh"
 #include "utils.cuh"
 // Libs
 #include <cassert>

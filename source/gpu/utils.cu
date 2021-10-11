@@ -70,7 +70,6 @@ void cublasStop() { cublasDestroy(handle); };
 #define SPMODE CUSPARSE_POINTER_MODE_HOST
 cusparseStatus_t spStat;
 cusparseHandle_t spHandle;
-cusparseStatus_t statCreateSpHandle;
 
 void cusparseStart() {
   cusparseErrCheck(cusparseCreate(&spHandle));
