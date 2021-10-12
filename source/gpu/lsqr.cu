@@ -101,7 +101,7 @@ int main() {
 
     printf("---------------------------------------------\n");
     printf("Running lsqr-GPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
-    //Vector_GPU A_g(A_rows, A_cols, A.data());
+    // Vector_GPU A_g(A_rows, A_cols, A.data());
     cublasStart();
     cusparseStart();
     Matrix_cuSPARSE A_g(A_rows, A_cols, A.data());
