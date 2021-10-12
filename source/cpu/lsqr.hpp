@@ -4,7 +4,7 @@
 
 double D2Norm(double a, double b);
 
-template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
+template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   // Iteration
   unsigned int istop = 0;
   unsigned int itn = 0;
@@ -39,7 +39,7 @@ template <typename Vec> Vec lsqr(Vec &A, Vec &b) {
   double beta = 0;
   const double Anorm = A.Dnrm2();
   const double bnorm = b.Dnrm2();
-  Vec A_T = A.transpose();
+  Mat A_T = A.transpose();
   Vec u, v, w, res_v;
 
   if (conlim > 0) {

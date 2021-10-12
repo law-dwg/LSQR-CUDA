@@ -37,9 +37,9 @@ int main() {
   if (matBuild) { // build matrices
     std::cout << "\nGreat, lets get started\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-1.0: ";
     // sp = valInput<double>(0.0, 1.0);
-    sp = 0;
+    sp = 0.6;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 500; i <= 1000; i += 500) {
+    for (int i = 1000; i <= 1100; i += 500) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -92,7 +92,7 @@ int main() {
     // A_c.print();
     // b_c.print();
     std::clock_t c_start = std::clock();
-    Vector_CPU x_c = lsqr<Vector_CPU>(A_c, b_c);
+    Vector_CPU x_c = lsqr<Vector_CPU, Vector_CPU>(A_c, b_c);
     std::clock_t c_end = std::clock();
     long double time_elapsed_ms = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
     std::cout << "CPU time used = " << time_elapsed_ms << " ms for lsqr\n";
@@ -101,13 +101,16 @@ int main() {
 
     printf("---------------------------------------------\n");
     printf("Running lsqr-GPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
-    Vector_GPU A_g(A_rows, A_cols, A.data());
+    //Vector_GPU A_g(A_rows, A_cols, A.data());
+    cublasStart();
+    cusparseStart();
+    Matrix_cuSPARSE A_g(A_rows, A_cols, A.data());
     Vector_GPU b_g(b_rows, b_cols, b.data());
     cudaEvent_t start, stop;
     cudaErrCheck(cudaEventCreate(&start));
     cudaErrCheck(cudaEventCreate(&stop));
     cudaErrCheck(cudaEventRecord(start));
-    Vector_GPU x_g = lsqr<Vector_GPU>(A_g, b_g);
+    Vector_GPU x_g = lsqr<Matrix_cuSPARSE, Vector_GPU>(A_g, b_g);
     cudaErrCheck(cudaDeviceSynchronize());
     cudaErrCheck(cudaEventRecord(stop));
     cudaErrCheck(cudaEventSynchronize(stop));
@@ -117,17 +120,20 @@ int main() {
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
     Vector_CPU x_g_out = x_g.matDeviceToHost();
     writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
-
+    cusparseStop();
+    cublasStop();
     printf("---------------------------------------------\n");
     printf("Running lsqr-GPU-cublas implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     cublasStart();
-    Vector_CUBLAS A_g_cublas(A_rows, A_cols, A.data());
+    cusparseStart();
+    // Vector_CUBLAS A_g_cublas(A_rows, A_cols, A.data());
+    Matrix_cuSPARSE A_g_cublas(A_rows, A_cols, A.data());
     Vector_CUBLAS b_g_cublas(b_rows, b_cols, b.data());
     cudaEvent_t start2, stop2;
     cudaErrCheck(cudaEventCreate(&start2));
     cudaErrCheck(cudaEventCreate(&stop2));
     cudaErrCheck(cudaEventRecord(start2));
-    Vector_CUBLAS x_g_cublas = lsqr<Vector_CUBLAS>(A_g_cublas, b_g_cublas);
+    Vector_CUBLAS x_g_cublas = lsqr<Matrix_cuSPARSE, Vector_CUBLAS>(A_g_cublas, b_g_cublas);
     cudaErrCheck(cudaDeviceSynchronize());
     cudaErrCheck(cudaEventRecord(stop2));
     cudaErrCheck(cudaEventSynchronize(stop2));
@@ -137,8 +143,9 @@ int main() {
     file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU_CUBLAS.txt";
     Vector_CPU x_g_cublas_out = x_g_cublas.matDeviceToHost();
     writeArrayToFile(file_out, x_g_cublas_out.getRows(), x_g_cublas_out.getColumns(), x_g_cublas_out.getMat());
+    cusparseStop();
     cublasStop();
-
+    printf("--------------------------------");
     cudaLastErrCheck();
   }
 }

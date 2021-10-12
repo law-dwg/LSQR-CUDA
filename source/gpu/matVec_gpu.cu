@@ -401,8 +401,8 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
   dim3 grid(blocksX, blocksY, 1);
   dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
   double *d_i;
-  cudaMalloc((void **)&d_i, sizeof(double));
-  cudaMemcpy(d_i, &h_i, sizeof(double), cudaMemcpyHostToDevice);
+  cudaErrCheck(cudaMalloc((void **)&d_i, sizeof(double)));
+  cudaErrCheck(cudaMemcpy(d_i, &h_i, sizeof(double), cudaMemcpyHostToDevice));
 
   scale<<<grid, block>>>(this->d_mat, d_i, out.d_mat, this->d_rows, this->d_columns, false);
   // cudaDeviceSynchronize();
@@ -447,13 +447,13 @@ Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
 
 void Vector_GPU::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> this Vector_GPU
   printf("ASSIGNMENT #2 called\n");
-  cudaFree(d_mat);
+  cudaErrCheck(cudaFree(d_mat));
   h_rows = v.getRows();
   h_columns = v.getColumns();
-  cudaMalloc((void **)&d_mat, sizeof(double) * v.rows * v.columns);
-  cudaMemcpy(d_rows, &h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_columns, &h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
-  cudaMemcpy(d_mat, &v.mat[0], sizeof(double) * h_rows * h_columns, cudaMemcpyHostToDevice);
+  cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.rows * v.columns));
+  cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice));
+  cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice));
+  cudaErrCheck(cudaMemcpy(d_mat, &v.mat[0], sizeof(double) * h_rows * h_columns, cudaMemcpyHostToDevice));
 }
 
 Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
@@ -488,10 +488,10 @@ Vector_CPU Vector_GPU::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
   unsigned int rows;
   unsigned int cols;
-  cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost);
+  cudaErrCheck(cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost));
   // cudaMemcpy(out, this, size, cudaMemcpyDeviceToHost);
-  cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost);
-  cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost);
+  cudaErrCheck(cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost));
+  cudaErrCheck(cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost));
   // std::cout << "d_rows=" << rows << "=h_rows=" << this->h_rows << std::endl;
   // std::cout << "d_columns=" << cols << "=h_columns=" << this->h_columns << std::endl;
   if (rows != this->h_rows || cols != this->h_columns) {
