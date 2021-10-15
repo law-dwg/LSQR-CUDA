@@ -3,6 +3,7 @@
 const double ONE = 1.0;
 const double ZERO = 0.0;
 const double NEGONE = -1.0;
+const double TOL = 1.e-12;
 
 /** CUDA */
 int checkDevice() {
@@ -77,3 +78,9 @@ void cusparseStart() {
 };
 
 void cusparseStop() { cusparseErrCheck(cusparseDestroy(spHandle)); };
+
+cusolverStatus_t solStat;
+cusolverSpHandle_t solHandle;
+void cusolverStart() { cusolverErrCheck(cusolverSpCreate(&solHandle)); };
+
+void cusolverStop() { cusolverErrCheck(cusolverSpDestroy(solHandle)); };

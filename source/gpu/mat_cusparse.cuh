@@ -15,7 +15,8 @@ public:
   int *d_csr_offsets, *d_csr_columns;
   int64_t h_nnz;
   double *d_csr_values;
-  cusparseSpMatDescr_t d_matDescr_sparse;
+  cusparseSpMatDescr_t d_matDescr_sparse = NULL;
+  cusparseMatDescr_t descr = NULL;
   void *dBuffer = NULL;
   size_t bufferSize = 0;
   Matrix_cuSPARSE(unsigned int r, unsigned int c) : h_rows(r), h_columns(c) {
@@ -26,6 +27,9 @@ public:
     cudaErrCheck(cudaMemcpy(d_columns, &c, sizeof(unsigned int), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMalloc((void **)&d_csr_offsets, (r + 1) * sizeof(int)));
     cudaErrCheck(cudaMalloc(&dBuffer, bufferSize));
+    cusparseErrCheck(cusparseCreateMatDescr(&descr));
+    cusparseErrCheck(cusparseSetMatType(descr, CUSPARSE_MATRIX_TYPE_GENERAL));
+    cusparseErrCheck(cusparseSetMatIndexBase(descr, CUSPARSE_INDEX_BASE_ZERO));
   };
   Matrix_cuSPARSE(unsigned int r, unsigned int c, double *m) : h_rows(r), h_columns(c) {
     cusparseDnMatDescr_t d_matDescr_dense;
@@ -36,6 +40,9 @@ public:
     cudaErrCheck(cudaMemcpy(d_rows, &r, sizeof(unsigned int), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_columns, &c, sizeof(unsigned int), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_mat, m, r * c * sizeof(double), cudaMemcpyHostToDevice));
+    cusparseErrCheck(cusparseCreateMatDescr(&descr));
+    cusparseErrCheck(cusparseSetMatType(descr, CUSPARSE_MATRIX_TYPE_GENERAL));
+    cusparseErrCheck(cusparseSetMatIndexBase(descr, CUSPARSE_INDEX_BASE_ZERO));
     // csr_offset ptr
     cudaErrCheck(cudaMalloc((void **)&d_csr_offsets, (r + 1) * sizeof(int)));
     // cusparse dense and sparse matricies
@@ -72,6 +79,7 @@ public:
   };
   ~Matrix_cuSPARSE() {
     cusparseErrCheck(cusparseDestroySpMat(d_matDescr_sparse));
+    cusparseErrCheck(cusparseDestroyMatDescr(descr));
     cudaErrCheck(cudaFree(d_rows));
     cudaErrCheck(cudaFree(d_columns));
     cudaErrCheck(cudaFree(d_csr_offsets));

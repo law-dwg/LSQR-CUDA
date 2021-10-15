@@ -1,5 +1,6 @@
 #pragma once
 #include "cublas_v2.h"
+#include "cusolverSp.h"
 #include "cusparse.h"
 #include "device_launch_parameters.h"
 #include <cuda.h>
@@ -13,6 +14,7 @@
 extern const double ONE;
 extern const double ZERO;
 extern const double NEGONE;
+extern const double TOL;
 
 /** CUDA */
 int checkDevice();
@@ -78,6 +80,42 @@ void cusparseStop();
 inline void cusparseAssert(cusparseStatus_t code, const char *file, int line, bool abort = true) {
   if (code != CUSPARSE_STATUS_SUCCESS) {
     fprintf(stderr, "cuSPARSE_assert: %s %s %d\n", cusparseGetErrorString(code), file, line);
+    if (abort)
+      exit(code);
+  }
+}
+#endif
+
+/** cuSolver */
+extern cusolverStatus_t solStat;
+extern cusolverSpHandle_t solHandle;
+void cusolverStart();
+void cusolverStop();
+#ifndef cusolverErrCheck
+#define cusolverErrCheck(ans)                                                                                                                        \
+  { cusolverAssert((ans), __FILE__, __LINE__); }
+inline void cusolverAssert(cusolverStatus_t code, const char *file, int line, bool abort = true) {
+  const char *errstr = "CUSOLVER UNKNOWN ERROR";
+  if (code != CUSOLVER_STATUS_SUCCESS) {
+    switch (code) {
+    case CUSOLVER_STATUS_SUCCESS:
+      errstr = "CUSOLVER_STATUS_SUCCESS";
+    case CUSOLVER_STATUS_NOT_INITIALIZED:
+      errstr = "CUSOLVER_STATUS_NOT_INITIALIZED";
+    case CUSOLVER_STATUS_ALLOC_FAILED:
+      errstr = "CUSOLVER_STATUS_ALLOC_FAILED";
+    case CUSOLVER_STATUS_INVALID_VALUE:
+      errstr = "CUSOLVER_STATUS_INVALID_VALUE";
+    case CUSOLVER_STATUS_ARCH_MISMATCH:
+      errstr = "CUSOLVER_STATUS_ARCH_MISMATCH";
+    case CUSOLVER_STATUS_EXECUTION_FAILED:
+      errstr = "CUSOLVER_STATUS_EXECUTION_FAILED";
+    case CUSOLVER_STATUS_INTERNAL_ERROR:
+      errstr = "CUSOLVER_STATUS_INTERNAL_ERROR";
+    case CUSOLVER_STATUS_MATRIX_TYPE_NOT_SUPPORTED:
+      errstr = "CUSOLVER_STATUS_MATRIX_TYPE_NOT_SUPPORTED";
+    }
+    fprintf(stderr, "CUSOLVER_assert: %s %s %d\n", errstr, file, line);
     if (abort)
       exit(code);
   }
