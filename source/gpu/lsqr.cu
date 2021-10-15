@@ -39,7 +39,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0.6;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 300; i <= 310; i += 500) {
+    for (int i = 1000; i <= 1100; i += 500) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -101,7 +101,7 @@ int main() {
 
     printf("---------------------------------------------\n");
     printf("Running lsqr-GPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
-    // Vector_GPU A_g(A_rows, A_cols, A.data());
+    Vector_GPU A_vg(A_rows, A_cols, A.data());
     cublasStart();
     cusparseStart();
     Matrix_cuSPARSE A_g(A_rows, A_cols, A.data());
@@ -110,7 +110,7 @@ int main() {
     cudaErrCheck(cudaEventCreate(&start));
     cudaErrCheck(cudaEventCreate(&stop));
     cudaErrCheck(cudaEventRecord(start));
-    Vector_GPU x_g = lsqr<Matrix_cuSPARSE, Vector_GPU>(A_g, b_g);
+    Vector_GPU x_g = lsqr<Vector_GPU, Vector_GPU>(A_vg, b_g);
     cudaErrCheck(cudaDeviceSynchronize());
     cudaErrCheck(cudaEventRecord(stop));
     cudaErrCheck(cudaEventSynchronize(stop));
