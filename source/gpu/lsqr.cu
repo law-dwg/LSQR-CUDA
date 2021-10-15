@@ -39,9 +39,9 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0.6;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 100; i <= 110; i += 500) {
-      // matrixBuilder(i, i, sp, "input/", "A");
-      // matrixBuilder(i, 1, 0, "input/", "b");
+    for (int i = 300; i <= 310; i += 500) {
+      matrixBuilder(i, i, sp, "input/", "A");
+      matrixBuilder(i, 1, 0, "input/", "b");
     }
   }
 
@@ -151,7 +151,7 @@ int main() {
     // cublasStart();
     // cusolverStart();
     // // Vector_GPU x_sol_out(A_g_cusparse.getRows(), 1);
-// 
+    //
     // int singularity = 0;
     // const int reorder = 0; /* no reordering */
     // int rankA;
@@ -169,7 +169,8 @@ int main() {
     // cusparseErrCheck(cusparseCreateMatDescr(&descr));
     // cusparseErrCheck(cusparseSetMatType(descr, CUSPARSE_MATRIX_TYPE_GENERAL));
     // cusparseErrCheck(cusparseSetMatIndexBase(descr, CUSPARSE_INDEX_BASE_ZERO));
-    // cusolverErrCheck(cusolverSpDcsrlsqvqrHost(solHandle, A_g_cusparse.getRows(), A_g_cusparse.getColumns(), A_g_cusparse.h_nnz, descr, c_csr_values,
+    // cusolverErrCheck(cusolverSpDcsrlsqvqrHost(solHandle, A_g_cusparse.getRows(), A_g_cusparse.getColumns(), A_g_cusparse.h_nnz, descr,
+    // c_csr_values,
     //                                           c_csr_offsets, c_csr_columns, b_test, TOL, &rankA, x_c_out, &p, &min_norm));
     // cudaErrCheck(cudaDeviceSynchronize());
     // printf("HERE %d\n", p);

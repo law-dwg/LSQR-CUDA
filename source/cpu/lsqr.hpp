@@ -5,54 +5,68 @@
 double D2Norm(double a, double b);
 
 template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
-  // Iteration
-  unsigned int istop = 0;
-  unsigned int itn = 0;
-  double rho = 0;
-  double phi = 0;
-  double c = 0;
-  double s = 0;
-  double theta = 0;
-  double tau = 0;
-  double res = 0;
-  double res1 = 0;
-  double ddnorm = 0;
-  double Acond = 0;
-  double damp = 0;
-  double dnorm = 0;
-  double dknorm = 0;
-  double res2 = 0;
+  /** LSQR-alg */
+
+  /** Input - Dense Vector - b */
+  const double bnorm = b.Dnrm2();
+
+  /** Input - Sparse Matrix - A */
+  Mat A_T = A.transpose();
+  double Anorm = 0; // Approximation of Frobenius norm of Abar
+  double Acond = 0; // Condition number of Abar
+
+  /** Output - Dense Vector - x */
+  Vec x(A.getColumns(), 1);
   double xnorm = 0;
-  double xxnorm = 0;
-  double z = 0;
-  double sn2 = 0;
+  double xnorm1 = 0;
+
+  /** Optional - Damping Coeff - Damped least squares */
+  bool damped = true;
+  double damp = 0;
+  double dampsq = damp * damp;
+
+  /** Const */
+  const double one = 1.0;
+  const double zero = 0.0;
+
+  /** Tolerances */
   double ctol = 0;
   double rtol = 0;
-  double dampsq = 0;
-  double cs2 = -1;
-  double atol = 1e-8;
-  double btol = 1e-8;
-  double conlim = 1e8;
-  double res_old = 1e10;
-  double epsilon = 1e-16;
-  double alpha = 0;
-  double beta = 0;
-  const double Anorm = A.Dnrm2();
-  const double bnorm = b.Dnrm2();
-  Mat A_T = A.transpose();
-  Vec u, v, w, res_v;
-
+  double atol = 1e-8;  // Optional
+  double btol = 1e-8;  // Optional
+  double conlim = 1e8; // Optional
   if (conlim > 0) {
     ctol = 1 / conlim;
   };
-  dampsq = damp * damp;
+
+  /** QR-Factorization Params */
+  double dnorm = 0;
+  double z = 0;
+  double sn2 = 0;
+  double cs2 = -1;
+  double psi = 0;
+
+  /** Precision */
+  double epsilon = 1e-16;
+
+  /** Stopping Criteria */
+  unsigned int istop = 0;
+  double test1 = 0;
+  double test2 = 0;
+  double test3 = 0;
+  unsigned int itn = 0; // Iteration
+  int itnlim = 2 * A.getColumns();
+
+  /** Residuals */
+  double res2 = 0;
 
   /*1. Initialize*/
-  Vec x(A.getColumns(), 1);
-  beta = bnorm;
+  Vec u, v, w, res_v;
+  double alpha = 0;
+  double beta = bnorm;
   if (beta > 0) {
     u = b * (1 / beta);
-    v = A_T * u; // could be sped up with cublas gemm instead of seperate transpose mult calls
+    v = A_T * u;
     alpha = v.Dnrm2();
   } else {
     v = x;
@@ -64,21 +78,25 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   };
   w = v;
 
+  // Norms
   double rhobar = alpha;
   double phibar = beta;
-
-  // Norms
   double rnorm = beta;
   double r1norm = rnorm;
   double r2norm = rnorm;
   double Arnorm = alpha * beta;
+  if (Arnorm == 0) {
+    printf("Exact solution is x = 0\n");
+    return x;
+  }
 
   // 2. For i=1,2,3....
   printf("2. For i=1,2,3....\n");
   do {
-    if (itn == A.getRows() / 2 || itn == A.getRows() || itn == (A.getRows() + A.getRows() / 2))
+    if ((itn == 0.25 * itnlim) || (itn == 0.5 * itnlim) || (itn == 0.75 * itnlim)) {
       printf("itn = %d\n", itn);
-    itn++;
+    }
+    ++itn;
 
     // 3. Continue the bidiagonialization
     /* Important equations for understanding.
@@ -92,87 +110,108 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     u = A * v - u * alpha; // ubar_i+1
     beta = u.Dnrm2();      // beta_i+1 = ||ubar_i+1||
     if (beta > 0) {
-      u = u * (1 / beta);         // u_i+1
+      u = u * (1 / beta); // u_i+1
+      Anorm = sqrt((Anorm * Anorm) + (alpha * alpha) + (beta * beta) + dampsq);
       v = (A_T * u) - (v * beta); // vbar_i+1
       alpha = v.Dnrm2();          // alpha_i+1
       if (alpha > 0) {
         v = v * (1 / alpha); // v_i+1
       }
     }
+    double rhobar1 = rhobar;
+    if (damped) {
+      rhobar1 = D2Norm(rhobar, damp);
+      double cs1 = rhobar / rhobar1;
+      double sn1 = damp / rhobar1;
+      psi = sn1 * phibar;
+      phibar = cs1 * phibar;
+    }
 
     // 4. Construct and apply next orthogonal transformation
-    rho = D2Norm(rhobar, beta); // rho_i
-    c = rhobar / rho;           // c_i
-    s = beta / rho;             // s_i
-    theta = s * alpha;          // theta_i+1
-    rhobar = -c * alpha;        // rhobar_i+1
-    phi = c * phibar;           // phi_i = c_i*phibar_i
-    phibar = s * phibar;        // phibar_i+1 = s_i*phibar_i
-
+    double rho = D2Norm(rhobar1, beta); // rho_i
+    double cs = rhobar1 / rho;          // c_i
+    double sn = beta / rho;             // s_i
+    double theta = sn * alpha;          // theta_i+1
+    rhobar = -cs * alpha;               // rhobar_i+1
+    double phi = cs * phibar;           // phi_i = c_i*phibar_i
+    phibar = sn * phibar;               // phibar_i+1 = s_i*phibar_i
     // used for stopping critera
-    tau = s * phi;
-    Arnorm = alpha * std::abs(tau);
+    double tau = sn * phi;
 
     // 5. Update x,w
     // save values for stopping criteria
-    Vec dk = w * (1 / rho);
-    double dknrm2 = dk.Dnrm2();
-    dknorm = dknrm2 * dknrm2 + ddnorm;
+    double t1 = phi / rho;
+    double t2 = -theta / rho;
+    double t3 = one / rho;
+    double dknorm = 0;
+    Vec dk = w * t3;
 
     /* Important equations
     x_i = x_i-1 + (phi_i/rho_i) *w_i
     w_i+1 = v_i+1 - (theta_i+1/rho_i)*w_i
     */
-    x = x + w * (phi / rho);
-    w = v - (w * (theta / rho));
+    x = x + w * t1;
+    w = v + w * t2;
+    double dkdnrm2 = dk.Dnrm2();
+    dknorm = dkdnrm2 * dkdnrm2 + dknorm;
+    dknorm = sqrt(dknorm);
+    dnorm = D2Norm(dnorm, dknorm);
+
+    double delta = sn2 * rho;
+    double gambar = -cs2 * rho;
+    double rhs = phi - delta * z;
+    double zbar = rhs / gambar;
+    xnorm = D2Norm(xnorm1, zbar);
+    double gamma = D2Norm(gambar, theta);
+    cs2 = gambar / gamma;
+    sn2 = theta / gamma;
+    z = rhs / gamma;
+    xnorm1 = D2Norm(xnorm1, z);
+
     // residual
     res_v = b - (A * x);
-    res = res_v.Dnrm2();
+    double res = res_v.Dnrm2();
 
+    Acond = Anorm * dnorm;
+    res2 = D2Norm(res2, psi);
+    rnorm = D2Norm(res2, phibar);
+    rnorm += 1e-30;
+    Arnorm = alpha * std::fabs(tau);
     // 6. Test for convergence
     // printf("6. Test for convergence\n");
-    /*Test 1 for convergence
-    stop if ||r|| =< btol*||b|| + atol*||A||*||x||
-    */
-    if (res <= (btol * bnorm + atol * Anorm * x.Dnrm2())) {
-      printf("istop1\n");
-      istop = 1;
+    test1 = rnorm / bnorm;
+    test2 = Arnorm / (Anorm * rnorm);
+    test3 = one / (Acond);
+    t1 = test1 / (one + Anorm * xnorm / bnorm);
+    rtol = btol + atol * Anorm * xnorm / bnorm;
+    t3 = one + test3;
+    t2 = one + test2;
+    t1 = one + t1;
+    if (itn >= itnlim) {
+      istop = 7;
     }
-
-    /*Test 2 for convergence
-    stop if ||A_T*r||/||A||*||r|| <= atol
-    */
-    if (Arnorm / (Anorm * res) <= atol) {
-      printf("Anorm = %f\n", Anorm);
-      printf("istop2\n");
-      istop = 2;
-    }
-
-    /*Test 3 for convergence
-    stop if cond(A) => conlim
-
-    Acond = A.Dnrm2() * sqrt(ddnorm);
-    if (Acond < conlim){
-        istop=3;
-    }
-
-    res1 = phibar*phibar;
-    double test3 = 1/ (Acond + epsilon);
-    std::cout.precision(25);
-    std::cout<<std::fixed<<res<<std::endl;
-
-    if(res <= btol * b.Dnrm2() + atol * A.Dnrm2() * x.Dnrm2());
-
-    if(test3<=ctol){
-        istop=3;
-        printf("%i\n",itn);
+    if (t3 <= one) {
+      istop = 6;
     };
-    double test2 = Arnorm / (A.Dnrm2()*res + epsilon);
-    if( 1 + test2 <= 1){
-        istop=5;
-        printf("%i\n",itn);
-    };*/
-  } while (istop == 0 && itn < 2 * A.getRows());
-  printf("ran through %d iterations \n", itn);
+    if (t2 <= one) {
+      istop = 5;
+    };
+    if (t1 <= one) {
+      istop = 4;
+    };
+    //  Allow for tolerances set by the user.
+    if (test3 <= ctol) {
+      istop = 3;
+    };
+    if (test2 <= atol) {
+      istop = 2;
+    };
+    if (test1 <= rtol) {
+      istop = 1;
+    };
+
+  } while (istop == 0);
+  printf("ran through %d iterations \nistop=%d\n", itn, istop);
+  // printf("Anorm=%f, Arnorm=%f,\nAcond=%f, xnorm=%f\nr1norm=%f\n", Anorm, Arnorm, Acond, xnorm, r1norm);
   return x;
 }
