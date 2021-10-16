@@ -78,13 +78,13 @@ int main() {
     Ab_rowscheck = A_rows == b_rows;
     all_checks = A_sizecheck && b_sizecheck && Ab_rowscheck;
     assert(all_checks);
-    // if (all_checks) {
-    //   continue;
-    // } else {
-    //   printf("Error, please check the matrix file naming convention (\"NumOfRows_NumOfCols_A.txt\" and "
-    //          "\"NumOfRows_1_b.txt\" format) and make sure the naming convention (rows * columns) matches the number of values in each file\n");
-    //   return 0;
-    // }
+    if (all_checks) {
+      continue;
+    } else {
+      printf("Error, please check the matrix file naming convention (\"NumOfRows_NumOfCols_A.txt\" and "
+             "\"NumOfRows_1_b.txt\" format) and make sure the naming convention (rows * columns) matches the number of values in each file\n");
+      return 0;
+    }
     printf("---------------------------------------------\n");
     printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     Vector_CPU A_c(A_rows, A_cols, A.data());
@@ -98,7 +98,6 @@ int main() {
     std::cout << "CPU time used = " << time_elapsed_ms << " ms for lsqr\n";
     std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_CPU.txt";
     writeArrayToFile(file_out, x_c.getRows(), x_c.getColumns(), x_c.getMat());
-
     printf("---------------------------------------------\n");
     printf("Running lsqr-GPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     Vector_GPU A_vg(A_rows, A_cols, A.data());
