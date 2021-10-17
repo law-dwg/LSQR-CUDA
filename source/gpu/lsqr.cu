@@ -3,9 +3,9 @@
 #include "../cpu/matVec_cpu.hpp"
 #include "../cpu/matrixBuilder.hpp"
 // GPU
+#include "MatrixCUSPARSE.cuh"
 #include "matVec_cublas.cuh"
 #include "matVec_gpu.cuh"
-#include "mat_cusparse.cuh"
 #include "utils.cuh"
 // Libs
 #include <cassert>
@@ -78,13 +78,13 @@ int main() {
     Ab_rowscheck = A_rows == b_rows;
     all_checks = A_sizecheck && b_sizecheck && Ab_rowscheck;
     assert(all_checks);
-    if (all_checks) {
-      continue;
-    } else {
-      printf("Error, please check the matrix file naming convention (\"NumOfRows_NumOfCols_A.txt\" and "
-             "\"NumOfRows_1_b.txt\" format) and make sure the naming convention (rows * columns) matches the number of values in each file\n");
-      return 0;
-    }
+    // if (all_checks) {
+    //  continue;
+    //} else {
+    //  printf("Error, please check the matrix file naming convention (\"NumOfRows_NumOfCols_A.txt\" and "
+    //         "\"NumOfRows_1_b.txt\" format) and make sure the naming convention (rows * columns) matches the number of values in each file\n");
+    //  return 0;
+    //}
     printf("---------------------------------------------\n");
     printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
     Vector_CPU A_c(A_rows, A_cols, A.data());
@@ -103,7 +103,7 @@ int main() {
     Vector_GPU A_vg(A_rows, A_cols, A.data());
     cublasStart();
     cusparseStart();
-    Matrix_cuSPARSE A_g(A_rows, A_cols, A.data());
+    MatrixCUSPARSE A_g(A_rows, A_cols, A.data());
     Vector_GPU b_g(b_rows, b_cols, b.data());
     cudaEvent_t start, stop;
     cudaErrCheck(cudaEventCreate(&start));
@@ -126,13 +126,13 @@ int main() {
     cublasStart();
     cusparseStart();
     // Vector_CUBLAS A_g_cublas(A_rows, A_cols, A.data());
-    Matrix_cuSPARSE A_g_cublas(A_rows, A_cols, A.data());
+    MatrixCUSPARSE A_g_cublas(A_rows, A_cols, A.data());
     Vector_CUBLAS b_g_cublas(b_rows, b_cols, b.data());
     cudaEvent_t start2, stop2;
     cudaErrCheck(cudaEventCreate(&start2));
     cudaErrCheck(cudaEventCreate(&stop2));
     cudaErrCheck(cudaEventRecord(start2));
-    Vector_CUBLAS x_g_cublas = lsqr<Matrix_cuSPARSE, Vector_CUBLAS>(A_g_cublas, b_g_cublas);
+    Vector_CUBLAS x_g_cublas = lsqr<MatrixCUSPARSE, Vector_CUBLAS>(A_g_cublas, b_g_cublas);
     cudaErrCheck(cudaDeviceSynchronize());
     cudaErrCheck(cudaEventRecord(stop2));
     cudaErrCheck(cudaEventSynchronize(stop2));
@@ -145,42 +145,6 @@ int main() {
     cusparseStop();
     cublasStop();
     printf("---------------------------------------------\n");
-    // printf("Running cuSolver implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
-    // cusparseStart();
-    // cublasStart();
-    // cusolverStart();
-    // // Vector_GPU x_sol_out(A_g_cusparse.getRows(), 1);
-    //
-    // int singularity = 0;
-    // const int reorder = 0; /* no reordering */
-    // int rankA;
-    // int p;
-    // double min_norm;
-    // double *b_test = b.data();
-    // double *x_c_out = new double[A_g_cusparse.getColumns()];
-    // double *c_csr_values = new double[A_g_cusparse.h_nnz];
-    // int *c_csr_columns = new int[A_g_cusparse.h_nnz];
-    // int *c_csr_offsets = new int[A_g_cusparse.getRows() + 1];
-    // cudaErrCheck(cudaMemcpy(c_csr_values, A_g_cusparse.d_csr_values, A_g_cusparse.h_nnz * sizeof(double), cudaMemcpyDeviceToHost));
-    // cudaErrCheck(cudaMemcpy(c_csr_columns, A_g_cusparse.d_csr_columns, A_g_cusparse.h_nnz * sizeof(int), cudaMemcpyDeviceToHost));
-    // cudaErrCheck(cudaMemcpy(c_csr_offsets, A_g_cusparse.d_csr_offsets, (A_g_cusparse.getRows() + 1) * sizeof(int), cudaMemcpyDeviceToHost));
-    // cusparseMatDescr_t descr = NULL;
-    // cusparseErrCheck(cusparseCreateMatDescr(&descr));
-    // cusparseErrCheck(cusparseSetMatType(descr, CUSPARSE_MATRIX_TYPE_GENERAL));
-    // cusparseErrCheck(cusparseSetMatIndexBase(descr, CUSPARSE_INDEX_BASE_ZERO));
-    // cusolverErrCheck(cusolverSpDcsrlsqvqrHost(solHandle, A_g_cusparse.getRows(), A_g_cusparse.getColumns(), A_g_cusparse.h_nnz, descr,
-    // c_csr_values,
-    //                                           c_csr_offsets, c_csr_columns, b_test, TOL, &rankA, x_c_out, &p, &min_norm));
-    // cudaErrCheck(cudaDeviceSynchronize());
-    // printf("HERE %d\n", p);
-    // // Vector_CPU x_c_sol_out = x_sol_out.matDeviceToHost();
-    // // Vector_CPU x_c_sol_out(A_g_cusparse.getRows(), 1, x_c_out);
-    // // x_c_sol_out.print();
-    // // file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU_CUSOLVER.txt";
-    // // writeArrayToFile(file_out, x_c_sol_out.getRows(), x_c_sol_out.getColumns(), x_c_sol_out.getMat());
-    // // cusolverStop();
-    // cusparseStop();
-    // cublasStop();
     cudaLastErrCheck();
   }
 }

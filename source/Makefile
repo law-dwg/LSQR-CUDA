@@ -12,7 +12,7 @@ NVCC_DEBUG_FLAGS = -G
 SOURCES_CU =	$(SRC_GPU)/lsqr.cu \
 				$(SRC_GPU)/matVec_gpu.cu \
 				$(SRC_GPU)/matVec_cublas.cu \
-				$(SRC_GPU)/mat_cusparse.cu \
+				$(SRC_GPU)/MatrixCUSPARSE.cu \
 				$(SRC_GPU)/utils.cu
 
 OBJS_CU := $(SOURCES_CU:%=$(BUILD_DIR)/%.o)
@@ -75,4 +75,4 @@ run: $(BUILD_DIR)/$(TARGET)
 	$(BUILD_DIR)/$(TARGET)
 
 format:
-	clang-format -i --verbose --style={'ColumnLimit: 150'} $(SRC_GPU)/*/*.* $(SRC_GPU)/*.* $(SRC_CPU)/*.* test/*/*.cu*
+	clang-format -i --verbose --style={'ColumnLimit: 150'} $(SRC_GPU)/*.* $(SRC_CPU)/*.* test/*/*.cu*
