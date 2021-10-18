@@ -7,36 +7,40 @@
 #include <time.h>   /* time */
 #include <vector>
 
-class Matrix_CSR_GPU {
+class MatrixCsrGPU {
 public:
-  unsigned int *d_rowIdx, *d_colIdx, *d_rows, *d_columns, *d_nnz, h_nnz, h_rows, h_columns;
-  double *d_vals;
-  Matrix_CSR_GPU() : h_columns(0), h_rows(0) { // Default Constructor
-    printf("Matrix_CSR_GPU Default constructor called\n");
-    cudaMalloc((void **)&d_rowIdx, sizeof(unsigned int));
-    cudaMalloc((void **)&d_colIdx, sizeof(unsigned int));
-    cudaMalloc((void **)&d_rows, sizeof(unsigned int));
-    cudaMalloc((void **)&d_columns, sizeof(unsigned int));
-    cudaMalloc((void **)&d_nnz, sizeof(unsigned int));
-    cudaMalloc((void **)&d_vals, sizeof(double));
-    cudaMemcpy(d_rows, &h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_columns, &h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
+  unsigned h_rows, h_columns, *d_rows, *d_columns;
+  int *d_csrRowPtr, *d_csrColInd, *d_nnz, h_nnz;
+  double *d_csrVal;
+  MatrixCsrGPU() : MatrixCsrGPU(0, 0, 0) { // Default Constructor
+    printf("MatrixCsrGPU Default constructor called\n");
+    cudaErrCheck(cudaMemset(d_csrVal, ZERO, h_nnz * sizeof(double)));
+    cudaErrCheck(cudaMemset(d_csrColInd, ZERO, h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMemset(d_csrRowPtr, ZERO, (h_rows + 1) * sizeof(int)));
   };
-  Matrix_CSR_GPU(unsigned int r, unsigned int c) : h_rows(r), h_columns(c) { // Constructor #1
-    printf("Matrix_CSR_GPU Constructor #1 was called\n");
+  MatrixCsrGPU(unsigned r, unsigned c, int n) : h_rows(r), h_columns(c), h_nnz(n) { // Constructor helper #1
+    printf("MatrixCsrGPU Constructor #1 was called\n");
     // allocate
-    cudaMalloc((void **)&d_rowIdx, sizeof(unsigned int));
-    cudaMalloc((void **)&d_colIdx, sizeof(unsigned int));
-    cudaMalloc((void **)&d_rows, sizeof(unsigned int));
-    cudaMalloc((void **)&d_columns, sizeof(unsigned int));
-    cudaMalloc((void **)&d_nnz, sizeof(unsigned int));
-    cudaMalloc((void **)&d_vals, sizeof(double));
+    cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
+    cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
+    cudaErrCheck(cudaMalloc((void **)&d_nnz, sizeof(int)));
+    cudaErrCheck(cudaMalloc((void **)&d_csrVal, h_nnz * sizeof(double)));
+    cudaErrCheck(cudaMalloc((void **)&d_csrColInd, h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, (h_rows + 1) * sizeof(int)));
+
     // copy to device
-    cudaMemcpy(d_rows, &r, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_columns, &c, sizeof(unsigned int), cudaMemcpyHostToDevice);
+    cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
   };
-  Matrix_CSR_GPU(unsigned int r, unsigned int c, double *m) : h_rows(r), h_columns(c), h_nnz(0) { // Constructor #2
-    printf("Matrix_CSR_GPU Constructor #2 was called\n");
+  MatrixCsrGPU(unsigned r, unsigned c, long long int n, double *values, int *colInd, int *rowPtr) : MatrixCsrGPU(r, c, n) { // Helper constructor #2
+    printf("MatrixCsrGPU Helper Constructor #2 called\n");
+    // copy to device
+    cudaErrCheck(cudaMemcpy(d_csrVal, values, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrColInd, colInd, h_nnz * sizeof(int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrRowPtr, rowPtr, (h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
+  }
+  MatrixCsrGPU(unsigned r, unsigned c, double *m) : h_rows(r), h_columns(c), h_nnz(0) { // Constructor (entry point)
+    printf("MatrixCsrGPU Constructor #2 was called\n");
     int row, col;
     col = row = 0;
     std::vector<int> temp_rowPtr, temp_colIdx;
@@ -44,7 +48,7 @@ public:
     std::vector<double> temp_vals;
     for (int i = 0; i < r * c; ++i) {
       if (((int)(i / c)) > row) {
-        printf("i=%d, h_nnz=%d, row=%d\n", i, h_nnz, row);
+        // printf("i=%d, h_nnz=%d, row=%d\n", i, h_nnz, row);
         temp_rowPtr.push_back(h_nnz);
         row = i / c;
       }
@@ -56,96 +60,104 @@ public:
       }
     }
     temp_rowPtr.push_back(h_nnz);
-    for (int i = 0; i < temp_rowPtr.size(); ++i) {
-      printf("rowPtr[%d]=%d\n", i, temp_rowPtr[i]);
-    }
-    for (int i = 0; i < temp_colIdx.size(); ++i) {
-      printf("temp_colIdx[%d]=%d\n", i, temp_colIdx[i]);
-    }
-    for (int i = 0; i < temp_vals.size(); ++i) {
-      printf("temp_vals[%d]=%f\n", i, temp_vals[i]);
-    }
+    // for (int i = 0; i < temp_rowPtr.size(); ++i) {
+    //  printf("rowPtr[%d]=%d\n", i, temp_rowPtr[i]);
+    //}
+    // for (int i = 0; i < temp_colIdx.size(); ++i) {
+    //  printf("temp_colIdx[%d]=%d\n", i, temp_colIdx[i]);
+    //}
+    // for (int i = 0; i < temp_vals.size(); ++i) {
+    //  printf("temp_vals[%d]=%f\n", i, temp_vals[i]);
+    //}
     // allocate
-    cudaMalloc((void **)&d_nnz, sizeof(unsigned int));
-    cudaMalloc((void **)&d_rows, sizeof(unsigned int));
-    cudaMalloc((void **)&d_columns, sizeof(unsigned int));
-    cudaMalloc((void **)&d_rowIdx, sizeof(unsigned int) * (r + 1));
-    cudaMalloc((void **)&d_colIdx, sizeof(unsigned int) * h_nnz);
-    cudaMalloc((void **)&d_vals, sizeof(double) * h_nnz);
+    cudaMalloc((void **)&d_rows, sizeof(unsigned));
+    cudaMalloc((void **)&d_columns, sizeof(unsigned));
+    cudaMalloc((void **)&d_nnz, sizeof(int));
+    cudaMalloc((void **)&d_csrRowPtr, sizeof(unsigned) * (r + 1));
+    cudaMalloc((void **)&d_csrColInd, sizeof(unsigned) * h_nnz);
+    cudaMalloc((void **)&d_csrVal, sizeof(double) * h_nnz);
     // copy to device
-    cudaMemcpy(d_nnz, &h_nnz, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_rows, &h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_columns, &h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_rowIdx, temp_rowPtr.data(), sizeof(unsigned int) * (r + 1), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_colIdx, temp_colIdx.data(), sizeof(unsigned int) * h_nnz, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_vals, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_nnz, &h_nnz, sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_csrRowPtr, temp_rowPtr.data(), sizeof(unsigned) * (r + 1), cudaMemcpyHostToDevice);
+    cudaMemcpy(d_csrColInd, temp_colIdx.data(), sizeof(unsigned) * h_nnz, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_csrVal, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice);
     printf("nnz = %d, rowIdx.size = %d, colIdx.size = %d\n", h_nnz, temp_rowPtr.size(), temp_colIdx.size());
   };
-  /*
-  Matrix_CSR_GPU(const Matrix_CSR_GPU &v) : Matrix_CSR_GPU(v.h_rows, v.h_columns) { // Copy constructor
-    printf("Matrix_CSR_GPU Copy Constructor was called\n");
-    cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
-  };
-  Matrix_CSR_GPU(Vector_CPU &v) : Matrix_CSR_GPU(v.getRows(), v.getColumns(), &v.mat[0]) { // Copy constructor from CPU
-    printf("Matrix_CSR_GPU/CPU Copy Constructor was called\n");
-  };
-  Matrix_CSR_GPU &operator=(const Matrix_CSR_GPU &v) { // Copy assignment operator
-    printf("Matrix_CSR_GPU Copy assignment operator was called\n");
-    cudaFree(this->d_mat);
-    this->h_rows = v.h_rows;
-    this->h_columns = v.h_columns;
-    cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns);
-    cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
+  MatrixCsrGPU(const MatrixCsrGPU &m) : MatrixCsrGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr){}; // Copy constructor
+  MatrixCsrGPU &operator=(const MatrixCsrGPU &m) { // Copy assignment operator
+    printf("MatrixCsrGPU Copy Assignment Operator called\n");
+    h_rows = m.h_rows;
+    h_columns = m.h_columns;
+    h_nnz = m.h_nnz;
+    // destroy old allocation
+    cudaErrCheck(cudaFree(d_csrVal));
+    cudaErrCheck(cudaFree(d_csrColInd));
+    cudaErrCheck(cudaFree(d_csrRowPtr));
+    // memory allocation
+    cudaErrCheck(cudaMalloc((void **)&d_csrVal, sizeof(double) * h_nnz));
+    cudaErrCheck(cudaMalloc((void **)&d_csrColInd, sizeof(int) * h_nnz));
+    cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, sizeof(int) * (h_rows + 1)));
+    // copy to device
+    cudaErrCheck(cudaMemcpy(d_rows, m.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, m.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_nnz, m.d_nnz, sizeof(int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrVal, m.d_csrVal, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrColInd, m.d_csrColInd, h_nnz * sizeof(int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrRowPtr, m.d_csrRowPtr, (m.h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
     return *this;
   };
-  Matrix_CSR_GPU(Matrix_CSR_GPU &&v) noexcept : h_rows(v.h_rows), h_columns(v.h_columns) { // Move constructor
-    printf("Vector_CPU Move Constructor was called\n");
-    cudaMalloc((void **)&d_rows, sizeof(unsigned int));
-    cudaMalloc((void **)&d_columns, sizeof(unsigned int));
-    cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns);
-    cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
-    cudaFree(v.d_mat); // free old memory
-    v.h_rows = 0;
-    v.h_columns = 0;
-    double temp[0]; // set old to 0, it will be freed in destructor
-    cudaMalloc((void **)&v.d_mat, sizeof(double));
-    cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice);
+  MatrixCsrGPU(MatrixCsrGPU &&m) noexcept
+      : MatrixCsrGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) { // MatrixCsrGPU Move Constructor
+    printf("MatrixCsrGPU Move Constructor called\n");
+    // free old resources
+    cudaErrCheck(cudaFree(m.d_csrVal));
+    cudaErrCheck(cudaFree(m.d_csrRowPtr));
+    cudaErrCheck(cudaFree(m.d_csrColInd));
+    m.h_rows = ZERO;
+    m.h_nnz = ZERO;
+    m.h_columns = ZERO;
+    cudaErrCheck(cudaMalloc((void **)&m.d_csrVal, h_nnz * sizeof(double)));
+    cudaErrCheck(cudaMalloc((void **)&m.d_csrColInd, h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMalloc((void **)&m.d_csrRowPtr, (h_rows + 1) * sizeof(int)));
+    cudaErrCheck(cudaMemcpy(m.d_rows, &m.h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(m.d_columns, &m.h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(m.d_nnz, &m.h_nnz, sizeof(int), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemset(m.d_csrVal, ZERO, m.h_nnz * sizeof(double)));
+    cudaErrCheck(cudaMemset(m.d_csrColInd, ZERO, m.h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMemset(m.d_csrRowPtr, ZERO, (m.h_rows + 1) * sizeof(int)));
   };
-  Matrix_CSR_GPU &operator=(Matrix_CSR_GPU &&v) noexcept { // Move assignment operator
-    printf("Matrix_CSR_GPU Move assignment operator was called\n");
-    // Host
-    h_rows = v.h_rows;
-    h_columns = v.h_columns;
-    // Device
-    cudaFree(d_mat);
-    cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns);
-    cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice);
-    cudaFree(v.d_mat); // free old memory
-    v.h_rows = 0;
-    v.h_columns = 0;
-    double temp[0]; // set old to 0, it will be freed in destructor
-    cudaMalloc((void **)&v.d_mat, sizeof(double));
-    cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice);
-    cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice);
+  MatrixCsrGPU &operator=(MatrixCsrGPU &&m) noexcept { // Move assignment operator
+    printf("MatrixCsrGPU Copy Assignment called\n");
+    // call copy assignment
+    *this = m;
+    // free old resources
+    cudaErrCheck(cudaFree(m.d_csrVal));
+    cudaErrCheck(cudaFree(m.d_csrRowPtr));
+    cudaErrCheck(cudaFree(m.d_csrColInd));
+    m.h_rows = ZERO;
+    m.h_nnz = ZERO;
+    m.h_columns = ZERO;
+    cudaErrCheck(cudaMalloc((void **)&m.d_csrVal, h_nnz * sizeof(double)));
+    cudaErrCheck(cudaMalloc((void **)&m.d_csrColInd, h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMalloc((void **)&m.d_csrRowPtr, (h_rows + 1) * sizeof(int)));
+    cudaErrCheck(cudaMemcpy(m.d_rows, &m.h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(m.d_columns, &m.h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(m.d_nnz, &m.h_nnz, sizeof(int), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemset(m.d_csrVal, ZERO, m.h_nnz * sizeof(double)));
+    cudaErrCheck(cudaMemset(m.d_csrColInd, ZERO, m.h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMemset(m.d_csrRowPtr, ZERO, (m.h_rows + 1) * sizeof(int)));
     return *this;
-  }
-  */
-  ~Matrix_CSR_GPU() { // Destructor
+  };
+  ~MatrixCsrGPU() { // Destructor
     printf("DESTRUCTOR CALLED\n");
-    cudaFree(d_rows);
-    cudaFree(d_columns);
-    cudaFree(d_colIdx);
-    cudaFree(d_rowIdx);
-    cudaFree(d_vals);
+    cudaErrCheck(cudaFree(d_rows));
+    cudaErrCheck(cudaFree(d_columns));
+    cudaErrCheck(cudaFree(d_nnz));
+    cudaErrCheck(cudaFree(d_csrColInd));
+    cudaErrCheck(cudaFree(d_csrRowPtr));
+    cudaErrCheck(cudaFree(d_csrVal));
   };
-  void operator*(Vector_GPU &v); // Multiplication
+  Vector_GPU operator*(Vector_GPU &v); // Multiplication
 };

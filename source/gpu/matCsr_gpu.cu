@@ -1,8 +1,9 @@
 #include "matCsr_gpu.cuh"
 #include <vector>
-#define TILE_DIM_X 32
+#define TILE_DIM_X 16
+#define TILE_DIM_Y 16
 
-__global__ void spmvNaive(unsigned int *rows, unsigned int *col, unsigned int *rowPtr, unsigned int *colIdx, double *val, double *rhs, double *out) {
+__global__ void spmvNaive(unsigned *rows, unsigned *col, int *rowPtr, int *colIdx, double *val, double *rhs, double *out) {
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int bid;
 
@@ -13,8 +14,8 @@ __global__ void spmvNaive(unsigned int *rows, unsigned int *col, unsigned int *r
     }
   }
 }
-__global__ void spmvTiled(unsigned int *rows, unsigned int *col, unsigned int *rowPtr, unsigned int *colIdx, double *val, double *rhs, double *out) {
-  __shared__ double temp[TILE_DIM_X];
+__global__ void spmvTiled(unsigned *rows, unsigned *col, int *d_nnz, int *rowPtr, int *colIdx, double *val, double *rhs, double *out) {
+  __shared__ double temp[TILE_DIM_X * TILE_DIM_X];
   int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
   int warp_id = thread_id / 32;    // global warp index
   int lane = thread_id & (32 - 1); // thread index within the warp
@@ -47,22 +48,22 @@ __global__ void spmvTiled(unsigned int *rows, unsigned int *col, unsigned int *r
   }
 }
 
-void Matrix_CSR_GPU::operator*(Vector_GPU &v) { // Multiplication
-  double *d_out;
-  double h_out[h_rows];
-  cudaMalloc((void **)&d_out, sizeof(double) * h_rows);
-  int threads = TILE_DIM_X;
-  int blocks = (h_rows * h_columns / TILE_DIM_X) + 1;
-  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", threads, 1, threads, blocks, 1, blocks);
-  spmvTiled<<<blocks, threads>>>(this->d_rows, this->d_columns, this->d_rowIdx, this->d_colIdx, this->d_vals, v.d_mat, d_out);
-  cudaMemcpy(&h_out, d_out, sizeof(double) * h_rows, cudaMemcpyDeviceToHost);
+Vector_GPU MatrixCsrGPU::operator*(Vector_GPU &v) { // Multiplication
+  Vector_GPU out(this->h_rows, 1);
+  unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
+  dim3 grid(blocksX, blocksY, 1);
+  dim3 block(TILE_DIM_X, TILE_DIM_Y, 1);
+  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", blocks, 1, threads, blocks, 1, blocks);
+  spmvTiled<<<grid, block>>>(this->d_rows, this->d_columns, this->d_nnz, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.d_mat, out.d_mat);
+  // cudaMemcpy(&h_out, d_out, sizeof(double) * h_rows, cudaMemcpyDeviceToHost);
 
   // double out[h_rows], h_vals[h_nnz], rhs_mat[v.h_rows * v.h_columns];
   // int h_rowPtr[h_rows + 1], h_colIdx[h_nnz];
   // cudaMemcpy(&rhs_mat, v.d_mat, sizeof(double) * v.h_rows * v.h_columns, cudaMemcpyDeviceToHost);
-  // cudaMemcpy(&h_vals, this->d_vals, sizeof(double) * h_nnz, cudaMemcpyDeviceToHost);
-  // cudaMemcpy(&h_rowPtr, this->d_rowIdx, sizeof(int) * h_rows + 1, cudaMemcpyDeviceToHost);
-  // cudaMemcpy(&h_colIdx, this->d_colIdx, sizeof(int) * h_nnz, cudaMemcpyDeviceToHost);
+  // cudaMemcpy(&h_vals, this->d_csrVal, sizeof(double) * h_nnz, cudaMemcpyDeviceToHost);
+  // cudaMemcpy(&h_rowPtr, this->d_csrRowPtr, sizeof(int) * h_rows + 1, cudaMemcpyDeviceToHost);
+  // cudaMemcpy(&h_colIdx, this->d_csrColInd, sizeof(int) * h_nnz, cudaMemcpyDeviceToHost);
   // double y;
   // for (int i = 0; i < h_rows + 1; ++i) {
   //  printf("h_rowPtr[%d]=%f\n", i, h_rowPtr[i]);
@@ -75,7 +76,8 @@ void Matrix_CSR_GPU::operator*(Vector_GPU &v) { // Multiplication
   //    out[i] += y;
   //  }
   //}
-  for (int i = 0; i < h_rows; ++i) {
-    printf("h_out[%d]=%f\n", i, h_out[i]);
-  }
+  // for (int i = 0; i < h_rows; ++i) {
+  //   printf("h_out[%d]=%f\n", i, h_out[i]);
+  // }
+  return out;
 }

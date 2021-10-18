@@ -88,10 +88,9 @@ public:
     cusparseDestroyDnMat(dnMatDescr);
     cudaFree(d_mat);
   };
-  MatrixCUSPARSE(const MatrixCUSPARSE &m) : MatrixCUSPARSE(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) {
-    printf("MatrixCUSPARSE Copy Constructor\n");
-  };                                                   // Copy constructor
-  MatrixCUSPARSE &operator=(const MatrixCUSPARSE &m) { // Copy assignment operator
+  MatrixCUSPARSE(const MatrixCUSPARSE &m)
+      : MatrixCUSPARSE(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr){}; // Copy constructor
+  MatrixCUSPARSE &operator=(const MatrixCUSPARSE &m) {                                              // Copy assignment operator
     printf("MatrixCUSPARSE Copy Assignment Operator called\n");
     h_rows = m.h_rows;
     h_columns = m.h_columns;
