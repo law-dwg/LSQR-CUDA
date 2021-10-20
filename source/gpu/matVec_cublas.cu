@@ -20,15 +20,19 @@
 //}
 /** Operator overloads */
 Vector_CUBLAS Vector_CUBLAS::operator*(Vector_CUBLAS &v) {
-  Vector_CUBLAS out(this->h_rows, v.h_columns);
-  int m = out.h_rows;
-  int n = out.h_columns;
-  int k = this->h_columns;
-  int lda = m, ldb = k, ldc = m;
-  cublasOperation_t OP = (m == 1 || n == 1) ? CUBLAS_OP_T : CUBLAS_OP_N;
-  // printf("m=%d,n=%d,k=%d,lda=%d, ldb=%d, ldc=%d, d_rows=%d, d_cols=%d,\n", m, n, k, lda, ldb, ldc, rows, cols);
-  cublasErrCheck(cublasDgemm(handle, OP, CUBLAS_OP_N, m, n, k, &ONE, this->d_mat, lda, v.d_mat, ldb, &ZERO, out.d_mat, ldc));
 
+  // a(m x k) * b(k * n) = c(m * n)
+  Vector_CUBLAS out(this->getRows(), v.getColumns());
+  if (this->getColumns() == v.getRows()) {
+    if (v.h_columns == 1) {
+      cublasDgemv(handle, CUBLAS_OP_T, this->h_columns, this->h_rows, &ONE, this->d_mat, this->h_columns, v.d_mat, 1, &ZERO, out.d_mat, 1);
+    } else {
+      cublasErrCheck(cublasDgemm(handle, CUBLAS_OP_N, CUBLAS_OP_N, out.h_columns, out.h_rows, this->h_columns, &ONE, v.d_mat, out.h_columns,
+                                 this->d_mat, this->h_columns, &ZERO, out.d_mat, out.h_columns));
+    }
+  } else {
+    printf("Cannot perform multiplication, dimension mismatch\n");
+  }
   return out;
 };
 
@@ -114,8 +118,7 @@ void Vector_CUBLAS::printmat() {
 
 Vector_CUBLAS Vector_CUBLAS::transpose() {
   Vector_CUBLAS out(this->h_columns, this->h_rows);
-  int m = this->h_rows, n = this->h_columns, k = this->h_columns;
-  int lda = m, ldb = k, ldc = m;
-  cublasErrCheck(cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_T, m, n, &ZERO, this->d_mat, lda, &ONE, this->d_mat, ldb, out.d_mat, ldc));
+  cublasErrCheck(cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_T, this->h_rows, this->h_columns, &ONE, this->d_mat, this->h_columns, &ZERO, this->d_mat,
+                             this->h_columns, out.d_mat, this->h_rows));
   return out;
 };

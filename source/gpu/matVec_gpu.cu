@@ -505,11 +505,11 @@ Vector_GPU Vector_GPU::transpose() {
   Vector_GPU out(this->h_columns, this->h_rows);
 
   dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
-  unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
-  unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
+  unsigned int blocksX = (out.h_rows / TILE_DIM_X) + 1;
+  unsigned int blocksY = (out.h_columns / TILE_DIM_Y) + 1;
   dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
-  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+  printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+         numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
   transposeTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, out.d_mat, this->d_rows, this->d_columns);
   // cudaDeviceSynchronize();
   return out;

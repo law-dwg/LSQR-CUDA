@@ -16,7 +16,7 @@ Vector_GPU MatrixCUSPARSE::operator*(Vector_GPU &v) {
 Vector_CUBLAS MatrixCUSPARSE::operator*(Vector_CUBLAS &v) {
   Vector_CUBLAS out(this->h_rows, 1);
   cusparseDnVecDescr_t rhs_desc, out_desc;
-  cusparseErrCheck(cusparseCreateDnVec(&rhs_desc, out.getRows(), v.d_mat, CUDA_R_64F));
+  cusparseErrCheck(cusparseCreateDnVec(&rhs_desc, v.getRows(), v.d_mat, CUDA_R_64F));
   cusparseErrCheck(cusparseCreateDnVec(&out_desc, out.getRows(), out.d_mat, CUDA_R_64F));
   cusparseErrCheck(cusparseSpMV_bufferSize(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, this->spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
                                            CUSPARSE_MV_ALG_DEFAULT, &bufferSize));
