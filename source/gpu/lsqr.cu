@@ -37,9 +37,9 @@ int main() {
   if (matBuild) { // build matrices
     std::cout << "\nGreat, lets get started\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-1.0: ";
     // sp = valInput<double>(0.0, 1.0);
-    sp = 0.2;
+    sp = 0.5;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 9000; i <= 5000; i += 500) {
+    for (int i = 5000; i <= 5000; i += 500) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }

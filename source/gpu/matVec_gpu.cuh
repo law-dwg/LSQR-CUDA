@@ -36,11 +36,13 @@ public:
   };
   Vector_GPU(Vector_CPU &v) : Vector_GPU(v.getRows(), v.getColumns(), &v.mat[0]){}; // Copy constructor from CPU
   Vector_GPU &operator=(const Vector_GPU &v) {                                      // Copy assignment operator
-    // printf("Vector_GPU Copy assignment operator was called\n");
-    cudaErrCheck(cudaFree(this->d_mat));
+    printf("Vector_GPU Copy assignment operator was called\n");
+    if (this->h_rows * this->h_columns != v.h_rows * v.h_columns) {
+      cudaErrCheck(cudaFree(this->d_mat));
+      cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns));
+    }
     this->h_rows = v.h_rows;
     this->h_columns = v.h_columns;
-    cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns));
     cudaErrCheck(cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice));

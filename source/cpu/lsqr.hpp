@@ -61,7 +61,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   double res2 = 0;
 
   /*1. Initialize*/
-  Vec u, v, w, res_v;
+  Vec u, v, w, dk, res_v;
   double alpha = 0;
   double beta = bnorm;
   if (beta > 0) {
@@ -93,8 +93,15 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   // 2. For i=1,2,3....
   printf("2. For i=1,2,3....\n");
   do {
-    if ((itn == 0.25 * itnlim) || (itn == 0.5 * itnlim) || (itn == 0.75 * itnlim)) {
-      printf("itn = %d\n", itn);
+    if (A.getRows() >= 6000) {
+      if ((itn == (0.125) * itnlim) || (itn == 0.25 * itnlim) || (itn == (0.25 + 0.125) * itnlim) || (itn == 0.5 * itnlim) ||
+          (itn == (0.5 + 0.125) * itnlim) || (itn == 0.75 * itnlim) || (itn == (0.75 + 0.125) * itnlim)) {
+        printf("itn = %d\n", itn);
+      }
+    } else {
+      if ((itn == 0.25 * itnlim) || (itn == 0.5 * itnlim) || (itn == 0.75 * itnlim)) {
+        printf("itn = %d\n", itn);
+      }
     }
     ++itn;
 
@@ -144,7 +151,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     double t2 = -theta / rho;
     double t3 = one / rho;
     double dknorm = 0;
-    Vec dk = w * t3;
+    dk = w * t3;
 
     /* Important equations
     x_i = x_i-1 + (phi_i/rho_i) *w_i
@@ -169,8 +176,8 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     xnorm1 = D2Norm(xnorm1, z);
 
     // residual
-    res_v = b - (A * x);
-    double res = res_v.Dnrm2();
+    // res_v = b - (A * x);
+    // double res = res_v.Dnrm2();
 
     Acond = Anorm * dnorm;
     res2 = D2Norm(res2, psi);
@@ -209,7 +216,6 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     if (test1 <= rtol) {
       istop = 1;
     };
-
   } while (istop == 0);
   printf("ran through %d iterations \nistop=%d\n", itn, istop);
   // printf("Anorm=%f, Arnorm=%f,\nAcond=%f, xnorm=%f\nr1norm=%f\n", Anorm, Arnorm, Acond, xnorm, r1norm);
