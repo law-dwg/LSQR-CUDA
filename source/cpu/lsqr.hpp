@@ -27,11 +27,12 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
 
   /** Const */
   const double one = 1.0;
+  const double negone = -1.0;
   const double zero = 0.0;
 
   /** Tolerances */
-  double ctol = 0;
-  double rtol = 0;
+  double ctol = zero;
+  double rtol = zero;
   double atol = 1e-8;  // Optional
   double btol = 1e-8;  // Optional
   double conlim = 1e8; // Optional
@@ -40,41 +41,41 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   };
 
   /** QR-Factorization Params */
-  double dnorm = 0;
-  double z = 0;
-  double sn2 = 0;
-  double cs2 = -1;
-  double psi = 0;
+  double dnorm = zero;
+  double z = zero;
+  double sn2 = zero;
+  double cs2 = negone;
+  double psi = zero;
 
   /** Precision */
   double epsilon = 1e-16;
 
   /** Stopping Criteria */
-  unsigned int istop = 0;
-  double test1 = 0;
-  double test2 = 0;
-  double test3 = 0;
+  unsigned int istop = zero;
+  double test1 = zero;
+  double test2 = zero;
+  double test3 = zero;
   unsigned int itn = 0; // Iteration
   int itnlim = 2 * A.getColumns();
 
   /** Residuals */
-  double res2 = 0;
+  double res2 = zero;
 
   /*1. Initialize*/
-  Vec u, v, w, dk, res_v;
-  double alpha = 0;
+  Vec u, v, w, dk;
+  double alpha = zero;
   double beta = bnorm;
   if (beta > 0) {
-    u = b * (1 / beta);
+    u = b * (one / beta);
     v = A_T * u;
     alpha = v.Dnrm2();
   } else {
     v = x;
-    alpha = 0;
+    alpha = zero;
   };
 
   if (alpha > 0) {
-    v = v * (1 / alpha);
+    v = v * (one / alpha);
   };
   w = v;
 
@@ -117,12 +118,12 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     u = A * v - u * alpha; // ubar_i+1
     beta = u.Dnrm2();      // beta_i+1 = ||ubar_i+1||
     if (beta > 0) {
-      u = u * (1 / beta); // u_i+1
+      u = u * (one / beta); // u_i+1
       Anorm = sqrt((Anorm * Anorm) + (alpha * alpha) + (beta * beta) + dampsq);
       v = (A_T * u) - (v * beta); // vbar_i+1
       alpha = v.Dnrm2();          // alpha_i+1
       if (alpha > 0) {
-        v = v * (1 / alpha); // v_i+1
+        v = v * (one / alpha); // v_i+1
       }
     }
     double rhobar1 = rhobar;
@@ -150,7 +151,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     double t1 = phi / rho;
     double t2 = -theta / rho;
     double t3 = one / rho;
-    double dknorm = 0;
+    double dknorm = zero;
     dk = w * t3;
 
     /* Important equations
@@ -176,7 +177,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     xnorm1 = D2Norm(xnorm1, z);
 
     // residual
-    // res_v = b - (A * x);
+    // Vec res_v = b - (A * x);
     // double res = res_v.Dnrm2();
 
     Acond = Anorm * dnorm;
@@ -184,6 +185,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     rnorm = D2Norm(res2, phibar);
     rnorm += 1e-30;
     Arnorm = alpha * std::fabs(tau);
+    
     // 6. Test for convergence
     // printf("6. Test for convergence\n");
     test1 = rnorm / bnorm;
