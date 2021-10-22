@@ -185,7 +185,7 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     rnorm = D2Norm(res2, phibar);
     rnorm += 1e-30;
     Arnorm = alpha * std::fabs(tau);
-    
+
     // 6. Test for convergence
     // printf("6. Test for convergence\n");
     test1 = rnorm / bnorm;

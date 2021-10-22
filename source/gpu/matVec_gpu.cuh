@@ -111,8 +111,3 @@ public:
   Vector_GPU transpose();
 };
 
-// matrix class for readability
-class Matrix_GPU : public Vector_GPU {
-  using Vector_GPU::Vector_GPU;
-  Matrix_GPU(const Vector_GPU &a) : Vector_GPU(a) { std::cout << "Mat_GPU conversion\n"; }
-};

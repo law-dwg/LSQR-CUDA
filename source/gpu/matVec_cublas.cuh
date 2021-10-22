@@ -75,7 +75,7 @@ public:
     cudaErrCheck(cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice));
   };
   Vector_CUBLAS &operator=(Vector_CUBLAS &&v) noexcept { // Move assignment operator
-    //printf("Vector_CUBLAS Move assignment operator was called\n");
+    // printf("Vector_CUBLAS Move assignment operator was called\n");
     // Host
     if (this->h_rows * this->h_columns != v.h_rows * v.h_columns) {
       cudaErrCheck(cudaFree(this->d_mat));
@@ -87,20 +87,20 @@ public:
     cudaErrCheck(cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice));
-    //HANDLED BY DESTRUCTOR
-    //cudaErrCheck(cudaFree(v.d_mat)); // free old memory
-    //v.h_rows = 0;
-    //v.h_columns = 0;
-    //double temp[0]; // set old to 0, it will be freed in destructor
-    //cudaErrCheck(cudaMalloc((void **)&v.d_mat, sizeof(double)));
-    //cudaErrCheck(cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice));
-    //cudaErrCheck(cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice));
-    //cudaErrCheck(cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice));
+    // HANDLED BY DESTRUCTOR
+    // cudaErrCheck(cudaFree(v.d_mat)); // free old memory
+    // v.h_rows = 0;
+    // v.h_columns = 0;
+    // double temp[0]; // set old to 0, it will be freed in destructor
+    // cudaErrCheck(cudaMalloc((void **)&v.d_mat, sizeof(double)));
+    // cudaErrCheck(cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    // cudaErrCheck(cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    // cudaErrCheck(cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice));
     return *this;
   }
 
   ~Vector_CUBLAS() { // Destructor
-    //printf("DESTRUCTOR CALLED\n");
+    // printf("DESTRUCTOR CALLED\n");
     cudaFree(d_mat);
     cudaFree(d_rows);
     cudaFree(d_columns);

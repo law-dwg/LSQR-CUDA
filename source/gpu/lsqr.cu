@@ -3,6 +3,7 @@
 #include "../cpu/matVec_cpu.hpp"
 #include "../cpu/matrixBuilder.hpp"
 // GPU
+#include "MatrixCSR.cuh"
 #include "MatrixCUSPARSE.cuh"
 #include "matVec_cublas.cuh"
 #include "matVec_gpu.cuh"
@@ -39,7 +40,7 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0.5;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 2500; i <= 2500; i += 500) {
+    for (int i = 1000; i <= 1000; i += 500) {
       matrixBuilder(i, i, sp, "input/", "A");
       matrixBuilder(i, 1, 0, "input/", "b");
     }
@@ -85,7 +86,7 @@ int main() {
     //         "\"NumOfRows_1_b.txt\" format) and make sure the naming convention (rows * columns) matches the number of values in each file\n");
     //  return 0;
     //}
-    if (false) {
+    if (true) {
       printf("---------------------------------------------\n");
       printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
       Vector_CPU A_c(A_rows, A_cols, A.data());
@@ -101,10 +102,10 @@ int main() {
       writeArrayToFile(file_out, x_c.getRows(), x_c.getColumns(), x_c.getMat());
       printf("---------------------------------------------\n");
     }
-    if (false) {
+    if (true) {
       printf("---------------------------------------------\n");
       printf("Running lsqr-GPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
-      Vector_GPU A_vg(A_rows, A_cols, A.data());
+      MatrixCSR A_vg(A_rows, A_cols, A.data());
       cublasStart();
       cusparseStart();
       // MatrixCUSPARSE A_g(A_rows, A_cols, A.data());
@@ -113,7 +114,7 @@ int main() {
       cudaErrCheck(cudaEventCreate(&start));
       cudaErrCheck(cudaEventCreate(&stop));
       cudaErrCheck(cudaEventRecord(start));
-      Vector_GPU x_g = lsqr<Vector_GPU, Vector_GPU>(A_vg, b_g);
+      Vector_GPU x_g = lsqr<MatrixCSR, Vector_GPU>(A_vg, b_g);
       cudaErrCheck(cudaDeviceSynchronize());
       cudaErrCheck(cudaEventRecord(stop));
       cudaErrCheck(cudaEventSynchronize(stop));
@@ -129,7 +130,7 @@ int main() {
     }
     cudaErrCheck(cudaDeviceReset());
 
-    if (true) {
+    if (false) {
       printf("---------------------------------------------\n");
       printf("Running lsqr-GPU-cublas implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
       cublasStart();

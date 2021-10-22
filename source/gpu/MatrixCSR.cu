@@ -14,49 +14,14 @@ __global__ void spmvNaive(unsigned *rows, unsigned *col, int *rowPtr, int *colId
     }
   }
 }
-__global__ void spmvTiled(unsigned *rows, unsigned *col, int *d_nnz, int *rowPtr, int *colIdx, double *val, double *rhs, double *out) {
-  __shared__ double temp[TILE_DIM_X * TILE_DIM_X];
-  int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-  int lane = thread_id & (32 - 1); // thread index within the warp
-  int warp_id = thread_id / 32;    // global warp index
-  // one warp per row
-  int row = warp_id;
-  printf("gid=%d, row = %d, wid=%d\n", thread_id, row, lane);
-  if (row < *rows) {
-    int row_start = rowPtr[row];
-    int row_end = rowPtr[row + 1];
-    temp[threadIdx.x] = 0.0;
-    double sum = 0.0;
-    for (int i = row_start + lane; i < row_end; i += 32) {
-      sum += val[i] * rhs[colIdx[i]];
-      printf("sum=%f += val[%d] * rhs[colIdx[%d]] = %f\n", sum, i, i, temp[threadIdx.x]);
-    }
-    temp[threadIdx.x] = sum;
-    if (lane < 16)
-      temp[threadIdx.x] += temp[threadIdx.x + 16];
-    if (lane < 8)
-      temp[threadIdx.x] += temp[threadIdx.x + 8];
-    if (lane < 4)
-      temp[threadIdx.x] += temp[threadIdx.x + 4];
-    if (lane < 2)
-      temp[threadIdx.x] += temp[threadIdx.x + 2];
-    if (lane < 1)
-      temp[threadIdx.x] += temp[threadIdx.x + 1];
-
-    if (lane == 0) {
-      out[row] += temp[threadIdx.x];
-      printf("wid=0 called, out[%d]=%f\n", row, out[row]);
-    }
-  }
-}
 
 Vector_GPU MatrixCSR::operator*(Vector_GPU &v) { // Multiplication
   Vector_GPU out(this->h_rows, 1);
   unsigned int blocksX = ((this->h_rows * this->h_columns) / (TILE_DIM_X * TILE_DIM_X)) + 1;
   dim3 grid(blocksX, 1, 1);
   dim3 block(TILE_DIM_X * TILE_DIM_X, 1, 1);
-  printf("grid(%d,%d,%d), block(%d,%d,%d)\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
-  spmvTiled<<<grid, block>>>(this->d_rows, this->d_columns, this->d_nnz, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.d_mat, out.d_mat);
+  // printf("grid(%d,%d,%d), block(%d,%d,%d)\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
+  spmvNaive<<<grid, block>>>(this->d_rows, this->d_columns, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.d_mat, out.d_mat);
   return out;
 }
 
