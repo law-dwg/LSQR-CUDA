@@ -1,6 +1,6 @@
 #pragma once
 #include "../cpu/matVec_cpu.hpp"
-#include "matVec_gpu.cuh"
+#include "VectorCUDA.cuh"
 #include <algorithm>
 #include <stdio.h>  //NULL, printf
 #include <stdlib.h> /* srand, rand */
@@ -10,7 +10,7 @@
 class MatrixCSR {
 public:
   unsigned h_rows, h_columns, *d_rows, *d_columns;
-  int *d_csrRowPtr, *d_csrColInd, *d_nnz, h_nnz;
+  int *d_csrRowPtr, *d_csrColInd, h_nnz;
   double *d_csrVal;
   // cusparse used for transpose
   cusparseMatDescr_t descr = NULL;
@@ -27,7 +27,6 @@ public:
     // allocate
     cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
-    cudaErrCheck(cudaMalloc((void **)&d_nnz, sizeof(int)));
     cudaErrCheck(cudaMalloc((void **)&d_csrVal, h_nnz * sizeof(double)));
     cudaErrCheck(cudaMalloc((void **)&d_csrColInd, h_nnz * sizeof(int)));
     cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, (h_rows + 1) * sizeof(int)));
@@ -81,14 +80,12 @@ public:
     // allocate
     cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
-    cudaErrCheck(cudaMalloc((void **)&d_nnz, sizeof(int)));
     cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, sizeof(unsigned) * (r + 1)));
     cudaErrCheck(cudaMalloc((void **)&d_csrColInd, sizeof(unsigned) * h_nnz));
     cudaErrCheck(cudaMalloc((void **)&d_csrVal, sizeof(double) * h_nnz));
     // copy to device
     cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(d_nnz, &h_nnz, sizeof(int), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrRowPtr, temp_rowPtr.data(), sizeof(unsigned) * (r + 1), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrColInd, temp_colIdx.data(), sizeof(unsigned) * h_nnz, cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrVal, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice));
@@ -114,7 +111,6 @@ public:
     // copy to device
     cudaErrCheck(cudaMemcpy(d_rows, m.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_columns, m.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_nnz, m.d_nnz, sizeof(int), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrVal, m.d_csrVal, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrColInd, m.d_csrColInd, h_nnz * sizeof(int), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrRowPtr, m.d_csrRowPtr, (m.h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
@@ -135,7 +131,6 @@ public:
     cudaErrCheck(cudaMalloc((void **)&m.d_csrRowPtr, (h_rows + 1) * sizeof(int)));
     cudaErrCheck(cudaMemcpy(m.d_rows, &m.h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(m.d_columns, &m.h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(m.d_nnz, &m.h_nnz, sizeof(int), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemset(m.d_csrVal, ZERO, m.h_nnz * sizeof(double)));
     cudaErrCheck(cudaMemset(m.d_csrColInd, ZERO, m.h_nnz * sizeof(int)));
     cudaErrCheck(cudaMemset(m.d_csrRowPtr, ZERO, (m.h_rows + 1) * sizeof(int)));
@@ -156,7 +151,6 @@ public:
     cudaErrCheck(cudaMalloc((void **)&m.d_csrRowPtr, (h_rows + 1) * sizeof(int)));
     cudaErrCheck(cudaMemcpy(m.d_rows, &m.h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(m.d_columns, &m.h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(m.d_nnz, &m.h_nnz, sizeof(int), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemset(m.d_csrVal, ZERO, m.h_nnz * sizeof(double)));
     cudaErrCheck(cudaMemset(m.d_csrColInd, ZERO, m.h_nnz * sizeof(int)));
     cudaErrCheck(cudaMemset(m.d_csrRowPtr, ZERO, (m.h_rows + 1) * sizeof(int)));
@@ -168,12 +162,11 @@ public:
     cudaErrCheck(cudaFree(dBuffer));
     cudaErrCheck(cudaFree(d_rows));
     cudaErrCheck(cudaFree(d_columns));
-    cudaErrCheck(cudaFree(d_nnz));
     cudaErrCheck(cudaFree(d_csrColInd));
     cudaErrCheck(cudaFree(d_csrRowPtr));
     cudaErrCheck(cudaFree(d_csrVal));
   };
-  Vector_GPU operator*(Vector_GPU &v); // Multiplication
+  VectorCUDA operator*(VectorCUDA &v); // Multiplication
   MatrixCSR transpose();
   int getRows() { return h_rows; };
   int getColumns() { return h_columns; };

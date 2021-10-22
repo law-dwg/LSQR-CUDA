@@ -5,8 +5,8 @@
 // GPU
 #include "MatrixCSR.cuh"
 #include "MatrixCUSPARSE.cuh"
-#include "matVec_cublas.cuh"
-#include "matVec_gpu.cuh"
+#include "VectorCUBLAS.cuh"
+#include "VectorCUDA.cuh"
 #include "utils.cuh"
 // Libs
 #include <cassert>
@@ -40,9 +40,9 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0.5;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 1000; i <= 1000; i += 500) {
-      matrixBuilder(i, i, sp, "input/", "A");
-      matrixBuilder(i, 1, 0, "input/", "b");
+    for (int i = 100; i <= 1000; i += 177) {
+      matrixBuilder(i + 333, i, sp, "input/", "A");
+      matrixBuilder(i + 333, 1, 0, "input/", "b");
     }
   }
 
@@ -109,12 +109,12 @@ int main() {
       cublasStart();
       cusparseStart();
       // MatrixCUSPARSE A_g(A_rows, A_cols, A.data());
-      Vector_GPU b_g(b_rows, b_cols, b.data());
+      VectorCUDA b_g(b_rows, b_cols, b.data());
       cudaEvent_t start, stop;
       cudaErrCheck(cudaEventCreate(&start));
       cudaErrCheck(cudaEventCreate(&stop));
       cudaErrCheck(cudaEventRecord(start));
-      Vector_GPU x_g = lsqr<MatrixCSR, Vector_GPU>(A_vg, b_g);
+      VectorCUDA x_g = lsqr<MatrixCSR, VectorCUDA>(A_vg, b_g);
       cudaErrCheck(cudaDeviceSynchronize());
       cudaErrCheck(cudaEventRecord(stop));
       cudaErrCheck(cudaEventSynchronize(stop));
@@ -130,19 +130,19 @@ int main() {
     }
     cudaErrCheck(cudaDeviceReset());
 
-    if (false) {
+    if (true) {
       printf("---------------------------------------------\n");
       printf("Running lsqr-GPU-cublas implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
       cublasStart();
       cusparseStart();
       MatrixCUSPARSE A_g(A_rows, A_cols, A.data());
-      // Vector_CUBLAS A_g_cublas(A_rows, A_cols, A.data());
-      Vector_CUBLAS b_g_cublas(b_rows, b_cols, b.data());
+      // VectorCUBLAS A_g_cublas(A_rows, A_cols, A.data());
+      VectorCUBLAS b_g_cublas(b_rows, b_cols, b.data());
       cudaEvent_t start2, stop2;
       cudaErrCheck(cudaEventCreate(&start2));
       cudaErrCheck(cudaEventCreate(&stop2));
       cudaErrCheck(cudaEventRecord(start2));
-      Vector_CUBLAS x_g_cublas = lsqr<MatrixCUSPARSE, Vector_CUBLAS>(A_g, b_g_cublas);
+      VectorCUBLAS x_g_cublas = lsqr<MatrixCUSPARSE, VectorCUBLAS>(A_g, b_g_cublas);
       cudaErrCheck(cudaDeviceSynchronize());
       cudaErrCheck(cudaEventRecord(stop2));
       cudaErrCheck(cudaEventSynchronize(stop2));

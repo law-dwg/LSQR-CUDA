@@ -1,12 +1,5 @@
 #pragma once
-#include "../cpu/matVec_cpu.hpp"
-#include "matVec_cublas.cuh"
-#include "matVec_gpu.cuh"
-#include "utils.cuh"
-#include <algorithm>
-#include <stdlib.h> /* srand, rand */
-#include <time.h>   /* time */
-#include <vector>
+#include "VectorCUBLAS.cuh"
 
 class MatrixCUSPARSE {
 protected:
@@ -170,8 +163,9 @@ public:
     cudaErrCheck(cudaFree(d_csrVal));
     cudaErrCheck(cudaFree(dBuffer));
   };
-  Vector_GPU operator*(Vector_GPU &v); // Multiplication
-  Vector_CUBLAS operator*(Vector_CUBLAS &v);
+
+  VectorCUDA operator*(VectorCUDA &v); // Multiplication
+  VectorCUBLAS operator*(VectorCUBLAS &v);
   MatrixCUSPARSE transpose();
   int getRows() { return h_rows; };
   int getColumns() { return h_columns; };

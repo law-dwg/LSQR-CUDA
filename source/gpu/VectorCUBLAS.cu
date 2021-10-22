@@ -1,4 +1,4 @@
-#include "matVec_cublas.cuh"
+#include "VectorCUBLAS.cuh"
 #include <assert.h>
 // void __global__ print(double *input, unsigned *r, unsigned *c) {
 //  const unsigned int bid = blockIdx.x                               // 1D
@@ -19,10 +19,10 @@
 //  }
 //}
 /** Operator overloads */
-Vector_CUBLAS Vector_CUBLAS::operator*(Vector_CUBLAS &v) {
+VectorCUBLAS VectorCUBLAS::operator*(VectorCUBLAS &v) {
 
   // a(m x k) * b(k * n) = c(m * n)
-  Vector_CUBLAS out(this->getRows(), v.getColumns());
+  VectorCUBLAS out(this->getRows(), v.getColumns());
   if (this->getColumns() == v.getRows()) {
     if (v.h_columns == 1) {
       cublasDgemv(handle, CUBLAS_OP_T, this->h_columns, this->h_rows, &ONE, this->d_mat, this->h_columns, v.d_mat, 1, &ZERO, out.d_mat, 1);
@@ -36,17 +36,17 @@ Vector_CUBLAS Vector_CUBLAS::operator*(Vector_CUBLAS &v) {
   return out;
 };
 
-Vector_CUBLAS Vector_CUBLAS::operator*(double i) {
-  Vector_CUBLAS out(this->h_rows, this->h_columns);
+VectorCUBLAS VectorCUBLAS::operator*(double i) {
+  VectorCUBLAS out(this->h_rows, this->h_columns);
   cublasErrCheck(cublasDcopy(handle, this->h_rows * this->h_columns, this->d_mat, 1, out.d_mat, 1));
   cublasErrCheck(cublasDscal(handle, this->h_rows * this->h_columns, &i, out.d_mat, 1));
   return out;
 };
 
-void Vector_CUBLAS::operator=(Vector_CPU &v){};
+void VectorCUBLAS::operator=(Vector_CPU &v){};
 
-Vector_CUBLAS Vector_CUBLAS::operator-(const Vector_CUBLAS &v) {
-  Vector_CUBLAS out(this->h_rows, this->h_columns);
+VectorCUBLAS VectorCUBLAS::operator-(const VectorCUBLAS &v) {
+  VectorCUBLAS out(this->h_rows, this->h_columns);
   if (this->h_rows * this->h_columns == v.h_rows * v.h_columns) {
     int m = out.h_rows;
     int n = out.h_columns;
@@ -60,8 +60,8 @@ Vector_CUBLAS Vector_CUBLAS::operator-(const Vector_CUBLAS &v) {
   return out;
 };
 
-Vector_CUBLAS Vector_CUBLAS::operator+(const Vector_CUBLAS &v) {
-  Vector_CUBLAS out(this->h_rows, this->h_columns);
+VectorCUBLAS VectorCUBLAS::operator+(const VectorCUBLAS &v) {
+  VectorCUBLAS out(this->h_rows, this->h_columns);
   // printf("h_rows = %d, h_cols = %d, v.h_rows = %d, v.h_cols = %d\n",this->h_rows,this->h_columns,v.h_rows,v.h_columns);
   if (this->h_rows * this->h_columns == v.h_rows * v.h_columns) {
     int m = out.h_rows;
@@ -77,7 +77,7 @@ Vector_CUBLAS Vector_CUBLAS::operator+(const Vector_CUBLAS &v) {
 };
 
 /** Member functions */
-Vector_CPU Vector_CUBLAS::matDeviceToHost() {
+Vector_CPU VectorCUBLAS::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
   unsigned int rows;
   unsigned int cols;
@@ -92,7 +92,7 @@ Vector_CPU Vector_CUBLAS::matDeviceToHost() {
   return v_cpu;
 };
 
-double Vector_CUBLAS::Dnrm2() {
+double VectorCUBLAS::Dnrm2() {
   double h_out;
   int *version;
   double *d_out;
@@ -105,7 +105,7 @@ double Vector_CUBLAS::Dnrm2() {
   return h_out;
 };
 
-void Vector_CUBLAS::printmat() {
+void VectorCUBLAS::printmat() {
   unsigned int blocksX = (this->h_rows / 16) + 1;
   unsigned int blocksY = (this->h_columns / 16) + 1;
   dim3 grid(blocksX, blocksY, 1);
@@ -116,8 +116,8 @@ void Vector_CUBLAS::printmat() {
   cudaDeviceSynchronize();
 }
 
-Vector_CUBLAS Vector_CUBLAS::transpose() {
-  Vector_CUBLAS out(this->h_columns, this->h_rows);
+VectorCUBLAS VectorCUBLAS::transpose() {
+  VectorCUBLAS out(this->h_columns, this->h_rows);
   cublasErrCheck(cublasDgeam(handle, CUBLAS_OP_T, CUBLAS_OP_T, this->h_rows, this->h_columns, &ONE, this->d_mat, this->h_columns, &ZERO, this->d_mat,
                              this->h_columns, out.d_mat, this->h_rows));
   return out;

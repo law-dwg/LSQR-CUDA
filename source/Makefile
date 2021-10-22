@@ -10,8 +10,8 @@ NVCC_OPT_FLAGS = -Xptxas -O3 -use_fast_math
 NVCC_BE_QUIET = -Wno-deprecated-gpu-targets
 NVCC_DEBUG_FLAGS = -G
 SOURCES_CU =	$(SRC_GPU)/lsqr.cu \
-				$(SRC_GPU)/matVec_gpu.cu \
-				$(SRC_GPU)/matVec_cublas.cu \
+				$(SRC_GPU)/VectorCUDA.cu \
+				$(SRC_GPU)/VectorCUBLAS.cu \
 				$(SRC_GPU)/MatrixCUSPARSE.cu \
 				$(SRC_GPU)/MatrixCSR.cu \
 				$(SRC_GPU)/utils.cu

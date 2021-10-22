@@ -15,8 +15,8 @@ __global__ void spmvNaive(unsigned *rows, unsigned *col, int *rowPtr, int *colId
   }
 }
 
-Vector_GPU MatrixCSR::operator*(Vector_GPU &v) { // Multiplication
-  Vector_GPU out(this->h_rows, 1);
+VectorCUDA MatrixCSR::operator*(VectorCUDA &v) { // Multiplication
+  VectorCUDA out(this->h_rows, 1);
   unsigned int blocksX = ((this->h_rows * this->h_columns) / (TILE_DIM_X * TILE_DIM_X)) + 1;
   dim3 grid(blocksX, 1, 1);
   dim3 block(TILE_DIM_X * TILE_DIM_X, 1, 1);

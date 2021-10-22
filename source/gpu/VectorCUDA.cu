@@ -1,4 +1,4 @@
-#include "matVec_gpu.cuh"
+#include "VectorCUDA.cuh"
 
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
 #else
@@ -393,9 +393,9 @@ void __global__ multiplyTiled(double *in1, unsigned int *rows1, unsigned int *co
 
 /** Operator overloads */
 
-Vector_GPU Vector_GPU::operator*(double h_i) {
+VectorCUDA VectorCUDA::operator*(double h_i) {
   // printf("scale %f\n", h_i);
-  Vector_GPU out(this->h_rows, this->h_columns);
+  VectorCUDA out(this->h_rows, this->h_columns);
   unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
   unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
   dim3 grid(blocksX, blocksY, 1);
@@ -410,27 +410,30 @@ Vector_GPU Vector_GPU::operator*(double h_i) {
   return out;
 }
 
-Vector_GPU Vector_GPU::operator*(Vector_GPU &v) {
-  // printf("MATMULT\n");
-  Vector_GPU out(this->h_rows, v.h_columns);
-  dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
-  unsigned int blocksY = (out.h_rows / TILE_DIM_X) + 1;
-  unsigned int blocksX = (out.h_columns / TILE_DIM_Y) + 1;
-  dim3 numOfBlocksInGrid(blocksX, blocksY, 1);
-  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
-  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
-  multiplyTiled<<<numOfBlocksInGrid, numOfThreadsInBlock>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
-  // cudaDeviceSynchronize();
-  // dim3 grid(1, 1, 1);
-  // dim3 block(out.h_rows, out.h_columns, 1);
-  // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
-  //                                v.d_columns, out.d_mat);
+VectorCUDA VectorCUDA::operator*(VectorCUDA &v) {
+  VectorCUDA out(this->h_rows, v.h_columns);
+  bool tiled = false;
+  dim3 threads(TILE_DIM_X, TILE_DIM_Y, 1);
+  unsigned int blocksY = (out.h_rows / threads.x) + 1;
+  unsigned int blocksX = (out.h_columns / threads.y) + 1;
+  dim3 blocks(blocksX, blocksY, 1);
+
+  if (h_columns == v.h_rows) {
+    if (tiled) {
+      multiplyTiled<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+    } else {
+      multiplyNaive<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+    }
+  } else {
+    printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
+  }
+
   return out;
 }
 
-Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
+VectorCUDA VectorCUDA::operator-(const VectorCUDA &v) {
   // printf("SUBTRACT CALLED\n");
-  Vector_GPU out(this->h_rows, this->h_columns);
+  VectorCUDA out(this->h_rows, this->h_columns);
   unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
   unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
   dim3 grid(blocksX, blocksY, 1);
@@ -445,7 +448,7 @@ Vector_GPU Vector_GPU::operator-(const Vector_GPU &v) {
   return out;
 }
 
-void Vector_GPU::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> this Vector_GPU
+void VectorCUDA::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> this VectorCUDA
   printf("ASSIGNMENT #2 called\n");
   cudaErrCheck(cudaFree(d_mat));
   h_rows = v.getRows();
@@ -456,8 +459,8 @@ void Vector_GPU::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> thi
   cudaErrCheck(cudaMemcpy(d_mat, &v.mat[0], sizeof(double) * h_rows * h_columns, cudaMemcpyHostToDevice));
 }
 
-Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
-  Vector_GPU out(this->h_rows, this->h_columns);
+VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
+  VectorCUDA out(this->h_rows, this->h_columns);
   unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
   unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
   dim3 grid(blocksX, blocksY, 1);
@@ -473,7 +476,7 @@ Vector_GPU Vector_GPU::operator+(const Vector_GPU &v) {
 }
 
 /** Member Functions */
-void Vector_GPU::printmat() {
+void VectorCUDA::printmat() {
   unsigned int blocksX = (this->h_rows / TILE_DIM_X) + 1;
   unsigned int blocksY = (this->h_columns / TILE_DIM_Y) + 1;
   dim3 grid(blocksX, blocksY, 1);
@@ -484,7 +487,7 @@ void Vector_GPU::printmat() {
   cudaErrCheck(cudaDeviceSynchronize());
 }
 
-Vector_CPU Vector_GPU::matDeviceToHost() {
+Vector_CPU VectorCUDA::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
   unsigned int rows;
   unsigned int cols;
@@ -501,8 +504,8 @@ Vector_CPU Vector_GPU::matDeviceToHost() {
   return v_cpu;
 }
 
-Vector_GPU Vector_GPU::transpose() {
-  Vector_GPU out(this->h_columns, this->h_rows);
+VectorCUDA VectorCUDA::transpose() {
+  VectorCUDA out(this->h_columns, this->h_rows);
 
   dim3 numOfThreadsInBlock(TILE_DIM_X, TILE_DIM_Y, 1);
   unsigned int blocksX = (out.h_rows / TILE_DIM_X) + 1;
@@ -515,7 +518,7 @@ Vector_GPU Vector_GPU::transpose() {
   return out;
 };
 
-double Vector_GPU::Dnrm2() {
+double VectorCUDA::Dnrm2() {
   dim3 threads(TILE_DIM_X, 1);
   int blockX = ((this->h_rows * this->h_columns + TILE_DIM_X - 1) / TILE_DIM_X);
   dim3 blocks(blockX, 1);
@@ -544,31 +547,31 @@ double Vector_GPU::Dnrm2() {
   return (std::abs(h_max) * sqrt(h_out));
 };
 
-Vector_GPU Vector_GPU::multNai(Vector_GPU &v) {
-  // printf("MATMULT\n");
-  Vector_GPU out(this->h_rows, v.h_columns);
-  dim3 threads(TILE_DIM_X, TILE_DIM_Y, 1);
-  unsigned int blocksX = (out.h_columns - 1) / threads.x + 1;
-  unsigned int blocksY = (out.h_rows - 1) / threads.y + 1;
-  dim3 blocks(blocksX, blocksY, 1);
-  // if (out.h_columns % TILE_DIM_X > 0 || blocksX == 0) {
-  //   blocksX += 2;
-  // };
-  // if (out.h_rows % TILE_DIM_Y > 0 || blocksY == 0) {
-  //   blocksY += 2;
-  // };
-
-  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
-  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
-  if (h_columns == v.h_rows) {
-    multiplyNaive<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
-  } else {
-    printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
-  }
-  // cudaDeviceSynchronize();
-  // dim3 grid(1, 1, 1);
-  // dim3 block(out.h_rows, out.h_columns, 1);
-  // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
-  //                                v.d_columns, out.d_mat);
-  return out;
-};
+// VectorCUDA VectorCUDA::multNai(VectorCUDA &v) {
+//  // printf("MATMULT\n");
+//  VectorCUDA out(this->h_rows, v.h_columns);
+//  dim3 threads(TILE_DIM_X, TILE_DIM_Y, 1);
+//  unsigned int blocksX = (out.h_columns - 1) / threads.x + 1;
+//  unsigned int blocksY = (out.h_rows - 1) / threads.y + 1;
+//  dim3 blocks(blocksX, blocksY, 1);
+//  // if (out.h_columns % TILE_DIM_X > 0 || blocksX == 0) {
+//  //   blocksX += 2;
+//  // };
+//  // if (out.h_rows % TILE_DIM_Y > 0 || blocksY == 0) {
+//  //   blocksY += 2;
+//  // };
+//
+//  // printf("threadsinblock(%d x %d)=%d, blocksingrid(%d, %d)=%d\n", numOfThreadsInBlock.x, numOfThreadsInBlock.y,
+//  //       numOfThreadsInBlock.x * numOfThreadsInBlock.y, numOfBlocksInGrid.x, numOfBlocksInGrid.y, numOfBlocksInGrid.x * numOfBlocksInGrid.y);
+//  if (h_columns == v.h_rows) {
+//    multiplyNaive<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+//  } else {
+//    printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
+//  }
+//  // cudaDeviceSynchronize();
+//  // dim3 grid(1, 1, 1);
+//  // dim3 block(out.h_rows, out.h_columns, 1);
+//  // multiplyNaive<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows,
+//  //                                v.d_columns, out.d_mat);
+//  return out;
+//};

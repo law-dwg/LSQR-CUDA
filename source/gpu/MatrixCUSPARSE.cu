@@ -1,31 +1,33 @@
 #include "MatrixCUSPARSE.cuh"
 #include <assert.h>
-Vector_GPU MatrixCUSPARSE::operator*(Vector_GPU &v) {
-  Vector_GPU out(this->h_rows, 1);
-  cusparseDnVecDescr_t rhs_desc, out_desc;
-  cusparseErrCheck(cusparseCreateDnVec(&rhs_desc, out.getRows(), v.d_mat, CUDA_R_64F));
-  cusparseErrCheck(cusparseCreateDnVec(&out_desc, out.getRows(), out.d_mat, CUDA_R_64F));
-  cusparseErrCheck(cusparseSpMV_bufferSize(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, this->spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
-                                           CUSPARSE_MV_ALG_DEFAULT, &bufferSize));
-  // cudaErrCheck(cudaMalloc(&dBuffer, this->bufferSize));
-  cusparseErrCheck(cusparseSpMV(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, this->spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
-                                CUSPARSE_MV_ALG_DEFAULT, dBuffer));
 
+template <typename T> void SpMV(MatrixCUSPARSE &M, T &v, T &out) {
+  if (M.getColumns() == v.getRows()) {
+    cusparseDnVecDescr_t rhs_desc, out_desc;
+    cusparseErrCheck(cusparseCreateDnVec(&rhs_desc, v.getRows(), v.d_mat, CUDA_R_64F));
+    cusparseErrCheck(cusparseCreateDnVec(&out_desc, out.getRows(), out.d_mat, CUDA_R_64F));
+    cusparseErrCheck(cusparseSpMV_bufferSize(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, M.spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
+                                             CUSPARSE_MV_ALG_DEFAULT, &M.bufferSize));
+    // cudaErrCheck(cudaMalloc(&dBuffer, this->bufferSize));
+    cusparseErrCheck(cusparseSpMV(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, M.spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
+                                  CUSPARSE_MV_ALG_DEFAULT, M.dBuffer));
+  } else {
+    printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
+  }
+};
+
+VectorCUDA MatrixCUSPARSE::operator*(VectorCUDA &v) {
+  VectorCUDA out(this->h_rows, 1);
+  SpMV(*this, v, out);
   return out;
 };
-Vector_CUBLAS MatrixCUSPARSE::operator*(Vector_CUBLAS &v) {
-  Vector_CUBLAS out(this->h_rows, 1);
-  cusparseDnVecDescr_t rhs_desc, out_desc;
-  cusparseErrCheck(cusparseCreateDnVec(&rhs_desc, v.getRows(), v.d_mat, CUDA_R_64F));
-  cusparseErrCheck(cusparseCreateDnVec(&out_desc, out.getRows(), out.d_mat, CUDA_R_64F));
-  cusparseErrCheck(cusparseSpMV_bufferSize(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, this->spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
-                                           CUSPARSE_MV_ALG_DEFAULT, &bufferSize));
-  // cudaErrCheck(cudaMalloc(&dBuffer, this->bufferSize));
-  cusparseErrCheck(cusparseSpMV(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, this->spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
-                                CUSPARSE_MV_ALG_DEFAULT, dBuffer));
 
+VectorCUBLAS MatrixCUSPARSE::operator*(VectorCUBLAS &v) {
+  VectorCUBLAS out(this->h_rows, 1);
+  SpMV(*this, v, out);
   return out;
 };
+
 MatrixCUSPARSE MatrixCUSPARSE::transpose() {
   MatrixCUSPARSE out(this->h_columns, this->h_rows, this->h_nnz);
   cudaErrCheck(cudaMemset(out.d_csrColInd, ZERO, out.h_nnz * sizeof(int)));
