@@ -7,21 +7,21 @@
 class Vector_CPU {
 public:
   // attributes
-  unsigned int rows;
-  unsigned int columns;
+  unsigned rows;
+  unsigned columns;
   std::vector<double> mat;
 
   // constructors and destructor
   Vector_CPU(){};
-  Vector_CPU(unsigned int p) : columns(1), rows(p) {
+  Vector_CPU(unsigned p) : columns(1), rows(p) {
     printf("CONSTRUCTOR 1 CALLED\n");
     this->mat.resize(p, 0.0);
   };
-  Vector_CPU(unsigned int r, unsigned int c) : rows(r), columns(c) {
+  Vector_CPU(unsigned r, unsigned c) : rows(r), columns(c) {
     // printf("CONSTRUCTOR 2 \n");
     this->mat.resize(r * c, 0);
   };
-  Vector_CPU(unsigned int r, unsigned int c, double *v) : rows(r), columns(c) {
+  Vector_CPU(unsigned r, unsigned c, double *v) : rows(r), columns(c) {
     // printf("CONSTRUCTOR 3 CALLED\n");
     mat.resize(r * c);
     mat.assign(v, v + r * c);
@@ -34,9 +34,9 @@ public:
   Vector_CPU operator*(double i);
   Vector_CPU operator-(Vector_CPU v);
   Vector_CPU operator+(Vector_CPU v);
-  double operator()(unsigned int i);
-  double operator()(unsigned int r, unsigned int c);
-  double operator[](unsigned int i);
+  double operator()(unsigned i);
+  double operator()(unsigned r, unsigned c);
+  double operator[](unsigned i);
 
   // member functions
   double *getMat() { return this->mat.data(); };
@@ -52,5 +52,5 @@ public:
 class Matrix_CPU : public Vector_CPU {
 public:
   double sparsity = .70; // the number of 0-elements/non-0-elements
-  Matrix_CPU(unsigned int r, unsigned int c);
+  Matrix_CPU(unsigned r, unsigned c);
 };

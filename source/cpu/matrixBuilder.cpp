@@ -104,7 +104,7 @@ double rands() {
   return dist25(rng);
 }
 
-void matrixBuilder(unsigned int r, unsigned int c, double sparsity, const char *dir, const char *matLetter) {
+void matrixBuilder(unsigned r, unsigned c, double sparsity, const char *dir, const char *matLetter) {
   // typedef std::mt19937 MyRNG; // the Mersenne Twister with a popular choice of parameters
   // uint32_t seed_val;          // populate somehow
   //

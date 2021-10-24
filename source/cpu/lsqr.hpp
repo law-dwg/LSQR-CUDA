@@ -51,11 +51,11 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   double epsilon = 1e-16;
 
   /** Stopping Criteria */
-  unsigned int istop = zero;
+  unsigned istop = zero;
   double test1 = zero;
   double test2 = zero;
   double test3 = zero;
-  unsigned int itn = 0; // Iteration
+  unsigned itn = 0; // Iteration
   int itnlim = 2 * A.getColumns();
 
   /** Residuals */

@@ -8,7 +8,7 @@
 #include <time.h>
 
 // constructors
-Matrix_CPU::Matrix_CPU(unsigned int r, unsigned int c) {
+Matrix_CPU::Matrix_CPU(unsigned r, unsigned c) {
   this->rows = r;
   this->columns = c;
   this->mat.resize(this->rows * this->columns);
@@ -89,9 +89,9 @@ Vector_CPU Vector_CPU::operator+(Vector_CPU v) {
   };
 };
 
-double Vector_CPU::operator()(unsigned int i) { return (Vector_CPU::operator[](i)); };
+double Vector_CPU::operator()(unsigned i) { return (Vector_CPU::operator[](i)); };
 
-double Vector_CPU::operator()(unsigned int r, unsigned int c) {
+double Vector_CPU::operator()(unsigned r, unsigned c) {
   if (r < this->rows && c < this->columns) {
     return (mat[r * this->columns + c]);
   } else {
@@ -101,7 +101,7 @@ double Vector_CPU::operator()(unsigned int r, unsigned int c) {
   }
 };
 
-double Vector_CPU::operator[](unsigned int i) { return (this->mat[i]); };
+double Vector_CPU::operator[](unsigned i) { return (this->mat[i]); };
 
 // member functions
 void Vector_CPU::print() {

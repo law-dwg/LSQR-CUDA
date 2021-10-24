@@ -13,7 +13,7 @@ void readArrayFromFile(const char *path, unsigned r, unsigned c, std::vector<dou
 
 double rands();
 
-void matrixBuilder(unsigned int r, unsigned int c, double sparsity, const char *dir, const char *matLetter);
+void matrixBuilder(unsigned r, unsigned c, double sparsity, const char *dir, const char *matLetter);
 
 void loading();
 

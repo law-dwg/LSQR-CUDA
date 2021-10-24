@@ -1,15 +1,15 @@
 #include "VectorCUBLAS.cuh"
 #include <assert.h>
 // void __global__ print(double *input, unsigned *r, unsigned *c) {
-//  const unsigned int bid = blockIdx.x                               // 1D
+//  const unsigned bid = blockIdx.x                               // 1D
 //                           + blockIdx.y * gridDim.x                 // 2D
 //                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-//  const unsigned int threadsPerBlock = blockDim.x * blockDim.y      // 2D
+//  const unsigned threadsPerBlock = blockDim.x * blockDim.y      // 2D
 //                                       * blockDim.z;                // 3D
-//  const unsigned int tid = threadIdx.x                              // 1D
+//  const unsigned tid = threadIdx.x                              // 1D
 //                           + threadIdx.y * blockDim.x               // 2D
 //                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
-//  const unsigned int gid = bid * threadsPerBlock + tid;
+//  const unsigned gid = bid * threadsPerBlock + tid;
 //  // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d,
 //  // value=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
 //  //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,input[gid]);
@@ -79,11 +79,11 @@ VectorCUBLAS VectorCUBLAS::operator+(const VectorCUBLAS &v) {
 /** Member functions */
 Vector_CPU VectorCUBLAS::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
-  unsigned int rows;
-  unsigned int cols;
+  unsigned rows;
+  unsigned cols;
   cudaErrCheck(cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost));
-  cudaErrCheck(cudaMemcpy(&rows, this->d_rows, sizeof(unsigned int), cudaMemcpyDeviceToHost));
-  cudaErrCheck(cudaMemcpy(&cols, this->d_columns, sizeof(unsigned int), cudaMemcpyDeviceToHost));
+  cudaErrCheck(cudaMemcpy(&rows, this->d_rows, sizeof(unsigned), cudaMemcpyDeviceToHost));
+  cudaErrCheck(cudaMemcpy(&cols, this->d_columns, sizeof(unsigned), cudaMemcpyDeviceToHost));
   // printf("d_rows = %d, h_rows = %d, d_cols = %d, h_cols = %d\n", rows, h_rows, cols, h_columns);
   if (rows != this->h_rows || cols != this->h_columns) {
     printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
@@ -106,8 +106,8 @@ double VectorCUBLAS::Dnrm2() {
 };
 
 void VectorCUBLAS::printmat() {
-  unsigned int blocksX = (this->h_rows / 16) + 1;
-  unsigned int blocksY = (this->h_columns / 16) + 1;
+  unsigned blocksX = (this->h_rows / 16) + 1;
+  unsigned blocksY = (this->h_columns / 16) + 1;
   dim3 grid(blocksX, blocksY, 1);
   dim3 block(16, 16, 1);
 

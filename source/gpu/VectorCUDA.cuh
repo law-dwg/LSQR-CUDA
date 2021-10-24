@@ -10,28 +10,28 @@ class VectorGPU {
 protected:
 public:
   /** Attributes */
-  unsigned int h_rows, h_columns, *d_rows, *d_columns;
+  unsigned h_rows, h_columns, *d_rows, *d_columns;
   double *d_mat;
   /** Constructors/Destructors and rule of 5 */
   VectorGPU() : h_rows(0), h_columns(0) { // Default Constructor
-    cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned int)));
-    cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned int)));
+    cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
+    cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double)));
-    cudaErrCheck(cudaMemcpy(d_rows, &ZERO, sizeof(unsigned int), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(d_columns, &ZERO, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_rows, &ZERO, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, &ZERO, sizeof(unsigned), cudaMemcpyHostToDevice));
   };
-  VectorGPU(unsigned int r, unsigned int c) : h_rows(r), h_columns(c) { // Constructor #1
+  VectorGPU(unsigned r, unsigned c) : h_rows(r), h_columns(c) { // Constructor #1
     // printf("VectorGPU Constructor #1 was called\n");
     // allocate to device
-    cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned int)));
-    cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned int)));
+    cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
+    cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * r * c));
     // copy to device
-    cudaErrCheck(cudaMemcpy(d_rows, &r, sizeof(unsigned int), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(d_columns, &c, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_rows, &r, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, &c, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemset(d_mat, ZERO, r * c * sizeof(double)));
   };
-  VectorGPU(unsigned int r, unsigned int c, double *m) : VectorGPU(r, c) { // Constructor #2
+  VectorGPU(unsigned r, unsigned c, double *m) : VectorGPU(r, c) { // Constructor #2
     // printf("VectorGPU Constructor #2 was called\n");
     cudaErrCheck(cudaMemcpy(d_mat, m, sizeof(double) * r * c, cudaMemcpyHostToDevice));
   };
@@ -52,26 +52,26 @@ public:
     this->h_rows = v.h_rows;
     this->h_columns = v.h_columns;
     cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns));
-    cudaErrCheck(cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice));
     return *this;
   };
   VectorGPU(VectorGPU &&v) noexcept : h_rows(v.h_rows), h_columns(v.h_columns) { // Move constructor
     printf("Vector_CPU Move Constructor was called\n");
-    cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned int)));
-    cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned int)));
+    cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
+    cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns));
-    cudaErrCheck(cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaFree(v.d_mat)); // free old memory
     v.h_rows = 0;
     v.h_columns = 0;
     double temp[0]; // set old to 0, it will be freed in destructor
     cudaErrCheck(cudaMalloc((void **)&v.d_mat, sizeof(double)));
-    cudaErrCheck(cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice));
   };
   VectorGPU &operator=(VectorGPU &&v) noexcept { // Move assignment operator
@@ -84,8 +84,8 @@ public:
     h_rows = v.h_rows;
     h_columns = v.h_columns;
     // Device
-    cudaErrCheck(cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_rows, v.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, v.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice));
     // HANDLED BY DESTRUCTOR
     // cudaErrCheck(cudaFree(v.d_mat)); // free old memory
@@ -93,8 +93,8 @@ public:
     // v.h_columns = 0;
     // double temp[0]; // set old to 0, it will be freed in destructor
     // cudaErrCheck(cudaMalloc((void **)&v.d_mat, sizeof(double)));
-    // cudaErrCheck(cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned int), cudaMemcpyHostToDevice));
-    // cudaErrCheck(cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned int), cudaMemcpyHostToDevice));
+    // cudaErrCheck(cudaMemcpy(v.d_rows, &v.h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+    // cudaErrCheck(cudaMemcpy(v.d_columns, &v.h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
     // cudaErrCheck(cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice));
     return *this;
   }
@@ -134,3 +134,7 @@ public:
   Vector_CPU matDeviceToHost(); // CopyToHost
   double Dnrm2();               // EuclideanNorm
 };
+
+void __global__ print(double *input, unsigned *r, unsigned *c);
+void __global__ maxVal(double *in1, unsigned *r, unsigned *c, double *out);
+void __global__ dnrm2(double *in1, unsigned *r, unsigned *c, double *max, double *out);

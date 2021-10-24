@@ -44,6 +44,7 @@ MatrixCUSPARSE MatrixCUSPARSE::transpose() {
                                      CUSPARSE_INDEX_32I, CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F));
   return out;
 };
+
 double MatrixCUSPARSE::Dnrm2() {
   double h_out;
   int incre = 1;
