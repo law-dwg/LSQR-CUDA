@@ -46,26 +46,19 @@ double MatrixCUDA::Dnrm2() {
   int blockX = ((this->h_nnz + TILE_DIM_X - 1) / TILE_DIM_X);
   dim3 blocks(blockX, 1);
   double *d_out, *d_max;
-  unsigned *d_ONE;
   double zero = 0.0;
-  unsigned one = 1;
   double h_max;
   double h_out;
   cudaErrCheck(cudaMalloc(&d_out, sizeof(double)));
   cudaErrCheck(cudaMalloc(&d_max, sizeof(double)));
-  cudaErrCheck(cudaMalloc(&d_ONE, sizeof(unsigned)));
+
   cudaErrCheck(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
   cudaErrCheck(cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice));
-  cudaErrCheck(cudaMemcpy(d_ONE, &one, sizeof(unsigned), cudaMemcpyHostToDevice));
-
-  // printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
-  // unsigned s_mem = sizeof(double) * TILE_DIM_X;
-  printf("h_nnz=%d\n", this->h_nnz);
-  maxVal<<<blocks, threads, 16 * sizeof(double)>>>(this->d_csrVal, this->d_nnz, d_ONE, d_max);
+  maxVal<<<blocks, threads, 16 * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max);
   // cudaErrCheck(cudaPeekAtLastError());
   cudaErrCheck(cudaDeviceSynchronize());
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
-  dnrm2<<<blocks, threads, 16 * sizeof(double)>>>(this->d_csrVal, this->d_nnz, d_ONE, d_max, d_out);
+  dnrm2<<<blocks, threads, 16 * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max, d_out);
   cudaErrCheck(cudaDeviceSynchronize());
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));

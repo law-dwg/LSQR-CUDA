@@ -213,7 +213,7 @@ void __global__ dnrm2Coop(double *in1, unsigned *r, unsigned *c, double *out) {
   }
 }
 
-void __global__ dnrm2(double *in1, unsigned *r, unsigned *c, double *max, double *out) {
+void __global__ dnrm2(double *in1, unsigned r, unsigned c, double *max, double *out) {
   extern __shared__ double sum[];
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
@@ -221,11 +221,11 @@ void __global__ dnrm2(double *in1, unsigned *r, unsigned *c, double *max, double
   // load into shared
   // sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
 
-  if (x < (*r * *c) && x2 < (*r * *c)) {
+  if (x < (r * c) && x2 < (r * c)) {
     sum[threadIdx.x] = in1[x] / *max * in1[x] / *max + in1[x2] / *max * in1[x2] / *max;
     // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] + in2[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x,
     // x, x2, sum[threadIdx.x]);
-  } else if ((x < (*r * *c)) && ((*r * *c) <= x2)) {
+  } else if ((x < (r * c)) && ((r * c) <= x2)) {
     sum[threadIdx.x] = in1[x] / *max * in1[x] / *max;
     // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x,
     // sum[threadIdx.x]);
@@ -259,7 +259,7 @@ void __global__ dnrm2(double *in1, unsigned *r, unsigned *c, double *max, double
   }
 }
 
-void __global__ maxVal(double *in1, unsigned *r, unsigned *c, double *out) {
+void __global__ maxVal(double *in1, unsigned r, unsigned c, double *out) {
   extern __shared__ double maxV[];
   int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
@@ -267,11 +267,11 @@ void __global__ maxVal(double *in1, unsigned *r, unsigned *c, double *out) {
   // load into shared
   // sum[threadIdx.x] = in1[x] * in1[x] + in1[x2] * in1[x2];
 
-  if (x < (*r * *c) && x2 < (*r * *c)) {
+  if (x < (r * c) && x2 < (r * c)) {
     maxV[threadIdx.x] = fmax(in1[x], in1[x2]);
     // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] + in2[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x,
     // x, x2, sum[threadIdx.x]);
-  } else if ((x < (*r * *c)) && ((*r * *c) <= x2)) {
+  } else if ((x < (r * c)) && ((r * c) <= x2)) {
     maxV[threadIdx.x] = in1[x];
     // printf("INIT: block(%d, %d) thread(%d, %d) sum[%d] =  in1[%d] = %f\n", blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, threadIdx.x, x,
     // sum[threadIdx.x]);
@@ -528,11 +528,11 @@ double VectorCUDA::Dnrm2() {
   // printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
 
-  maxVal<<<blocks, threads, 16 * sizeof(double)>>>(this->d_mat, this->d_rows, this->d_columns, d_max);
+  maxVal<<<blocks, threads, 16 * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max);
   // cudaErrCheck(cudaPeekAtLastError());
   cudaErrCheck(cudaDeviceSynchronize());
   // unsigned s_mem = sizeof(double) * TILE_DIM_X;
-  dnrm2<<<blocks, threads, 16 * sizeof(double)>>>(this->d_mat, this->d_rows, this->d_columns, d_max, d_out);
+  dnrm2<<<blocks, threads, 16 * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max, d_out);
   cudaErrCheck(cudaDeviceSynchronize());
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
