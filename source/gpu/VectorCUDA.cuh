@@ -1,6 +1,7 @@
 #pragma once
 #include "../cpu/matVec_cpu.hpp"
 #include "utils.cuh"
+#include "Kernels.cuh"
 #include <algorithm>
 #include <stdlib.h> /* srand, rand */
 #include <time.h>   /* time */
@@ -134,7 +135,3 @@ public:
   Vector_CPU matDeviceToHost(); // CopyToHost
   double Dnrm2();               // EuclideanNorm
 };
-
-void __global__ print(double *input, unsigned *r, unsigned *c);
-void __global__ maxVal(double *in1, unsigned r, unsigned c, double *out);
-void __global__ dnrm2(double *in1, unsigned r, unsigned c, double *max, double *out);

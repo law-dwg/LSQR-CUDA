@@ -1,5 +1,5 @@
 #include "MatrixCUDA.cuh"
-#include "VectorCUDA.cuh"
+#include "Kernels.cuh"
 #include <assert.h>
 #include <vector>
 #define TILE_DIM_X 16

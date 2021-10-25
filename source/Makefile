@@ -14,6 +14,7 @@ SOURCES_CU =	$(SRC_GPU)/lsqr.cu \
 				$(SRC_GPU)/VectorCUBLAS.cu \
 				$(SRC_GPU)/MatrixCUSPARSE.cu \
 				$(SRC_GPU)/MatrixCUDA.cu \
+				$(SRC_GPU)/Kernels.cu \
 				$(SRC_GPU)/utils.cu
 
 OBJS_CU := $(SOURCES_CU:%=$(BUILD_DIR)/%.o)

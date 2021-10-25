@@ -1,5 +1,6 @@
 #pragma once
 #include "../cpu/matVec_cpu.hpp"
+#include "Kernels.cuh"
 #include "VectorCUDA.cuh"
 #include <algorithm>
 #include <stdio.h>  //NULL, printf
