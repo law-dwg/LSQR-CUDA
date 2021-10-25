@@ -16,7 +16,7 @@ VectorCUDA VectorCUDA::operator*(double h_i) {
 
   scale<<<grid, block>>>(this->d_mat, h_i, out.d_mat, this->d_rows, this->d_columns, false);
   // cudaDeviceSynchronize();
-  printf("SCALE CALLED\n");
+  // printf("SCALE CALLED\n");
   return out;
 }
 
@@ -36,7 +36,8 @@ VectorCUDA VectorCUDA::operator*(VectorCUDA &v) {
       multiplyNaive<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
     }
   } else {
-    printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
+    printf("Cannot perform multiplication, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
   }
 
   return out;
@@ -52,7 +53,8 @@ VectorCUDA VectorCUDA::operator-(const VectorCUDA &v) {
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat, false);
   } else {
-    printf("SUBTRACT: ARRAYS ARE NOT THE SAME SIZE, canot perform operation %d!=%d\n", this->h_rows, v.h_rows);
+    printf("Cannot perform subtraction, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
   }
   return out;
 }
@@ -77,7 +79,8 @@ VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat, true);
   } else {
-    printf("ADDITION: ARRAYS ARE NOT THE SAME SIZE, canot perform operation %d!=%d\n", this->h_rows, v.h_rows);
+    printf("Cannot perform addition, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
   }
   return out;
 }
@@ -103,6 +106,7 @@ Vector_CPU VectorCUDA::matDeviceToHost() {
   // std::cout << "d_columns=" << cols << "=h_columns=" << this->h_columns << std::endl;
   if (rows != this->h_rows || cols != this->h_columns) {
     printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
+    exit(1);
   }
   Vector_CPU v_cpu(this->h_rows, this->h_columns, out);
   return v_cpu;
@@ -128,21 +132,15 @@ double VectorCUDA::Dnrm2() {
   int blockX = ((this->h_rows * this->h_columns + (threads.x) - 1) / (threads.x));
   dim3 blocks(blockX, 1);
   double *d_out, *d_max;
-  double zero = 0.0;
   double h_max;
   double h_out;
   cudaErrCheck(cudaMalloc(&d_out, sizeof(double)));
   cudaErrCheck(cudaMalloc(&d_max, sizeof(double)));
-  cudaErrCheck(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
-  cudaErrCheck(cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice));
-
-  // printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
-  // unsigned s_mem = sizeof(double) * BLOCK_SIZE_X;
+  cudaErrCheck(cudaMemcpy(d_out, &ZERO, sizeof(double), cudaMemcpyHostToDevice));
+  cudaErrCheck(cudaMemcpy(d_max, &ZERO, sizeof(double), cudaMemcpyHostToDevice));
 
   maxVal<<<blocks, threads, threads.x * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max);
-  // cudaErrCheck(cudaPeekAtLastError());
   cudaErrCheck(cudaDeviceSynchronize());
-  // unsigned s_mem = sizeof(double) * BLOCK_SIZE_X;
   dnrm2<<<blocks, threads, threads.x * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max, d_out);
   cudaErrCheck(cudaDeviceSynchronize());
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));

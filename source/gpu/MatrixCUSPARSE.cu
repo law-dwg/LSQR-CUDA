@@ -12,7 +12,8 @@ template <typename T> void SpMV(MatrixCUSPARSE &M, T &v, T &out) {
     cusparseErrCheck(cusparseSpMV(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, M.spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
                                   CUSPARSE_MV_ALG_DEFAULT, M.dBuffer));
   } else {
-    printf("MATRICIES CANNOT BE MULTIPLED, INVALID SIZES");
+    printf("Cannot perform multiplication, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
   }
 };
 

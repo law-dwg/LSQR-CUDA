@@ -8,8 +8,13 @@ VectorCUDA MatrixCUDA::operator*(VectorCUDA &v) { // Multiplication
   unsigned blocksX = ((this->h_rows * this->h_columns) / (BLOCK_SIZE_X * BLOCK_SIZE_X)) + 1;
   dim3 grid(blocksX, 1, 1);
   dim3 block(BLOCK_SIZE_X * BLOCK_SIZE_X, 1, 1);
-  // printf("grid(%d,%d,%d), block(%d,%d,%d)\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
-  spmvNaive<<<grid, block>>>(this->d_rows, this->d_columns, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.getMat(), out.getMat());
+  if (this->h_columns == v.getRows()) {
+    // printf("grid(%d,%d,%d), block(%d,%d,%d)\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
+    spmvNaive<<<grid, block>>>(this->d_rows, this->d_columns, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.getMat(), out.getMat());
+  } else {
+    printf("Cannot perform multiplication, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
+  }
   return out;
 }
 

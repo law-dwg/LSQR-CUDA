@@ -20,7 +20,7 @@ protected:
 
 public:
   /** Constructors */
-  MatrixGPU(unsigned r, unsigned c) : h_rows(r), h_columns(c) { // Constructor #1
+  MatrixGPU(unsigned r, unsigned c) : h_rows(r), h_columns(c) { // Constr. #1
     printf("MatrixGPU Constructor #1 was called\n");
     cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
@@ -34,7 +34,7 @@ public:
     cusparseErrCheck(cusparseSetMatType(descr, CUSPARSE_MATRIX_TYPE_GENERAL));
     cusparseErrCheck(cusparseSetMatIndexBase(descr, CUSPARSE_INDEX_BASE_ZERO));
   };
-  MatrixGPU(unsigned r, unsigned c, unsigned n) : MatrixGPU(r, c) { // Constructor helper #2
+  MatrixGPU(unsigned r, unsigned c, unsigned n) : MatrixGPU(r, c) { // Constr. #2
     h_nnz = n;
     printf("MatrixGPU Constructor #2 was called\n");
     // allocate
@@ -162,7 +162,10 @@ public:
     printf("MatrixGPU Move Assignment called\n");
     // call copy assignment
     *this = m;
-    // freeing memory handled by destructor (unless std::move is called explicitly)
+    m.h_rows = ZERO;
+    m.h_nnz = ZERO;
+    m.h_columns = ZERO;
+    // freeing memory handled by destructor, potential err. blocked via rows = cols = 0
     return *this;
   };
 

@@ -86,7 +86,9 @@ public:
   VectorGPU &operator=(VectorGPU &&v) noexcept { // Move assignment operator
     // call copy assignment
     *this = v;
-    // freeing memory is handled by destructor (auto called)
+    v.h_rows = ZERO;
+    v.h_columns = ZERO;
+    // freeing memory handled by destructor, potential err. blocked via rows = cols = 0
     return *this;
   }
 

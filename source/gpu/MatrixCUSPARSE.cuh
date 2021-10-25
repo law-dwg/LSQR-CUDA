@@ -90,24 +90,10 @@ public:
     printf("MatrixCUSPARSE Move Assignment called\n");
     // call copy assignment
     *this = m;
-    // free old resources
-    cudaErrCheck(cudaFree(m.d_csrVal));
-    cudaErrCheck(cudaFree(m.d_csrRowPtr));
-    cudaErrCheck(cudaFree(m.d_csrColInd));
-    cusparseErrCheck(cusparseDestroySpMat(m.spMatDescr));
     m.h_rows = ZERO;
     m.h_nnz = ZERO;
     m.h_columns = ZERO;
-    cudaErrCheck(cudaMalloc((void **)&m.d_csrVal, h_nnz * sizeof(double)));
-    cudaErrCheck(cudaMalloc((void **)&m.d_csrColInd, h_nnz * sizeof(int)));
-    cudaErrCheck(cudaMalloc((void **)&m.d_csrRowPtr, (h_rows + 1) * sizeof(int)));
-    cudaErrCheck(cudaMemcpy(m.d_rows, &m.h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(m.d_columns, &m.h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemset(m.d_csrVal, ZERO, m.h_nnz * sizeof(double)));
-    cudaErrCheck(cudaMemset(m.d_csrColInd, ZERO, m.h_nnz * sizeof(int)));
-    cudaErrCheck(cudaMemset(m.d_csrRowPtr, ZERO, (m.h_rows + 1) * sizeof(int)));
-    cusparseErrCheck(cusparseCreateCsr(&m.spMatDescr, m.h_rows, m.h_columns, m.h_nnz, m.d_csrRowPtr, m.d_csrColInd, m.d_csrVal, CUSPARSE_INDEX_32I,
-                                       CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F));
+    // freeing memory handled by destructor, potential err. blocked via rows = cols = 0
     return *this;
   };
 

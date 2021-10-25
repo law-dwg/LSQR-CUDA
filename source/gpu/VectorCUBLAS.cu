@@ -31,7 +31,8 @@ VectorCUBLAS VectorCUBLAS::operator*(VectorCUBLAS &v) {
                                  this->d_mat, this->h_columns, &ZERO, out.d_mat, out.h_columns));
     }
   } else {
-    printf("Cannot perform multiplication, dimension mismatch\n");
+    printf("Cannot perform multiplication, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
   }
   return out;
 };
@@ -55,8 +56,10 @@ VectorCUBLAS VectorCUBLAS::operator-(const VectorCUBLAS &v) {
     cublasOperation_t OP = (m == 1 || n == 1) ? CUBLAS_OP_T : CUBLAS_OP_N;
     // printf("h_rows = %d, h_cols = %d, v.h_rows = %d, v.h_cols = %d\n",this->h_rows,this->h_columns,v.h_rows,v.h_columns);
     cublasErrCheck(cublasDgeam(handle, CUBLAS_OP_N, OP, m, n, &ONE, this->d_mat, lda, &NEGONE, v.d_mat, ldb, out.d_mat, ldc));
-  } else
-    printf("CUBLAS SUBTRACT ERROR, MATRICES ARENT SAME SIZE\n");
+  } else {
+    printf("Cannot perform subtraction, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
+  }
   return out;
 };
 
@@ -71,7 +74,8 @@ VectorCUBLAS VectorCUBLAS::operator+(const VectorCUBLAS &v) {
     cublasOperation_t OP = (m == 1 || n == 1) ? CUBLAS_OP_T : CUBLAS_OP_N;
     cublasErrCheck(cublasDgeam(handle, CUBLAS_OP_N, OP, m, n, &ONE, this->d_mat, lda, &ONE, v.d_mat, ldb, out.d_mat, ldc));
   } else {
-    printf("CUBLAS ADDITION ERROR, MATRICES ARENT SAME SIZE\n");
+    printf("Cannot perform addition, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
   }
   return out;
 };
@@ -87,6 +91,7 @@ Vector_CPU VectorCUBLAS::matDeviceToHost() {
   // printf("d_rows = %d, h_rows = %d, d_cols = %d, h_cols = %d\n", rows, h_rows, cols, h_columns);
   if (rows != this->h_rows || cols != this->h_columns) {
     printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
+    exit(1);
   }
   Vector_CPU v_cpu(this->h_rows, this->h_columns, out);
   return v_cpu;
