@@ -44,7 +44,7 @@ VectorCUBLAS VectorCUBLAS::operator*(double i) {
   return out;
 };
 
-void VectorCUBLAS::operator=(Vector_CPU &v){};
+void VectorCUBLAS::operator=(VectorCPU &v){};
 
 VectorCUBLAS VectorCUBLAS::operator-(const VectorCUBLAS &v) {
   VectorCUBLAS out(this->h_rows, this->h_columns);
@@ -81,7 +81,7 @@ VectorCUBLAS VectorCUBLAS::operator+(const VectorCUBLAS &v) {
 };
 
 /** Member functions */
-Vector_CPU VectorCUBLAS::matDeviceToHost() {
+VectorCPU VectorCUBLAS::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
   unsigned rows;
   unsigned cols;
@@ -93,7 +93,7 @@ Vector_CPU VectorCUBLAS::matDeviceToHost() {
     printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
     exit(1);
   }
-  Vector_CPU v_cpu(this->h_rows, this->h_columns, out);
+  VectorCPU v_cpu(this->h_rows, this->h_columns, out);
   return v_cpu;
 };
 

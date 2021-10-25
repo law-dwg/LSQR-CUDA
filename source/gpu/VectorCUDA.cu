@@ -59,15 +59,15 @@ VectorCUDA VectorCUDA::operator-(const VectorCUDA &v) {
   return out;
 }
 
-void VectorCUDA::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> this VectorCUDA
+void VectorCUDA::operator=(VectorCPU &v) { // Copy assignment VectorCPU -> this VectorCUDA
   printf("ASSIGNMENT #2 called\n");
   cudaErrCheck(cudaFree(d_mat));
   h_rows = v.getRows();
   h_columns = v.getColumns();
-  cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.rows * v.columns));
+  cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.getRows() * v.getColumns()));
   cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
   cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
-  cudaErrCheck(cudaMemcpy(d_mat, &v.mat[0], sizeof(double) * h_rows * h_columns, cudaMemcpyHostToDevice));
+  cudaErrCheck(cudaMemcpy(d_mat, v.getMat(), sizeof(double) * h_rows * h_columns, cudaMemcpyHostToDevice));
 }
 
 VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
@@ -94,7 +94,7 @@ void VectorCUDA::printmat() {
   print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
 }
 
-Vector_CPU VectorCUDA::matDeviceToHost() {
+VectorCPU VectorCUDA::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
   unsigned rows;
   unsigned cols;
@@ -108,7 +108,7 @@ Vector_CPU VectorCUDA::matDeviceToHost() {
     printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
     exit(1);
   }
-  Vector_CPU v_cpu(this->h_rows, this->h_columns, out);
+  VectorCPU v_cpu(this->h_rows, this->h_columns, out);
   return v_cpu;
 }
 

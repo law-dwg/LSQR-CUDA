@@ -1,4 +1,4 @@
-#include "matVec_cpu.hpp"
+#include "VectorCPU.hpp"
 #include <cassert>
 #include <chrono>
 #include <cstdio>
@@ -7,35 +7,11 @@
 #include <stdlib.h>
 #include <time.h>
 
-// constructors
-Matrix_CPU::Matrix_CPU(unsigned r, unsigned c) {
-  this->rows = r;
-  this->columns = c;
-  this->mat.resize(this->rows * this->columns);
-  int zeros = round(this->sparsity * r * c);
-  int nonZeros = r * c - zeros;
-  // std::cout<<zeros<<std::endl;
-  srand(time(0));
-
-  // printf("%f sparsity for %i elements leads to %f zero values which rounds to
-  // %d. That means there are %d nonzero
-  // values\n",this->sparsity,r*c,this->sparsity * r*c,zeros,nonZeros);
-  // printf("mat size: %i\n",mat.size());
-  for (int i = 0; i < mat.size(); i++) {
-    if (i < nonZeros) {
-      mat[i] = rand() % 100;
-    } else {
-      mat[i] = 0;
-    };
-  }
-  std::random_shuffle(mat.begin(), mat.end());
-};
-
 // operator overloads
-Vector_CPU Vector_CPU::operator*(Vector_CPU &v) {
+VectorCPU VectorCPU::operator*(VectorCPU &v) {
   std::vector<double> lhs = this->mat;
   std::vector<double> rhs = v.mat;
-  Vector_CPU out(this->rows, v.columns);
+  VectorCPU out(this->rows, v.columns);
   if (this->columns == v.rows) {
     for (int r = 0; r < this->rows; r++) {
       for (int c = 0; c < v.columns; c++) {
@@ -44,67 +20,69 @@ Vector_CPU Vector_CPU::operator*(Vector_CPU &v) {
         }
       }
     }
-    return out;
   } else {
-    printf("cannot perform this multiplication\n");
-    return v;
+    printf("Cannot perform multiplication, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
   }
+  return out;
 };
 
-Vector_CPU Vector_CPU::operator*(double i) {
+VectorCPU VectorCPU::operator*(double i) {
   // probably can find a better implementation
-  Vector_CPU out = *this;
+  VectorCPU out = *this;
   for (int e = 0; e < out.mat.size(); e++) {
     out.mat[e] *= i;
   }
   return out;
 };
 
-Vector_CPU Vector_CPU::operator-(Vector_CPU v) {
-  Vector_CPU out(this->rows, this->columns);
+VectorCPU VectorCPU::operator-(VectorCPU v) {
+  VectorCPU out(this->rows, this->columns);
   if (out.rows == v.rows && out.columns == v.columns) {
     for (int i = 0; i < this->mat.size(); i++) {
       out.mat[i] = this->mat[i] - v.mat[i];
     }
-    return out;
   } else {
-    printf("cannot perform this subtraction, vectors need to be the same size");
-    return (*this);
+    printf("Cannot perform subtraction, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
   };
+  return out;
 };
 
-Vector_CPU Vector_CPU::operator+(Vector_CPU v) {
+VectorCPU VectorCPU::operator+(VectorCPU v) {
   if (this->mat.size() == 0) {
     return v;
   } else if (this->rows == v.rows && this->columns == v.columns) {
-    Vector_CPU out(this->rows, this->columns);
+    VectorCPU out(this->rows, this->columns);
     for (int i = 0; i < this->mat.size(); i++) {
       out.mat[i] = this->mat[i] + v.mat[i];
     }
     return out;
   } else {
     printf("out.mat.size() = %i ", this->mat.size());
-    printf("cannot perform this addition, vectors need to be the same size");
+    printf("Cannot perform addition, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
+    exit(1);
     return (*this);
   };
+  
 };
 
-double Vector_CPU::operator()(unsigned i) { return (Vector_CPU::operator[](i)); };
+double VectorCPU::operator()(unsigned i) { return (VectorCPU::operator[](i)); };
 
-double Vector_CPU::operator()(unsigned r, unsigned c) {
+double VectorCPU::operator()(unsigned r, unsigned c) {
   if (r < this->rows && c < this->columns) {
     return (mat[r * this->columns + c]);
   } else {
     printf("please use valid indices: (r,c) where 0=<r<%i and 0=<c<%i\n", this->rows, this->columns);
-    // throw 505;
-    return EXIT_FAILURE;
+    exit(1);
+    return mat[0];
   }
 };
 
-double Vector_CPU::operator[](unsigned i) { return (this->mat[i]); };
+double VectorCPU::operator[](unsigned i) { return (this->mat[i]); };
 
 // member functions
-void Vector_CPU::print() {
+void VectorCPU::print() {
   printf("#ofRows:%i #ofCols:%i\n", this->rows, this->columns);
   printf("PRINTING MATRIX\n[");
   for (int e = 0; e < (this->mat.size()); e++) {
@@ -116,21 +94,19 @@ void Vector_CPU::print() {
   printf("]\n");
 };
 
-Vector_CPU Vector_CPU::transpose() {
-  Vector_CPU out = (*this);
+VectorCPU VectorCPU::transpose() {
+  VectorCPU out = (*this);
   out.rows = this->columns;
   out.columns = this->rows;
   for (int r = 0; r < this->rows; r++) {
     for (int c = 0; c < this->columns; c++) {
-      // printf("new index: %i, old index:
-      // %i\n",(r+c*this->rows),(c+r*this->columns));
       out.mat[r + c * this->rows] = this->mat[c + r * this->columns];
     }
   };
   return out;
 };
 
-double Vector_CPU::Dnrm2() {
+double VectorCPU::Dnrm2() {
   double sumScaled = 1.0;
   double magnitudeOfLargestElement = 0.0;
   for (int i = 0; i < this->mat.size(); i++) {
@@ -149,11 +125,10 @@ double Vector_CPU::Dnrm2() {
       }
     }
   }
-  // printf("sumScaled: %f, magOfLargestEle: %f\n", sumScaled, magnitudeOfLargestElement);
   return magnitudeOfLargestElement * sqrt(sumScaled);
 };
 
-double Vector_CPU::normalNorm() {
+double VectorCPU::normalNorm() {
   double sumScaled = 0;
   for (int i = 0; i < this->mat.size(); i++) {
     if (this->mat[i] != 0) {

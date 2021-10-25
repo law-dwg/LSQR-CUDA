@@ -1,5 +1,5 @@
 #pragma once
-#include "../cpu/matVec_cpu.hpp"
+#include "../cpu/VectorCPU.hpp"
 #include "Kernels.cuh"
 #include "utils.cuh"
 #include <algorithm>
@@ -56,7 +56,7 @@ public:
     cudaErrCheck(cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice));
   };
 
-  VectorGPU(Vector_CPU &v) : VectorGPU(v.getRows(), v.getColumns(), v.getMat()){}; // Copy constructor from CPU
+  VectorGPU(VectorCPU &v) : VectorGPU(v.getRows(), v.getColumns(), v.getMat()){}; // Copy constructor from CPU
 
   /** Destructor */
   ~VectorGPU() {
@@ -98,9 +98,9 @@ public:
   double *getMat() { return d_mat; };
 
   /** Virtual members */
-  virtual void operator=(Vector_CPU &v) = 0;
+  virtual void operator=(VectorCPU &v) = 0;
   virtual void printmat() = 0;
-  virtual Vector_CPU matDeviceToHost() = 0;
+  virtual VectorCPU matDeviceToHost() = 0;
   virtual double Dnrm2() = 0;
 };
 
@@ -114,11 +114,11 @@ public:
   VectorCUDA operator*(double i);            // Scale
   VectorCUDA operator-(const VectorCUDA &v); // Subtraction
   VectorCUDA operator+(const VectorCUDA &v); // Addittion
-  void operator=(Vector_CPU &v);             // CopyToDevice
+  void operator=(VectorCPU &v);             // CopyToDevice
 
   /** Member Functions */
   VectorCUDA transpose();       // Transpose
   void printmat();              // PrintKernel
-  Vector_CPU matDeviceToHost(); // CopyToHost
+  VectorCPU matDeviceToHost(); // CopyToHost
   double Dnrm2();               // EuclideanNorm
 };

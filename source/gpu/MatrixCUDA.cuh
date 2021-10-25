@@ -1,5 +1,5 @@
 #pragma once
-#include "../cpu/matVec_cpu.hpp"
+#include "../cpu/VectorCPU.hpp"
 #include "Kernels.cuh"
 #include "VectorCUDA.cuh"
 #include <algorithm>
@@ -45,13 +45,13 @@ public:
     cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
   };
-  MatrixGPU() : MatrixGPU(0, 0, 0u) { // Default Constructor
+  MatrixGPU() : MatrixGPU(0, 0, 0u) { // Default Constr.
     printf("MatrixGPU Default constructor called\n");
     cudaErrCheck(cudaMemset(d_csrVal, ZERO, h_nnz * sizeof(double)));
     cudaErrCheck(cudaMemset(d_csrColInd, ZERO, h_nnz * sizeof(int)));
     cudaErrCheck(cudaMemset(d_csrRowPtr, ZERO, (h_rows + 1) * sizeof(int)));
   };
-  MatrixGPU(unsigned r, unsigned c, unsigned n, double *values, int *colInd, int *rowPtr) : MatrixGPU(r, c, n) { // Constructor #3
+  MatrixGPU(unsigned r, unsigned c, unsigned n, double *values, int *colInd, int *rowPtr) : MatrixGPU(r, c, n) { // Constr. #3
     printf("MatrixGPU Constructor #3 called\n");
     // copy to device
     cudaErrCheck(cudaMemcpy(d_csrVal, values, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
@@ -91,9 +91,9 @@ public:
     cudaErrCheck(cudaMemcpy(d_csrVal, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice));
     printf("nnz = %d, rowIdx.size = %d, colIdx.size = %d\n", h_nnz, temp_rowPtr.size(), temp_colIdx.size());
   };
-  MatrixGPU(const MatrixGPU &m) : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) {
+  MatrixGPU(const MatrixGPU &m) : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) { // Copy Constr.
     printf("MatrixGPU Copy Constructor called\n");
-  }; // Copy constructor
+  };
   MatrixGPU(MatrixGPU &&m) noexcept
       : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) { // MatrixGPU Move Constructor
     printf("MatrixGPU Move Constructor called\n");

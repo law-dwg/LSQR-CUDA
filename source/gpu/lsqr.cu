@@ -1,6 +1,6 @@
 // CPU
 #include "../cpu/lsqr.hpp"
-#include "../cpu/matVec_cpu.hpp"
+#include "../cpu/VectorCPU.hpp"
 #include "../cpu/matrixBuilder.hpp"
 // GPU
 #include "MatrixCUDA.cuh"
@@ -40,9 +40,9 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0.5;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 1000; i <= 1000; i += 100) {
-      matrixBuilder(i + 333, i, sp, "input/", "A");
-      matrixBuilder(i + 333, 1, 0, "input/", "b");
+    for (int i = 1500; i <= 1500; i += 100) {
+      matrixBuilder(i, i, sp, "input/", "A");
+      matrixBuilder(i, 1, 0, "input/", "b");
     }
   }
 
@@ -89,12 +89,12 @@ int main() {
     if (true) {
       printf("---------------------------------------------\n");
       printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
-      Vector_CPU A_c(A_rows, A_cols, A.data());
-      Vector_CPU b_c(b_rows, b_cols, b.data());
+      VectorCPU A_c(A_rows, A_cols, A.data());
+      VectorCPU b_c(b_rows, b_cols, b.data());
       // A_c.print();
       // b_c.print();
       std::clock_t c_start = std::clock();
-      Vector_CPU x_c = lsqr<Vector_CPU, Vector_CPU>(A_c, b_c);
+      VectorCPU x_c = lsqr<VectorCPU, VectorCPU>(A_c, b_c);
       std::clock_t c_end = std::clock();
       long double time_elapsed_ms = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
       std::cout << "CPU time used = " << time_elapsed_ms << " ms for lsqr\n";
@@ -122,7 +122,7 @@ int main() {
       cudaErrCheck(cudaEventElapsedTime(&milliseconds, start, stop));
       printf("GPU time used = %f ms for lsqr\n", milliseconds);
       std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU.txt";
-      Vector_CPU x_g_out = x_g.matDeviceToHost();
+      VectorCPU x_g_out = x_g.matDeviceToHost();
       writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
       cusparseStop();
       cublasStop();
@@ -150,7 +150,7 @@ int main() {
       cudaErrCheck(cudaEventElapsedTime(&milliseconds, start2, stop2));
       printf("GPU time used = %f ms for lsqr\n", milliseconds);
       std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_GPU_CUBLAS.txt";
-      Vector_CPU x_g_cublas_out = x_g_cublas.matDeviceToHost();
+      VectorCPU x_g_cublas_out = x_g_cublas.matDeviceToHost();
       writeArrayToFile(file_out, x_g_cublas_out.getRows(), x_g_cublas_out.getColumns(), x_g_cublas_out.getMat());
       cusparseStop();
       cublasStop();
