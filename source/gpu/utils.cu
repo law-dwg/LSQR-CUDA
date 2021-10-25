@@ -1,7 +1,7 @@
 #include "utils.cuh"
 #include <iostream>
-const unsigned BLOCK_SIZE_X = 16;
-const unsigned BLOCK_SIZE_Y = 16;
+const unsigned BLOCK_SIZE_X = 32;
+const unsigned BLOCK_SIZE_Y = 32;
 const double ONE = 1.0;
 const double ZERO = 0.0;
 const double NEGONE = -1.0;

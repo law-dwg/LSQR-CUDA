@@ -9,7 +9,7 @@
 #include <vector>
 
 class MatrixGPU {
-public:
+protected:
   unsigned h_rows, h_columns, h_nnz, *d_rows, *d_columns, *d_nnz;
   int *d_csrRowPtr, *d_csrColInd;
   double *d_csrVal;
@@ -18,6 +18,7 @@ public:
   void *dBuffer = NULL;
   size_t bufferSize = 0;
 
+public:
   /** Constructors */
   MatrixGPU(unsigned r, unsigned c) : h_rows(r), h_columns(c) { // Constructor #1
     printf("MatrixGPU Constructor #1 was called\n");
@@ -130,24 +131,30 @@ public:
   /** Assignments */
   MatrixGPU &operator=(const MatrixGPU &m) { // Copy assignment operator
     printf("MatrixGPU Copy Assignment Operator called\n");
-    h_rows = m.h_rows;
-    h_columns = m.h_columns;
-    h_nnz = m.h_nnz;
-    // destroy old allocation
-    cudaErrCheck(cudaFree(d_csrVal));
-    cudaErrCheck(cudaFree(d_csrColInd));
-    cudaErrCheck(cudaFree(d_csrRowPtr));
-    // memory allocation
-    cudaErrCheck(cudaMalloc((void **)&d_csrVal, sizeof(double) * h_nnz));
-    cudaErrCheck(cudaMalloc((void **)&d_csrColInd, sizeof(int) * h_nnz));
-    cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, sizeof(int) * (h_rows + 1)));
+    // free + memory allocation (if needed)
+    if (h_rows != m.h_rows) {
+      h_rows = m.h_rows;
+      cudaErrCheck(cudaMemcpy(d_rows, m.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+      cudaErrCheck(cudaFree(d_csrRowPtr));
+      cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, sizeof(int) * (m.h_rows + 1)));
+    }
+    if (h_nnz != m.h_nnz) {
+      h_nnz = m.h_nnz;
+      cudaErrCheck(cudaMemcpy(d_nnz, m.d_nnz, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+      cudaErrCheck(cudaFree(d_csrVal));
+      cudaErrCheck(cudaFree(d_csrColInd));
+      cudaErrCheck(cudaMalloc((void **)&d_csrVal, sizeof(double) * h_nnz));
+      cudaErrCheck(cudaMalloc((void **)&d_csrColInd, sizeof(int) * h_nnz));
+    }
+    if (h_columns != m.h_columns) {
+      h_columns = m.h_columns;
+      cudaErrCheck(cudaMemcpy(d_columns, m.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+    }
+
     // copy to device
-    cudaErrCheck(cudaMemcpy(d_rows, m.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_columns, m.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_nnz, m.d_nnz, sizeof(unsigned), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrVal, m.d_csrVal, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrColInd, m.d_csrColInd, h_nnz * sizeof(int), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_csrRowPtr, m.d_csrRowPtr, (m.h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrRowPtr, m.d_csrRowPtr, (h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
     return *this;
   };
 
@@ -155,22 +162,7 @@ public:
     printf("MatrixGPU Move Assignment called\n");
     // call copy assignment
     *this = m;
-    // free old resources
-    cudaErrCheck(cudaFree(m.d_csrVal));
-    cudaErrCheck(cudaFree(m.d_csrRowPtr));
-    cudaErrCheck(cudaFree(m.d_csrColInd));
-    m.h_rows = ZERO;
-    m.h_nnz = ZERO;
-    m.h_columns = ZERO;
-    cudaErrCheck(cudaMalloc((void **)&m.d_csrVal, h_nnz * sizeof(double)));
-    cudaErrCheck(cudaMalloc((void **)&m.d_csrColInd, h_nnz * sizeof(int)));
-    cudaErrCheck(cudaMalloc((void **)&m.d_csrRowPtr, (h_rows + 1) * sizeof(int)));
-    cudaErrCheck(cudaMemcpy(m.d_rows, &m.h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(m.d_columns, &m.h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(d_nnz, m.d_nnz, sizeof(unsigned), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemset(m.d_csrVal, ZERO, m.h_nnz * sizeof(double)));
-    cudaErrCheck(cudaMemset(m.d_csrColInd, ZERO, m.h_nnz * sizeof(int)));
-    cudaErrCheck(cudaMemset(m.d_csrRowPtr, ZERO, (m.h_rows + 1) * sizeof(int)));
+    // freeing memory handled by destructor (unless std::move is called explicitly)
     return *this;
   };
 
@@ -178,6 +170,7 @@ public:
   // MatrixGPU transpose();
   int getRows() { return h_rows; };
   int getColumns() { return h_columns; };
+  int getNnz() { return h_nnz; };
   virtual double Dnrm2() = 0;
 };
 

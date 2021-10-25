@@ -1,4 +1,5 @@
 #pragma once
+#include <limits.h>
 #include <math.h>
 #include <stdio.h>
 
@@ -30,6 +31,9 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   const double negone = -1.0;
   const double zero = 0.0;
 
+  /** Precision */
+  double epsilon = 1e-16;
+
   /** Tolerances */
   double ctol = zero;
   double rtol = zero;
@@ -46,9 +50,6 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   double sn2 = zero;
   double cs2 = negone;
   double psi = zero;
-
-  /** Precision */
-  double epsilon = 1e-16;
 
   /** Stopping Criteria */
   unsigned istop = zero;
@@ -83,8 +84,6 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   double rhobar = alpha;
   double phibar = beta;
   double rnorm = beta;
-  double r1norm = rnorm;
-  double r2norm = rnorm;
   double Arnorm = alpha * beta;
   if (Arnorm == 0) {
     printf("Exact solution is x = 0\n");
@@ -189,8 +188,8 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     // 6. Test for convergence
     // printf("6. Test for convergence\n");
     test1 = rnorm / bnorm;
-    test2 = Arnorm / (Anorm * rnorm);
-    test3 = one / (Acond);
+    test2 = Arnorm / (Anorm * rnorm + epsilon);
+    test3 = one / (Acond + epsilon);
     t1 = test1 / (one + Anorm * xnorm / bnorm);
     rtol = btol + atol * Anorm * xnorm / bnorm;
     t3 = one + test3;
@@ -220,6 +219,5 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     };
   } while (istop == 0);
   printf("ran through %d iterations \nistop=%d\n", itn, istop);
-  // printf("Anorm=%f, Arnorm=%f,\nAcond=%f, xnorm=%f\nr1norm=%f\n", Anorm, Arnorm, Acond, xnorm, r1norm);
   return x;
 }

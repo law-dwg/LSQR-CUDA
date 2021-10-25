@@ -4,25 +4,18 @@
 
 class MatrixCUSPARSE : public MatrixGPU {
 protected:
-public:
   cusparseSpMatDescr_t spMatDescr = NULL;
 
+public:
   /** Constructors */
-  MatrixCUSPARSE(unsigned r, unsigned c) : MatrixGPU(r, c) { // Cosntructor #1
-    printf("MatrixCUSPARSE Helper Constructor #2 called\n");
-  };
-  MatrixCUSPARSE(unsigned r, unsigned c, int n) : MatrixGPU(r, c, n) { // Helper constructor #1
-    printf("MatrixCUSPARSE Helper Constructor #2 called\n");
-  };
-  MatrixCUSPARSE(unsigned r, unsigned c, int n, double *values, int *colInd, int *rowPtr)
-      : MatrixGPU(r, c, n, values, colInd, rowPtr) { // Helper constructor #2
-    printf("MatrixCUSPARSE Helper Constructor #3 called\n");
+  MatrixCUSPARSE(unsigned r, unsigned c) : MatrixGPU(r, c){};                                                                            // Constr. #1
+  MatrixCUSPARSE(unsigned r, unsigned c, int n) : MatrixGPU(r, c, n){};                                                                  // Constr. #2
+  MatrixCUSPARSE(unsigned r, unsigned c, int n, double *values, int *colInd, int *rowPtr) : MatrixGPU(r, c, n, values, colInd, rowPtr) { // Constr. #3
     // cusparse
     cusparseErrCheck(cusparseCreateCsr(&spMatDescr, h_rows, h_columns, h_nnz, d_csrRowPtr, d_csrColInd, d_csrVal, CUSPARSE_INDEX_32I,
                                        CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F));
   };
-  MatrixCUSPARSE(unsigned r, unsigned c, double *m) : MatrixGPU(r, c) { // Constructor (entry point)
-    printf("MatrixCUSPARSE entry point called\n");
+  MatrixCUSPARSE(unsigned r, unsigned c, double *m) : MatrixGPU(r, c) { // Constr. (entry point)
     // convert dense to sparse
     cusparseDnMatDescr_t dnMatDescr;
     double *d_mat;
@@ -37,26 +30,22 @@ public:
     cudaErrCheck(cudaMalloc(&dBuffer, bufferSize));
     cusparseErrCheck(cusparseDenseToSparse_analysis(spHandle, dnMatDescr, spMatDescr, CUSPARSE_DENSETOSPARSE_ALG_DEFAULT, dBuffer));
 
+    // find nnz
     int64_t rows_tmp, cols_tmp, h_nnz_temp;
-    cusparseErrCheck(cusparseSpMatGetSize(spMatDescr, &rows_tmp, &cols_tmp, &h_nnz_temp)); // determine # of non-zeros
+    cusparseErrCheck(cusparseSpMatGetSize(spMatDescr, &rows_tmp, &cols_tmp, &h_nnz_temp));
     h_nnz = (unsigned)h_nnz_temp;
-    // printf("Sparse matrix created, rows=%d, cols=%d, nnz=%d\n", rows_tmp, cols_tmp, h_nnz);
     cudaErrCheck(cudaMalloc((void **)&d_csrColInd, h_nnz * sizeof(int)));
     cudaErrCheck(cudaMalloc((void **)&d_csrVal, h_nnz * sizeof(double)));
 
+    // set CSR
     cusparseErrCheck(cusparseCsrSetPointers(spMatDescr, d_csrRowPtr, d_csrColInd, d_csrVal));
     cusparseErrCheck(cusparseDenseToSparse_convert(spHandle, dnMatDescr, spMatDescr, CUSPARSE_DENSETOSPARSE_ALG_DEFAULT, dBuffer));
     cusparseDestroyDnMat(dnMatDescr);
     cudaFree(d_mat);
   };
-  MatrixCUSPARSE() : MatrixGPU() { // Default constructor
-    printf("MatrixCUSPARSE Default Constructor called\n");
-  };
-  MatrixCUSPARSE(const MatrixCUSPARSE &m) : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) {
-    printf("MatrixCUSPARSE Copy Cosntructor called\n");
-  }; // Copy constructor
-  MatrixCUSPARSE(MatrixCUSPARSE &&m) noexcept : MatrixGPU(std::move(m)) {
-    printf("MatrixCUSPARSE Move Constructor called\n");
+  MatrixCUSPARSE() : MatrixGPU(){};                                                                                                // Default Constr.
+  MatrixCUSPARSE(const MatrixCUSPARSE &m) : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr){}; // Copy Constr.
+  MatrixCUSPARSE(MatrixCUSPARSE &&m) noexcept : MatrixGPU(std::move(m)) {                                                          // Move Constr.
     // free old resources
     cusparseErrCheck(cusparseDestroySpMat(m.spMatDescr));
     // placeholder
@@ -65,32 +54,33 @@ public:
   };
 
   /** Destructor */
-  ~MatrixCUSPARSE() {
-    printf("MatrixCUSPARSE Destructor called\n");
-    cusparseErrCheck(cusparseDestroySpMat(spMatDescr));
-  };
+  ~MatrixCUSPARSE() { cusparseErrCheck(cusparseDestroySpMat(spMatDescr)); };
 
   /** Assignments */
   MatrixCUSPARSE &operator=(const MatrixCUSPARSE &m) { // Copy assignment operator
-    printf("MatrixCUSPARSE Copy Assignment Operator called\n");
-    h_rows = m.h_rows;
-    h_columns = m.h_columns;
-    h_nnz = m.h_nnz;
-    // destroy old allocation
-    cudaErrCheck(cudaFree(d_csrVal));
-    cudaErrCheck(cudaFree(d_csrColInd));
-    cudaErrCheck(cudaFree(d_csrRowPtr));
-    cusparseErrCheck(cusparseDestroySpMat(spMatDescr));
-    // memory allocation
-    cudaErrCheck(cudaMalloc((void **)&d_csrVal, sizeof(double) * h_nnz));
-    cudaErrCheck(cudaMalloc((void **)&d_csrColInd, sizeof(int) * h_nnz));
-    cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, sizeof(int) * (h_rows + 1)));
+    // free + memory allocation
+    if (h_rows != m.h_rows) {
+      h_rows = m.h_rows;
+      cudaErrCheck(cudaMemcpy(d_rows, m.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+      cudaErrCheck(cudaFree(d_csrRowPtr));
+      cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, sizeof(int) * (m.h_rows + 1)));
+    }
+    if (h_nnz != m.h_nnz) {
+      h_nnz = m.h_nnz;
+      cudaErrCheck(cudaMemcpy(d_nnz, m.d_nnz, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+      cudaErrCheck(cudaFree(d_csrVal));
+      cudaErrCheck(cudaFree(d_csrColInd));
+      cudaErrCheck(cudaMalloc((void **)&d_csrVal, sizeof(double) * h_nnz));
+      cudaErrCheck(cudaMalloc((void **)&d_csrColInd, sizeof(int) * h_nnz));
+    }
+    if (h_columns != m.h_columns) {
+      h_columns = m.h_columns;
+      cudaErrCheck(cudaMemcpy(d_columns, m.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
+    }
     // copy to device
-    cudaErrCheck(cudaMemcpy(d_rows, m.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_columns, m.d_columns, sizeof(unsigned), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrVal, m.d_csrVal, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrColInd, m.d_csrColInd, h_nnz * sizeof(int), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_csrRowPtr, m.d_csrRowPtr, (m.h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrRowPtr, m.d_csrRowPtr, (h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
     // cusparse
     cusparseErrCheck(cusparseCreateCsr(&spMatDescr, h_rows, h_columns, h_nnz, d_csrRowPtr, d_csrColInd, d_csrVal, CUSPARSE_INDEX_32I,
                                        CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F));
@@ -128,4 +118,5 @@ public:
   /** Member Functions */
   MatrixCUSPARSE transpose();
   double Dnrm2();
+  template <typename T> friend void SpMV(MatrixCUSPARSE &M, T &v, T &out);
 };

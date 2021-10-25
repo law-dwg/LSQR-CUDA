@@ -9,7 +9,7 @@ VectorCUDA MatrixCUDA::operator*(VectorCUDA &v) { // Multiplication
   dim3 grid(blocksX, 1, 1);
   dim3 block(BLOCK_SIZE_X * BLOCK_SIZE_X, 1, 1);
   // printf("grid(%d,%d,%d), block(%d,%d,%d)\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
-  spmvNaive<<<grid, block>>>(this->d_rows, this->d_columns, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.d_mat, out.d_mat);
+  spmvNaive<<<grid, block>>>(this->d_rows, this->d_columns, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.getMat(), out.getMat());
   return out;
 }
 
@@ -28,8 +28,8 @@ MatrixCUDA MatrixCUDA::transpose() {
 };
 
 double MatrixCUDA::Dnrm2() {
-  dim3 threads(BLOCK_SIZE_X, 1);
-  int blockX = ((this->h_nnz + BLOCK_SIZE_X - 1) / BLOCK_SIZE_X);
+  dim3 threads(BLOCK_SIZE_X * BLOCK_SIZE_X, 1);
+  int blockX = ((this->h_nnz + threads.x - 1) / threads.x);
   dim3 blocks(blockX, 1);
   double *d_out, *d_max;
   double zero = 0.0;
@@ -40,11 +40,10 @@ double MatrixCUDA::Dnrm2() {
 
   cudaErrCheck(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
   cudaErrCheck(cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice));
-  maxVal<<<blocks, threads, BLOCK_SIZE_X * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max);
+  maxVal<<<blocks, threads, threads.x * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max);
   // cudaErrCheck(cudaPeekAtLastError());
   cudaErrCheck(cudaDeviceSynchronize());
-  // unsigned s_mem = sizeof(double) * TILE_DIM_X;
-  dnrm2<<<blocks, threads, BLOCK_SIZE_X * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max, d_out);
+  dnrm2<<<blocks, threads, threads.x * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max, d_out);
   cudaErrCheck(cudaDeviceSynchronize());
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));

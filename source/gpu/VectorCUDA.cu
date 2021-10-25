@@ -1,36 +1,8 @@
 #include "Kernels.cuh"
 #include "VectorCUDA.cuh"
-#if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
-#else
-static __inline__ __device__ double atomicAdd(double *address, double val) {
-  unsigned long long int *address_as_ull = (unsigned long long int *)address;
-  unsigned long long int old = *address_as_ull, assumed;
-  if (val == 0.0)
-    return __longlong_as_double(old);
-  do {
-    assumed = old;
-    old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
-  } while (assumed != old);
-  return __longlong_as_double(old);
-}
-#endif
-
-static __inline__ __device__ double atomicMax(double *address, double val) {
-  unsigned long long int *address_as_ull = (unsigned long long int *)address;
-  unsigned long long int old = *address_as_ull, assumed;
-  do {
-    assumed = old;
-    old = ::atomicCAS(address_as_ull, assumed, __double_as_longlong(::fmaxf(val, __longlong_as_double(assumed))));
-  } while (assumed != old);
-  return __longlong_as_double(old);
-}
-
 #include <assert.h>
-#include <cooperative_groups.h>
 #include <iostream>
 #include <math.h>
-#include <sstream>
-#include <string.h>
 
 /** Operator overloads */
 
@@ -44,7 +16,7 @@ VectorCUDA VectorCUDA::operator*(double h_i) {
 
   scale<<<grid, block>>>(this->d_mat, h_i, out.d_mat, this->d_rows, this->d_columns, false);
   // cudaDeviceSynchronize();
-
+  printf("SCALE CALLED\n");
   return out;
 }
 
@@ -79,10 +51,8 @@ VectorCUDA VectorCUDA::operator-(const VectorCUDA &v) {
   dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_X, 1);
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat, false);
-    // cudaDeviceSynchronize();
   } else {
     printf("SUBTRACT: ARRAYS ARE NOT THE SAME SIZE, canot perform operation %d!=%d\n", this->h_rows, v.h_rows);
-    // assert(h_rows == v.h_rows);
   }
   return out;
 }
@@ -101,15 +71,13 @@ void VectorCUDA::operator=(Vector_CPU &v) { // Copy assignment Vector_CPU -> thi
 VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
   VectorCUDA out(this->h_rows, this->h_columns);
   unsigned blocksX = (this->h_rows / BLOCK_SIZE_X) + 1;
-  unsigned blocksY = (this->h_columns / BLOCK_SIZE_X) + 1;
+  unsigned blocksY = (this->h_columns / BLOCK_SIZE_Y) + 1;
   dim3 grid(blocksX, blocksY, 1);
-  dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_X, 1);
+  dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat, true);
-    // cudaDeviceSynchronize();
   } else {
     printf("ADDITION: ARRAYS ARE NOT THE SAME SIZE, canot perform operation %d!=%d\n", this->h_rows, v.h_rows);
-    // assert(this->h_rows == v.h_rows);
   }
   return out;
 }
@@ -117,13 +85,10 @@ VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
 /** Member Functions */
 void VectorCUDA::printmat() {
   unsigned blocksX = (this->h_rows / BLOCK_SIZE_X) + 1;
-  unsigned blocksY = (this->h_columns / BLOCK_SIZE_X) + 1;
+  unsigned blocksY = (this->h_columns / BLOCK_SIZE_Y) + 1;
   dim3 grid(blocksX, blocksY, 1);
-  dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_X, 1);
-
+  dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
   print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
-  // cudaErrCheck(cudaPeekAtLastError());
-  cudaErrCheck(cudaDeviceSynchronize());
 }
 
 Vector_CPU VectorCUDA::matDeviceToHost() {
@@ -159,8 +124,8 @@ VectorCUDA VectorCUDA::transpose() {
 };
 
 double VectorCUDA::Dnrm2() {
-  dim3 threads(BLOCK_SIZE_X, 1);
-  int blockX = ((this->h_rows * this->h_columns + BLOCK_SIZE_X - 1) / BLOCK_SIZE_X);
+  dim3 threads(BLOCK_SIZE_X * BLOCK_SIZE_X, 1);
+  int blockX = ((this->h_rows * this->h_columns + (threads.x) - 1) / (threads.x));
   dim3 blocks(blockX, 1);
   double *d_out, *d_max;
   double zero = 0.0;
@@ -174,11 +139,11 @@ double VectorCUDA::Dnrm2() {
   // printf("dnrm2 threads(%d x %d)=%d, blocks(%d, %d)=%d\n", threads.x, threads.y, threads.x * threads.y, blocks.x, blocks.y, blocks.x * blocks.y);
   // unsigned s_mem = sizeof(double) * BLOCK_SIZE_X;
 
-  maxVal<<<blocks, threads, BLOCK_SIZE_X * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max);
+  maxVal<<<blocks, threads, threads.x * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max);
   // cudaErrCheck(cudaPeekAtLastError());
   cudaErrCheck(cudaDeviceSynchronize());
   // unsigned s_mem = sizeof(double) * BLOCK_SIZE_X;
-  dnrm2<<<blocks, threads, BLOCK_SIZE_X * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max, d_out);
+  dnrm2<<<blocks, threads, threads.x * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max, d_out);
   cudaErrCheck(cudaDeviceSynchronize());
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
