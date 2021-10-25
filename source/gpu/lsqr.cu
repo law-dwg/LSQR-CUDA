@@ -40,9 +40,9 @@ int main() {
     // sp = valInput<double>(0.0, 1.0);
     sp = 0.5;
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
-    for (int i = 100; i <= 1500; i += 100) {
-      matrixBuilder(i, i, sp, "input/", "A");
-      matrixBuilder(i, 1, 0, "input/", "b");
+    for (int i = 1000; i <= 1000; i += 100) {
+      matrixBuilder(i + 333, i, sp, "input/", "A");
+      matrixBuilder(i + 333, 1, 0, "input/", "b");
     }
   }
 

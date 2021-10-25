@@ -11,6 +11,8 @@
 #ifndef IDX2C
 #define IDX2C(i, j, ld) (((j) * (ld)) + (i))
 #endif
+extern const unsigned BLOCK_SIZE_X;
+extern const unsigned BLOCK_SIZE_Y;
 extern const double ONE;
 extern const double ZERO;
 extern const double NEGONE;

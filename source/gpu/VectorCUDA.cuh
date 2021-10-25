@@ -1,7 +1,7 @@
 #pragma once
 #include "../cpu/matVec_cpu.hpp"
-#include "utils.cuh"
 #include "Kernels.cuh"
+#include "utils.cuh"
 #include <algorithm>
 #include <stdlib.h> /* srand, rand */
 #include <time.h>   /* time */

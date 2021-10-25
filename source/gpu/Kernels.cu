@@ -1,5 +1,4 @@
 #include "Kernels.cuh"
-#include <cooperative_groups.h>
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
 #else
 static __inline__ __device__ double atomicAdd(double *address, double val) {
@@ -25,10 +24,62 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
   return __longlong_as_double(old);
 }
 
-using namespace cooperative_groups;
 // OUR TILE SIZE SHOULD MATCH THAT OF OUR BLOCK
-#define TILE_DIM_X 16
-#define TILE_DIM_Y 16
+
+// gridDim.x - # of blocks in a grid, in x
+// gridDim.y - # of blocks in a grid, in y
+// blockDim.x - # of threads in a block, in x
+// blockDim.y - # of threads in a block, in y
+
+/** CUDA kernels */
+
+// BLOCK AND TILE SWEEP TOGETHER (BLOCK_SIZE = TILE_SIZE)
+void __global__ multiplyTiled(double *in1, unsigned *rows1, unsigned *cols1, double *in2, unsigned *rows2, unsigned *cols2, double *output) {
+
+  extern __shared__ double array[];
+  double *A = (double *)array;
+  double *B = (double *)&A[blockDim.x * blockDim.y];  
+  int y = blockIdx.y * blockDim.y + threadIdx.y; // row
+  int x = blockIdx.x * blockDim.x + threadIdx.x; // col
+  double sum = 0;                                // sum in block
+
+  for (int i = 0; i < *cols1; i += blockDim.x) {
+    int id1, id2;
+    if (i + threadIdx.x < *cols1 && y < *rows1) {
+      id1 = y * *cols1 + i + threadIdx.x;
+      A[threadIdx.x + blockDim.x * threadIdx.y] = in1[id1];
+    } else {
+      A[threadIdx.x + blockDim.x * threadIdx.y] = 0.0;
+    }
+    if (i + threadIdx.y < *rows2 && x < *cols2) {
+      id2 = (i * *cols2 + threadIdx.y * *cols2) + x;
+      B[threadIdx.x + blockDim.x * threadIdx.y] = in2[id2];
+    } else {
+      B[threadIdx.x * blockDim.x * threadIdx.y] = 0.0;
+    }
+
+    __syncthreads();
+    for (int j = 0; j < blockDim.x; j++) {
+      // if (x + j < *cols2 && y + j < *rows1) {
+      int Ax, Ay, Bx, By;
+      Ax = j;
+      Ay = threadIdx.y;
+      Bx = threadIdx.x;
+      By = j;
+      // if (blockIdx.x == 1 && blockIdx.y == 2 && threadIdx.x == 0 && threadIdx.y == 0) {
+      //   printf("OUT block(%d, %d), thread(%d,% d), y = %d, x = %d, i=%d, j=%d, A[%d][%d]=%f * "
+      //          "B[%d][%d]=%f\n",
+      //          blockIdx.x, blockIdx.y, threadIdx.x, threadIdx.y, x, y, i, j, Ax, Ay, A[Ax][Ay], Bx, By, B[Bx][By]);
+      // }
+      sum += A[Ax + blockDim.x * Ay] * B[Bx + blockDim.x * By];
+      //}
+    };
+    __syncthreads();
+  };
+  if (x < *cols2 && y < *rows1) {
+    output[y * *cols2 + x] = sum;
+  }
+}
 
 void __global__ print(double *input, unsigned *r, unsigned *c) {
   const unsigned bid = blockIdx.x                               // 1D
@@ -47,6 +98,22 @@ void __global__ print(double *input, unsigned *r, unsigned *c) {
   if (gid < *r * *c) {
     printf("%f\n", input[gid]);
   }
+}
+
+__device__ void warpReduce(volatile double *sum, int thread) {
+  // printf("COMBINEDCALLED threadIdx.x = %d\n", thread);
+  // if (blockD >= 64)
+  sum[thread] += sum[thread + 32];
+  // if (blockD >= 32)
+  sum[thread] += sum[thread + 16];
+  // if (blockD >= 16)
+  sum[thread] += sum[thread + 8];
+  // if (blockD >= 8)
+  sum[thread] += sum[thread + 4];
+  // if (blockD >= 4)
+  sum[thread] += sum[thread + 2];
+  // if (blockD >= 2)
+  sum[thread] += sum[thread + 1];
 }
 
 void __global__ dnrm2(double *in1, unsigned r, unsigned c, double *max, double *out) {
@@ -134,4 +201,115 @@ void __global__ maxVal(double *in1, unsigned r, unsigned c, double *out) {
   // if (lastBlock(lastBlockCounter)) {
   //   shArr[thIdx] = thIdx<gridSize ? gOut[thIdx] : 0;
   //   __syncthreads();
+}
+
+void __global__ multiplyNaive(double *in1, unsigned *rows1, unsigned *cols1, double *in2, unsigned *rows2, unsigned *cols2, double *output) {
+  const unsigned x = blockIdx.y * blockDim.y + threadIdx.y; // row
+  const unsigned y = blockIdx.x * blockDim.x + threadIdx.x; // column
+  double sum = 0;
+  if ((x < *rows1) && (y < *cols2)) {
+    for (int i = 0; i < *cols1; ++i) {
+      sum += in1[x * *cols1 + i] * in2[i * *cols2 + y];
+      // printf("sum = %f += in1[%d] * in2[%d] = %f * %f\n",sum,r * *cols1 + i,
+      // i * *cols2 + c,in1[r * *cols1 + i],in2[i * *cols2 + c]);
+    }
+    output[x * *cols2 + y] = sum;
+    // printf("output[%d] = %f\n",r * *cols2 + c, output[r * *cols2 + c]);
+  }
+}
+
+void __global__ scale(double *input, double scalar, double *output, unsigned *r, unsigned *c, bool inverse) {
+  const unsigned bid = blockIdx.x                               // 1D
+                       + blockIdx.y * gridDim.x                 // 2D
+                       + gridDim.x * gridDim.y * blockIdx.z;    // 3D
+  const unsigned threadsPerBlock = blockDim.x * blockDim.y      // 2D
+                                   * blockDim.z;                // 3D
+  const unsigned tid = threadIdx.x                              // 1D
+                       + threadIdx.y * blockDim.x               // 2D
+                       + blockDim.x * blockDim.x * threadIdx.z; // 3D
+  const unsigned gid = bid * threadsPerBlock + tid;
+  // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d,
+  // value=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
+  //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,input[gid]);
+  if (gid < *r * *c) {
+    if (inverse) {
+      output[gid] = input[gid] * (1.0 / scalar);
+      // printf("%f = %f / %f\n", output[gid], input[gid], *scalar);
+    } else {
+      output[gid] = input[gid] * scalar;
+      // printf("out[%d] = %f = %f * %f\n", gid, output[gid], input[gid], *scalar);
+    }
+  }
+}
+
+void __global__ add(double *in1, double *in2, unsigned *rows, unsigned *cols, double *out, bool add) {
+  const unsigned bid = blockIdx.x                               // 1D
+                       + blockIdx.y * gridDim.x                 // 2D
+                       + gridDim.x * gridDim.y * blockIdx.z;    // 3D
+  const unsigned threadsPerBlock = blockDim.x * blockDim.y      // 2D
+                                   * blockDim.z;                // 3D
+  const unsigned tid = threadIdx.x                              // 1D
+                       + threadIdx.y * blockDim.x               // 2D
+                       + blockDim.x * blockDim.x * threadIdx.z; // 3D
+  const unsigned gid = bid * threadsPerBlock + tid;
+  // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d, in1=%f,
+  // in2=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
+  //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,in1[gid],in2[gid]);
+  int s = add ? 1 : -1;
+  if (gid < *rows * *cols)
+    out[gid] = in1[gid] + (s * in2[gid]);
+  // printf("%f = %f + %f\n", out[gid], in1[gid], in2[gid]);
+}
+
+// BLOCK SWEEPS ACROSS TILE (TILE SIZE > BLOCK SIZE)
+// source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
+void __global__ transposeTiled(double *in1, double *output, unsigned *rows, unsigned *cols) {
+  extern __shared__ double A[]; // Add +1 to prevent bank-conflicts
+
+  int x = blockIdx.x * blockDim.x + threadIdx.x; // col
+  int y = blockIdx.y * blockDim.y + threadIdx.y; // row
+
+  // Load the matrix into shared memory
+  for (int i = 0; i < blockDim.y; i += blockDim.y) {
+    if ((x < *cols) && (y < *rows)) {
+      // A[(row + i) * height + col] = in1[(row + i) * width + col];
+      A[threadIdx.y + i + blockDim.x * threadIdx.x] = in1[(y + i) * *cols + x];
+      // printf(
+      //     "block(%d, %d), thread(%d,% d), row = %d, col = %d, ,i=%d, A[%d][%d] "
+      //     "= in1[%d] = %f\n",
+      //     blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i, threadIdx.y + i,
+      //     threadIdx.x, (y + i) * *cols + x, in1[(y + i) * *cols + x]);
+    }
+  };
+
+  __syncthreads();
+  x = blockIdx.y * blockDim.x + threadIdx.x; // x-dimension col
+  y = blockIdx.x * blockDim.y + threadIdx.y; // y-dimension row
+
+  for (int i = 0; i < blockDim.y; i += blockDim.y) {
+    // printf("block(%d, %d), thread(%d, %d), i=%d, A[%d][%d] = %f\n",
+    //       blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, i,
+    //       threadIdx.y+i,threadIdx.x, A[threadIdx.y+i][threadIdx.x]);
+    if ((y + i < *cols) && (x < *rows)) {
+      // output[col * width + (row+i)] = A[(row + i) * width + col];
+      output[(y + i) * *rows + x] = A[threadIdx.x + blockDim.x * (threadIdx.y + i)];
+      // printf(
+      //     "block(%d, %d), thread(%d, %d), row = %d, col = %d, i=%d, output[%d] "
+      //     "= A[%d][%d] = %f\n",
+      //     blockIdx.y, blockIdx.x, threadIdx.y, threadIdx.x, y, x, i, (y + i) * *rows + x,
+      //     threadIdx.x, threadIdx.y + i, A[threadIdx.x][threadIdx.y + i]);
+    }
+  }
+}
+
+__global__ void spmvNaive(unsigned *rows, unsigned *col, int *rowPtr, int *colIdx, double *val, double *rhs, double *out) {
+  int gid = blockIdx.x * blockDim.x + threadIdx.x;
+  int bid;
+
+  if (gid < *rows) {
+    out[gid] = double(0.0);
+    for (bid = rowPtr[gid]; bid < rowPtr[gid + 1]; ++bid) {
+      out[gid] += val[bid] * rhs[colIdx[bid]];
+    }
+  }
 }
