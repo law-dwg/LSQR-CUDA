@@ -1,7 +1,4 @@
 #pragma once
-#include <algorithm>
-#include <iostream>
-#include <iterator>
 #include <vector>
 
 class VectorCPU {
@@ -29,14 +26,14 @@ public:
   }
   ~VectorCPU() { mat.clear(); };
   /** Assignments */
-  VectorCPU &operator=(const VectorCPU &v) { // Copy assignment operator
+  VectorCPU &operator=(const VectorCPU &v) { // Copy Assignment
     rows = v.rows;
     columns = v.columns;
     mat = v.mat;
     return *this;
   };
 
-  VectorCPU &operator=(VectorCPU &&v) noexcept { // Move assignment operator
+  VectorCPU &operator=(VectorCPU &&v) noexcept { // Move Assignment
     // call copy assignment
     *this = v;
     v.rows = 0;
@@ -55,7 +52,7 @@ public:
 
   // member functions
   double *getMat() { return this->mat.data(); };
-  void print();
+  void printMat();
   int getRows() { return this->rows; };
   int getColumns() { return this->columns; };
   double Dnrm2();

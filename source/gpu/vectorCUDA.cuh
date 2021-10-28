@@ -2,10 +2,6 @@
 #include "../cpu/vectorCPU.hpp"
 #include "kernels.cuh"
 #include "utils.cuh"
-#include <algorithm>
-#include <stdlib.h> /* srand, rand */
-#include <time.h>   /* time */
-#include <vector>
 
 class VectorGPU {
 protected:
@@ -34,7 +30,7 @@ public:
   VectorGPU(unsigned r, unsigned c, double *m) : VectorGPU(r, c) { // Constr. #2
     cudaErrCheck(cudaMemcpy(d_mat, m, sizeof(double) * r * c, cudaMemcpyHostToDevice));
   };
-  VectorGPU(const VectorGPU &v) : h_rows(v.h_rows), h_columns(v.h_columns) { // Copy constructor
+  VectorGPU(const VectorGPU &v) : h_rows(v.h_rows), h_columns(v.h_columns) { // Copy Constr.
     // allocate to device
     cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
@@ -56,7 +52,7 @@ public:
     cudaErrCheck(cudaMemcpy(v.d_mat, &temp, sizeof(double), cudaMemcpyHostToDevice));
   };
 
-  VectorGPU(VectorCPU &v) : VectorGPU(v.getRows(), v.getColumns(), v.getMat()){}; // Copy constructor from CPU
+  VectorGPU(VectorCPU &v) : VectorGPU(v.getRows(), v.getColumns(), v.getMat()){}; // Copy Constr.: VectorCPU -> VectorGPU
 
   /** Destructor */
   ~VectorGPU() {
@@ -66,8 +62,8 @@ public:
   };
 
   /** Assignments */
-  VectorGPU &operator=(const VectorGPU &v) { // Copy assignment operator
-    // free + memory allocation (if needed)
+  VectorGPU &operator=(const VectorGPU &v) { // Copy Assignment
+    // free + memory allocation (if needed) - checks to reduce cuda calls
     if (h_rows * h_columns != v.h_rows * v.h_columns) {
       cudaErrCheck(cudaFree(d_mat));
       cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.h_rows * v.h_columns));
@@ -83,12 +79,12 @@ public:
     cudaErrCheck(cudaMemcpy(d_mat, v.d_mat, sizeof(double) * v.h_columns * v.h_rows, cudaMemcpyDeviceToDevice));
     return *this;
   };
-  VectorGPU &operator=(VectorGPU &&v) noexcept { // Move assignment operator
+  VectorGPU &operator=(VectorGPU &&v) noexcept { // Move Assignment
     // call copy assignment
     *this = v;
     v.h_rows = ZERO;
     v.h_columns = ZERO;
-    // freeing memory handled by destructor, potential err. blocked via rows = cols = 0
+    // freeing memory handled by destructor. Potential operation errors blocked via rows = cols = 0
     return *this;
   }
 
@@ -98,8 +94,8 @@ public:
   double *getMat() { return d_mat; };
 
   /** Virtual members */
-  virtual void operator=(VectorCPU &v) = 0;
-  virtual void printmat() = 0;
+  virtual void operator=(VectorCPU &v) = 0; // Copy Assignment: VectorCPU -> VectorGPU
+  virtual void printMat() = 0;
   virtual VectorCPU matDeviceToHost() = 0;
   virtual double Dnrm2() = 0;
 };
@@ -118,7 +114,7 @@ public:
 
   /** Member Functions */
   VectorCUDA transpose();      // Transpose
-  void printmat();             // PrintKernel
+  void printMat();             // PrintKernel
   VectorCPU matDeviceToHost(); // CopyToHost
   double Dnrm2();              // EuclideanNorm
 };

@@ -50,7 +50,6 @@ void __global__ print(double *input, unsigned *r, unsigned *c) {
 };
 void __global__ maxVal(double *in1, unsigned r, unsigned c, double *out) {
   extern __shared__ double maxV[];
-  int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
   int x2 = (blockIdx.x * (blockDim.x * 2) + threadIdx.x) + blockDim.x;
   // load into shared
@@ -76,7 +75,6 @@ void __global__ maxVal(double *in1, unsigned r, unsigned c, double *out) {
 };
 void __global__ dnrm2(double *in1, unsigned r, unsigned c, double *max, double *out) {
   extern __shared__ double sum[];
-  int gid = blockIdx.x * blockDim.x + threadIdx.x;
   int x = blockIdx.x * (blockDim.x * 2) + threadIdx.x;
   int x2 = (blockIdx.x * (blockDim.x * 2) + threadIdx.x) + blockDim.x;
   // load into shared
@@ -89,7 +87,6 @@ void __global__ dnrm2(double *in1, unsigned r, unsigned c, double *max, double *
   }
   __syncthreads();
   // standard reduction
-  int s_stop = 0;
   for (unsigned s = blockDim.x / 2; s > 0; s >>= 1) {
     if (threadIdx.x < s) {
       sum[threadIdx.x] += sum[threadIdx.x + s];

@@ -15,7 +15,7 @@ public:
 
   /** Member Functions */
   VectorCUBLAS transpose();    // Transpose
-  void printmat();             // PrintKernel
+  void printMat();             // PrintKernel
   VectorCPU matDeviceToHost(); // CopyToHost
   double Dnrm2();              // EuclideanNorm
 };

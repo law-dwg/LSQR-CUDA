@@ -91,8 +91,8 @@ int main() {
       printf("Running lsqr-CPU implementation\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
       VectorCPU A_c(A_rows, A_cols, A.data());
       VectorCPU b_c(b_rows, b_cols, b.data());
-      // A_c.print();
-      // b_c.print();
+      // A_c.printMat();
+      // b_c.printMat();
       std::clock_t c_start = std::clock();
       VectorCPU x_c = lsqr<VectorCPU, VectorCPU>(A_c, b_c);
       std::clock_t c_end = std::clock();

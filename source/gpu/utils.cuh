@@ -6,7 +6,7 @@
 #include <cuda.h>
 #include <cuda_profiler_api.h>
 #include <cuda_runtime.h>
-#include <stdio.h> //NULL, printf
+#include <stdio.h>
 
 #ifndef IDX2C
 #define IDX2C(i, j, ld) (((j) * (ld)) + (i))

@@ -1,26 +1,9 @@
 #include "vectorCUBLAS.cuh"
 #include <assert.h>
-// void __global__ print(double *input, unsigned *r, unsigned *c) {
-//  const unsigned bid = blockIdx.x                               // 1D
-//                           + blockIdx.y * gridDim.x                 // 2D
-//                           + gridDim.x * gridDim.y * blockIdx.z;    // 3D
-//  const unsigned threadsPerBlock = blockDim.x * blockDim.y      // 2D
-//                                       * blockDim.z;                // 3D
-//  const unsigned tid = threadIdx.x                              // 1D
-//                           + threadIdx.y * blockDim.x               // 2D
-//                           + blockDim.x * blockDim.x * threadIdx.z; // 3D
-//  const unsigned gid = bid * threadsPerBlock + tid;
-//  // printf("thread(%d,%d,%d), block(%d,%d,%d), bid=%d, gid=%d,
-//  // value=%f\n",threadIdx.x,threadIdx.y,threadIdx.z,
-//  //    blockIdx.x,blockIdx.y,blockIdx.z,bid,gid,input[gid]);
-//  __syncthreads();
-//  if (gid < *r * *c) {
-//    printf("%f\n", input[gid]);
-//  }
-//}
+#include <stdio.h>
+
 /** Operator overloads */
 VectorCUBLAS VectorCUBLAS::operator*(VectorCUBLAS &v) {
-
   // a(m x k) * b(k * n) = c(m * n)
   VectorCUBLAS out(this->getRows(), v.getColumns());
   if (this->getColumns() == v.getRows()) {
@@ -54,7 +37,6 @@ VectorCUBLAS VectorCUBLAS::operator-(const VectorCUBLAS &v) {
     int k = this->h_columns;
     int lda = m, ldb = k, ldc = m;
     cublasOperation_t OP = (m == 1 || n == 1) ? CUBLAS_OP_T : CUBLAS_OP_N;
-    // printf("h_rows = %d, h_cols = %d, v.h_rows = %d, v.h_cols = %d\n",this->h_rows,this->h_columns,v.h_rows,v.h_columns);
     cublasErrCheck(cublasDgeam(handle, CUBLAS_OP_N, OP, m, n, &ONE, this->d_mat, lda, &NEGONE, v.d_mat, ldb, out.d_mat, ldc));
   } else {
     printf("Cannot perform subtraction, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
@@ -65,7 +47,6 @@ VectorCUBLAS VectorCUBLAS::operator-(const VectorCUBLAS &v) {
 
 VectorCUBLAS VectorCUBLAS::operator+(const VectorCUBLAS &v) {
   VectorCUBLAS out(this->h_rows, this->h_columns);
-  // printf("h_rows = %d, h_cols = %d, v.h_rows = %d, v.h_cols = %d\n",this->h_rows,this->h_columns,v.h_rows,v.h_columns);
   if (this->h_rows * this->h_columns == v.h_rows * v.h_columns) {
     int m = out.h_rows;
     int n = out.h_columns;
@@ -90,7 +71,7 @@ VectorCPU VectorCUBLAS::matDeviceToHost() {
   cudaErrCheck(cudaMemcpy(&cols, this->d_columns, sizeof(unsigned), cudaMemcpyDeviceToHost));
   // printf("d_rows = %d, h_rows = %d, d_cols = %d, h_cols = %d\n", rows, h_rows, cols, h_columns);
   if (rows != this->h_rows || cols != this->h_columns) {
-    printf("INCONSISTENT ROWS AND COLS BETWEEN HOST AND DEVICE\n");
+    printf("Cannot perform move to host, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
     exit(1);
   }
   VectorCPU v_cpu(this->h_rows, this->h_columns, out);
@@ -99,26 +80,23 @@ VectorCPU VectorCUBLAS::matDeviceToHost() {
 
 double VectorCUBLAS::Dnrm2() {
   double h_out;
-  int *version;
   double *d_out;
-  double zero = 0.0;
   cudaErrCheck(cudaMalloc(&d_out, sizeof(double)));
   int size = (this->h_rows * this->h_columns);
   int incre = 1;
   cublasErrCheck(cublasDnrm2(handle, size, this->d_mat, incre, &h_out));
+  // sanity checks
   assert(!(h_out != h_out));
+  assert(h_out > 0);
   return h_out;
 };
 
-void VectorCUBLAS::printmat() {
-  unsigned blocksX = (this->h_rows / 16) + 1;
-  unsigned blocksY = (this->h_columns / 16) + 1;
+void VectorCUBLAS::printMat() {
+  unsigned blocksX = (this->h_rows / BLOCK_SIZE_X) + 1;
+  unsigned blocksY = (this->h_columns / BLOCK_SIZE_Y) + 1;
   dim3 grid(blocksX, blocksY, 1);
-  dim3 block(16, 16, 1);
-
-  // print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
-  // cudaErrCheck(cudaPeekAtLastError());
-  cudaDeviceSynchronize();
+  dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
+  print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
 }
 
 VectorCUBLAS VectorCUBLAS::transpose() {

@@ -1,11 +1,10 @@
 #include "kernels.cuh"
 #include "vectorCUDA.cuh"
 #include <assert.h>
-#include <iostream>
-#include <math.h>
+#include <cmath>
+#include <stdio.h>
 
 /** Operator overloads */
-
 VectorCUDA VectorCUDA::operator*(double h_i) {
   VectorCUDA out(this->h_rows, this->h_columns);
   unsigned blocksX = (this->h_rows / BLOCK_SIZE_X) + 1;
@@ -80,7 +79,7 @@ VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
 }
 
 /** Member Functions */
-void VectorCUDA::printmat() {
+void VectorCUDA::printMat() {
   unsigned blocksX = (this->h_rows / BLOCK_SIZE_X) + 1;
   unsigned blocksY = (this->h_columns / BLOCK_SIZE_Y) + 1;
   dim3 grid(blocksX, blocksY, 1);
@@ -132,5 +131,5 @@ double VectorCUDA::Dnrm2() {
   // sanity checks
   assert(!(h_out != h_out));
   assert(h_out > 0);
-  return (std::abs(h_max) * sqrt(h_out));
+  return (std::abs(h_max) * std::sqrt(h_out));
 };

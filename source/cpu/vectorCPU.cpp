@@ -81,7 +81,7 @@ double VectorCPU::operator()(unsigned r, unsigned c) {
 double VectorCPU::operator[](unsigned i) { return (this->mat[i]); };
 
 // member functions
-void VectorCPU::print() {
+void VectorCPU::printMat() {
   printf("#ofRows:%i #ofCols:%i\n", this->rows, this->columns);
   printf("PRINTING MATRIX\n[");
   for (int e = 0; e < (this->mat.size()); e++) {

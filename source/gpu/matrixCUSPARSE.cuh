@@ -57,7 +57,7 @@ public:
   ~MatrixCUSPARSE() { cusparseErrCheck(cusparseDestroySpMat(spMatDescr)); };
 
   /** Assignments */
-  MatrixCUSPARSE &operator=(const MatrixCUSPARSE &m) { // Copy assignment operator
+  MatrixCUSPARSE &operator=(const MatrixCUSPARSE &m) { // Copy Assignment
     // free + memory allocation
     if (h_rows != m.h_rows) {
       h_rows = m.h_rows;
@@ -86,8 +86,7 @@ public:
                                        CUSPARSE_INDEX_32I, CUSPARSE_INDEX_BASE_ZERO, CUDA_R_64F));
     return *this;
   };
-  MatrixCUSPARSE &operator=(MatrixCUSPARSE &&m) noexcept { // Move assignment operator
-    printf("MatrixCUSPARSE Move Assignment called\n");
+  MatrixCUSPARSE &operator=(MatrixCUSPARSE &&m) noexcept { // Move Assignment
     // call copy assignment
     *this = m;
     m.h_rows = ZERO;

@@ -21,7 +21,6 @@ protected:
 public:
   /** Constructors */
   MatrixGPU(unsigned r, unsigned c) : h_rows(r), h_columns(c) { // Constr. #1
-    printf("MatrixGPU Constructor #1 was called\n");
     cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_nnz, sizeof(unsigned)));
@@ -36,7 +35,6 @@ public:
   };
   MatrixGPU(unsigned r, unsigned c, unsigned n) : MatrixGPU(r, c) { // Constr. #2
     h_nnz = n;
-    printf("MatrixGPU Constructor #2 was called\n");
     // allocate
     cudaErrCheck(cudaMalloc((void **)&d_csrVal, h_nnz * sizeof(double)));
     cudaErrCheck(cudaMalloc((void **)&d_csrColInd, h_nnz * sizeof(int)));
@@ -46,29 +44,26 @@ public:
     cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
   };
   MatrixGPU() : MatrixGPU(0, 0, 0u) { // Default Constr.
-    printf("MatrixGPU Default constructor called\n");
     cudaErrCheck(cudaMemset(d_csrVal, ZERO, h_nnz * sizeof(double)));
     cudaErrCheck(cudaMemset(d_csrColInd, ZERO, h_nnz * sizeof(int)));
     cudaErrCheck(cudaMemset(d_csrRowPtr, ZERO, (h_rows + 1) * sizeof(int)));
   };
   MatrixGPU(unsigned r, unsigned c, unsigned n, double *values, int *colInd, int *rowPtr) : MatrixGPU(r, c, n) { // Constr. #3
-    printf("MatrixGPU Constructor #3 called\n");
     // copy to device
     cudaErrCheck(cudaMemcpy(d_csrVal, values, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrColInd, colInd, h_nnz * sizeof(int), cudaMemcpyDeviceToDevice));
     cudaErrCheck(cudaMemcpy(d_csrRowPtr, rowPtr, (h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
   }
-  MatrixGPU(unsigned r, unsigned c, double *m) : MatrixGPU(r, c) { // Constructor (entry point)
+  MatrixGPU(unsigned r, unsigned c, double *m) : MatrixGPU(r, c) { // Constr. (entry point)
     h_nnz = 0;
-    printf("MatrixGPU Entry Point was called\n");
     int row, col;
     col = row = 0;
     std::vector<int> temp_rowPtr, temp_colIdx;
     temp_rowPtr.push_back(0);
     std::vector<double> temp_vals;
+    // convert to CSR
     for (int i = 0; i < r * c; ++i) {
       if (((int)(i / c)) > row) {
-        // printf("i=%d, h_nnz=%d, row=%d\n", i, h_nnz, row);
         temp_rowPtr.push_back(h_nnz);
         row = i / c;
       }
@@ -89,14 +84,9 @@ public:
     cudaErrCheck(cudaMemcpy(d_csrRowPtr, temp_rowPtr.data(), sizeof(unsigned) * (r + 1), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrColInd, temp_colIdx.data(), sizeof(unsigned) * h_nnz, cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrVal, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice));
-    printf("nnz = %d, rowIdx.size = %d, colIdx.size = %d\n", h_nnz, temp_rowPtr.size(), temp_colIdx.size());
   };
-  MatrixGPU(const MatrixGPU &m) : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) { // Copy Constr.
-    printf("MatrixGPU Copy Constructor called\n");
-  };
-  MatrixGPU(MatrixGPU &&m) noexcept
-      : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) { // MatrixGPU Move Constructor
-    printf("MatrixGPU Move Constructor called\n");
+  MatrixGPU(const MatrixGPU &m) : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr){};    // Copy Constr.
+  MatrixGPU(MatrixGPU &&m) noexcept : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) { // MatrixGPU Move Constr.
     // free old resources
     cudaErrCheck(cudaFree(m.d_csrVal));
     cudaErrCheck(cudaFree(m.d_csrRowPtr));
@@ -117,7 +107,6 @@ public:
 
   /** Destructor */
   ~MatrixGPU() { // Destructor
-    printf("MatrixGPU DESTRUCTOR CALLED\n");
     cusparseErrCheck(cusparseDestroyMatDescr(descr));
     cudaErrCheck(cudaFree(dBuffer));
     cudaErrCheck(cudaFree(d_nnz));
@@ -129,8 +118,7 @@ public:
   };
 
   /** Assignments */
-  MatrixGPU &operator=(const MatrixGPU &m) { // Copy assignment operator
-    printf("MatrixGPU Copy Assignment Operator called\n");
+  MatrixGPU &operator=(const MatrixGPU &m) { // Copy Assignment
     // free + memory allocation (if needed)
     if (h_rows != m.h_rows) {
       h_rows = m.h_rows;
@@ -158,14 +146,13 @@ public:
     return *this;
   };
 
-  MatrixGPU &operator=(MatrixGPU &&m) noexcept { // Move assignment operator
-    printf("MatrixGPU Move Assignment called\n");
+  MatrixGPU &operator=(MatrixGPU &&m) noexcept { // Move Assignment
     // call copy assignment
     *this = m;
     m.h_rows = ZERO;
     m.h_nnz = ZERO;
     m.h_columns = ZERO;
-    // freeing memory handled by destructor, potential err. blocked via rows = cols = 0
+    // freeing memory handled by destructor, potential errors are blocked by rows = cols = 0
     return *this;
   };
 
