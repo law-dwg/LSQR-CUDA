@@ -75,7 +75,7 @@ clean:
 	rm -r $(BUILD_DIR)
 
 clean_mats:
-	rm input/*.txt output/*.txt
+	rm input/*.mat input/*.vec output/*.vec
 
 clean_debug:
 	rm -r $(DEBUG_BUILD_DIR)

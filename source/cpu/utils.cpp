@@ -125,9 +125,9 @@ void matrixBuilder(unsigned r, unsigned c, double sparsity, const char *dir, con
     mat[i] = rands();
   }
   std::random_shuffle(mat.begin(), mat.end());
-
+  std::string fileExt = (*matLetter == 'A') ? "mat" : "vec";
   std::stringstream fileName;
-  fileName << dir << r << "_" << c << "_" << matLetter << ".txt";
+  fileName << dir << r << "_" << c << "_" << (int)(sparsity*100) << "_" << matLetter << "." << fileExt;
   writeArrayToFile(fileName.str(), r, c, mat.data());
 };
 
@@ -175,8 +175,10 @@ void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vecto
 
   // read and allocate data
   if (file.substr(unders2 + 1) == "A") {                            // A Matrix
+    std::string temp = file.substr(unders1 + 1, (unders2 - unders1));
+    size_t unders3 = temp.find(delim[2]);
     A_r = std::stoi(file.substr(0, unders1));                       // read rows from filename
-    A_c = std::stoi(file.substr(unders1 + 1, (unders2 - unders1))); // read cols from filename
+    A_c = std::stoi(temp.substr(0, unders3)); // read cols from filename
     printf("Loading matrix A(%d,%d)...", A_r, A_c);
     readArrayFromFile(path.c_str(), A_r, A_c, A);
     printf(" done\n");
@@ -187,6 +189,6 @@ void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vecto
     readArrayFromFile(path.c_str(), b_r, b_c, b);
     printf(" done\n");
   } else { // err
-    printf("Error while trying to read %s, please rename to either \"NumOfRows_1_b.txt\" or \"NumOfRows_NumOfCols_A.txt\" \n", path);
+    printf("Error while trying to read %s, please rename to either \"NumOfRows_1_b.vec\" or \"NumOfRows_NumOfCols_A.mat\" \n", path);
   }
 }
