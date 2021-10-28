@@ -1,6 +1,10 @@
 TARGET := lsqr
 BUILD_DIR := ./build
 
+# Main
+SRC_MAIN := ./gpu/main.cu
+OBJ_MAIN := $(BUILD_DIR)/$(SRC_MAIN).o
+
 # GPU code
 SRC_GPU := ./gpu
 NVCC := nvcc
@@ -35,10 +39,10 @@ DEBUG_OBJS_CU := $(SOURCES_CU:%=$(DEBUG_BUILD_DIR)/%.o)
 DEBUG_OBJS_CPP := $(SOURCES_CPP:%=$(DEBUG_BUILD_DIR)/%.o)
 
 # Main build
-$(BUILD_DIR)/$(TARGET): $(OBJS_CPP) $(OBJS_CU) $(BUILD_DIR)/main.cu.o
-	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_BE_QUIET) $(CC_OPT_FLAGS) $(NVCC_OPT_FLAGS) $(BUILD_DIR)/main.cu.o $(OBJS_CU) $(OBJS_CPP) -o $@
+$(BUILD_DIR)/$(TARGET): $(OBJS_CPP) $(OBJS_CU) $(OBJ_MAIN)
+	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_BE_QUIET) $(CC_OPT_FLAGS) $(NVCC_OPT_FLAGS) $(OBJ_MAIN) $(OBJS_CU) $(OBJS_CPP) -o $@
 
-$(BUILD_DIR)/main.cu.o: gpu/main.cu
+$(OBJ_MAIN): $(SRC_MAIN)
 	mkdir -p $(dir $@)
 	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_BE_QUIET) $(NVCC_OPT_FLAGS) -dc $< -o $@
 
