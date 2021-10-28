@@ -10,11 +10,11 @@ NVCC_OPT_FLAGS = -Xptxas -O3 -use_fast_math
 NVCC_BE_QUIET = -Wno-deprecated-gpu-targets
 NVCC_DEBUG_FLAGS = -G
 SOURCES_CU =	$(SRC_GPU)/lsqr.cu \
-				$(SRC_GPU)/VectorCUDA.cu \
-				$(SRC_GPU)/VectorCUBLAS.cu \
-				$(SRC_GPU)/MatrixCUSPARSE.cu \
-				$(SRC_GPU)/MatrixCUDA.cu \
-				$(SRC_GPU)/Kernels.cu \
+				$(SRC_GPU)/vectorCUDA.cu \
+				$(SRC_GPU)/vectorCUBLAS.cu \
+				$(SRC_GPU)/matrixCUSPARSE.cu \
+				$(SRC_GPU)/matrixCUDA.cu \
+				$(SRC_GPU)/kernels.cu \
 				$(SRC_GPU)/utils.cu
 
 OBJS_CU := $(SOURCES_CU:%=$(BUILD_DIR)/%.o)
@@ -24,9 +24,9 @@ SRC_CPU := ./cpu
 CC = g++
 CC_OPT_FLAGS = -O3
 CC_DEBUG_FLAGS = -g 
-SOURCES_CPP = 	$(SRC_CPU)/matrixBuilder.cpp \
+SOURCES_CPP = 	$(SRC_CPU)/utils.cpp \
 				$(SRC_CPU)/lsqr.cpp \
-				$(SRC_CPU)/VectorCPU.cpp
+				$(SRC_CPU)/vectorCPU.cpp
 OBJS_CPP := $(SOURCES_CPP:%=$(BUILD_DIR)/%.o)
 
 # Debug
