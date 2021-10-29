@@ -25,8 +25,8 @@ VectorCUDA VectorCUDA::operator*(VectorCUDA &v) {
 
   if (h_columns == v.h_rows) {
     if (tiled) {
-      multiplyTiled<<<blocks, threads, (BLOCK_SIZE_X * (BLOCK_SIZE_Y + 1) * sizeof(double)) * 2>>>(this->d_mat, this->d_rows, this->d_columns,
-                                                                                                   v.d_mat, v.d_rows, v.d_columns, out.d_mat);
+      multiplyTiled<<<blocks, threads, ((BLOCK_SIZE_X * (BLOCK_SIZE_Y + 1) * sizeof(double)) * 2)>>>(this->d_mat, this->d_rows, this->d_columns,
+                                                                                                     v.d_mat, v.d_rows, v.d_columns, out.d_mat);
     } else {
       multiplyNaive<<<blocks, threads>>>(this->d_mat, this->d_rows, this->d_columns, v.d_mat, v.d_rows, v.d_columns, out.d_mat);
     }

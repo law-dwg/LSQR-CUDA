@@ -116,7 +116,7 @@ void __global__ multiplyTiled(double *in1, unsigned *rows1, unsigned *cols1, dou
   // BLOCK AND TILE SWEEP TOGETHER (BLOCK_SIZE = TILE_SIZE)
   extern __shared__ double array[];
   double *A = (double *)array;
-  double *B = (double *)&A[blockDim.x * blockDim.y];
+  double *B = (double *)&A[blockDim.x * (blockDim.y + 1)];
   int y = blockIdx.y * blockDim.y + threadIdx.y; // row
   int x = blockIdx.x * blockDim.x + threadIdx.x; // col
   double sum = 0;                                // sum in block
@@ -126,15 +126,15 @@ void __global__ multiplyTiled(double *in1, unsigned *rows1, unsigned *cols1, dou
     // load into shared
     if (i + threadIdx.x < *cols1 && y < *rows1) {
       id1 = y * *cols1 + i + threadIdx.x;
-      A[threadIdx.x + blockDim.x * threadIdx.y] = in1[id1];
+      A[(blockDim.y + 1) * threadIdx.y + threadIdx.x] = in1[id1];
     } else {
-      A[threadIdx.x + blockDim.x * threadIdx.y] = 0.0;
+      A[(blockDim.y + 1) * threadIdx.y + threadIdx.x] = 0.0;
     }
     if (i + threadIdx.y < *rows2 && x < *cols2) {
       id2 = (i * *cols2 + threadIdx.y * *cols2) + x;
-      B[threadIdx.x + blockDim.x * threadIdx.y] = in2[id2];
+      B[(blockDim.y + 1) * threadIdx.y + threadIdx.x] = in2[id2];
     } else {
-      B[threadIdx.x * blockDim.x * threadIdx.y] = 0.0;
+      B[(blockDim.y + 1) * threadIdx.y + threadIdx.x] = 0.0;
     }
     __syncthreads();
     // perform multiplication
@@ -144,7 +144,7 @@ void __global__ multiplyTiled(double *in1, unsigned *rows1, unsigned *cols1, dou
       Ay = threadIdx.y;
       Bx = threadIdx.x;
       By = j;
-      sum += A[Ax + blockDim.x * Ay] * B[Bx + blockDim.x * By];
+      sum += A[(blockDim.y + 1) * Ay + Ax] * B[(blockDim.y + 1) * By + Bx];
     };
     __syncthreads();
     // save to out
