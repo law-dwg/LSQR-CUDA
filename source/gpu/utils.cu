@@ -1,7 +1,7 @@
 #include "utils.cuh"
 #include <iostream>
-const unsigned BLOCK_SIZE_X = 32;
-const unsigned BLOCK_SIZE_Y = 32;
+const unsigned BLOCK_SIZE_X = 16;
+const unsigned BLOCK_SIZE_Y = 16;
 const double ONE = 1.0;
 const double ZERO = 0.0;
 const double NEGONE = -1.0;
@@ -39,7 +39,7 @@ int checkDevice() {
 };
 
 void cudaLastErrCheck() {
-  cudaError_t err = cudaGetLastError(); // add
+  cudaError_t err = cudaGetLastError();
   if (err != cudaSuccess) {
     std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
   }
@@ -50,21 +50,10 @@ void cudaLastErrCheck() {
 cublasStatus_t stat;
 cudaError_t cudaStat;
 cublasHandle_t handle;
-// cudaStream_t stream;
 
 void cublasStart() {
   cublasErrCheck(cublasCreate(&handle));
   cublasErrCheck(cublasSetPointerMode(handle, MODE));
-  // cudaStatCreateStream = cudaStreamCreate(&stream);
-  // if (cudaStatCreateStream != cudaSuccess) {
-  //   printf("CUBLAS create stream failed\n");
-  //   // return EXIT_FAILURE;
-  // }
-  // statSetStream = cublasSetStream(handle, stream);
-  // if (statSetStream != CUBLAS_STATUS_SUCCESS) {
-  //   printf("CUBLAS set pointer failed\n");
-  //   // return EXIT_FAILURE;
-  // }
 };
 
 void cublasStop() { cublasDestroy(handle); };
