@@ -29,8 +29,6 @@ bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG) 
   }
   if (same) {
     for (int i = 0; i < rowC * colC; i++) {
-      // printf("MG[%d] = %f, MC[%d] = %f\n", i, MG[i], i, MC[i]);
-      // printf("DIFF = %f, %f == %f\n", std::abs(MG[i] - MC[i]), MG[i], MC[i]);
       if (!(std::abs(MG[i] - MC[i]) < epsilon)) {
         printf("MATRICIES SIZE (%d x %d) DO NOT MATCH DISCREPANCY AT INDEX %d; DIFF = %f, %f "
                "== %f\n",
@@ -50,23 +48,20 @@ bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG) 
   return same;
 };
 
-bool compareVal(double *VC, double *VG) {
-  typedef std::numeric_limits<double> dbl;
-  bool same = false;
-  printf("GPU: %20f\n", *VG);
-  printf("CPU: %20f\n", *VC);
-  std::cout.precision(dbl::max_digits10);
-  std::cout << *VC << std::endl;
-  std::cout << *VG << std::endl;
-  std::cout << std::abs(*VC - *VG) << std::endl;
-  if (std::abs(*VC - *VG) < 1e-15) {
-    printf("THEY ARE SAME\n");
-    same = true;
-  } else {
-    printf("THEY ARE NOT SAME\n");
+void sizeCheck(unsigned A_r, unsigned A_c, std::vector<double> &A, unsigned b_r, unsigned b_c, std::vector<double> &b, std::string A_f,
+               std::string b_f) {
+  bool A_sizecheck, b_sizecheck, Ab_rowscheck, all_checks;
+  A_sizecheck = A.size() == A_r * A_c && A_r != 0 && A_c != 0;
+  b_sizecheck = b.size() == b_r * b_c && b_r != 0 && b_c == 1;
+  Ab_rowscheck = A_r == b_r;
+  all_checks = A_sizecheck && b_sizecheck && Ab_rowscheck;
+  if (!all_checks) {
+    printf("\n\nERROR, please check the matrix file naming convention of\nA - '%s' == 'input/#rows_#cols_A_#sparsity.mat'\nb - '%s'"
+           " == input/'#rows_1_b.vec'\n\nThese values (rows * columns) must match the number of values in each file\n\n",
+           A_f.c_str(), b_f.c_str());
+    exit(1);
   }
-  return same;
-}
+};
 
 void writeArrayToFile(std::string dest, unsigned rows, unsigned cols, double *arr) {
   typedef std::numeric_limits<double> dbl;
@@ -89,7 +84,6 @@ void writeArrayToFile(std::string dest, unsigned rows, unsigned cols, double *ar
 };
 
 void readArrayFromFile(const char *path, unsigned r, unsigned c, std::vector<double> &mat) {
-  // mat.resize(r*c); // not necessary
   std::ifstream file(path);
   assert(file.is_open());
   std::copy(std::istream_iterator<double>(file), std::istream_iterator<double>(), std::back_inserter(mat));
@@ -100,27 +94,13 @@ double rands() {
   static std::random_device rd;
   static std::mt19937 rng(rd());
   static std::uniform_int_distribution<std::mt19937::result_type> dist25(1, 25); // distribution in range [1, 6]
-  // std::cout << dist25(rng) << std::endl;
   return dist25(rng);
 }
 
 void matrixBuilder(unsigned r, unsigned c, double sparsity, const char *dir, const char *matLetter) {
-  // typedef std::mt19937 MyRNG; // the Mersenne Twister with a popular choice of parameters
-  // uint32_t seed_val;          // populate somehow
-  //
-  // MyRNG rng; // e.g. keep one global instance (per thread)
-  //
-  // void initialize() { rng.seed(seed_val); }
-  rands();
   std::vector<double> mat(r * c, 0.0);
   int zeros = round(sparsity * r * c);
   int nonZeros = r * c - zeros;
-  // std::cout<<zeros<<std::endl;
-
-  // printf("%f sparsity for %i elements leads to %f zero values which rounds to
-  // %d. That means there are %d nonzero
-  // values\n",this->sparsity,r*c,this->sparsity * r*c,zeros,nonZeros);
-  // printf("mat size: %i\n",mat.size());
   for (int i = 0; i < nonZeros; i++) {
     mat[i] = rands();
   }
@@ -159,34 +139,32 @@ void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vecto
   size_t slash = file.find_last_of(delim[0]);         // file prefix location
   file.erase(file.begin() + dot, file.end());         // remove file extension
   file.erase(file.begin(), file.begin() + slash + 1); // remove file prefix
-  size_t unders2 = file.find_last_of(delim[2]);       // underscore at end of filename
-  size_t unders1 = file.find(delim[2]);               // underscore at beginning of filename
+  size_t undersLast = file.find_last_of(delim[2]);    // underscore at end of filename
+  size_t undersFirst = file.find(delim[2]);           // underscore at beginning of filename
 
-  // read and allocate data
-  if (file.substr(unders2 + 1) == "A") { // A Matrix
-    std::string temp = file.substr(unders1 + 1, (unders2 - unders1));
-    printf("%s\n", temp.c_str());
-    size_t unders3 = temp.find(delim[2]);
-    size_t unders4 = temp.find_last_of(delim[2]);
-    A_r = std::stoi(file.substr(0, unders1)); // read rows from filename
-    std::cout << A_r << std::endl;
-    A_c = std::stoi(temp.substr(0, unders3)); // read cols from filename
-    std::cout << A_c << std::endl;
-    sp = (double)std::stoi(temp.substr(unders3 + 1, unders4 - unders3 - 1)) / 100;
-    printf("%f\n", sp);
-    printf("Loading matrix A(%d,%d)...", A_r, A_c);
+  // read and allocate data now in '#rows_#cols_#sp_A' or '#rows_1_b' format
+  if (file.substr(undersLast + 1) == "A") {                                        // A matrix
+    std::string middle = file.substr(undersFirst + 1, (undersLast - undersFirst)); // '#cols_#sp_'
+
+    size_t undersFirstMiddle = middle.find(delim[2]);
+    size_t undersLastMiddle = middle.find_last_of(delim[2]);
+
+    A_r = std::stoi(file.substr(0, undersFirst));                                                                 // read rows from filename
+    A_c = std::stoi(middle.substr(0, undersFirstMiddle));                                                         // read cols from filename
+    sp = (double)std::stoi(middle.substr(undersFirstMiddle + 1, undersLastMiddle - undersFirstMiddle - 1)) / 100; // read sp from filename
+    printf("Loading matrix A(%d,%d), sparsity %0.2f...", A_r, A_c, sp);
     readArrayFromFile(path.c_str(), A_r, A_c, A);
     printf(" done\n");
-  } else if (file.substr(unders2 + 1) == "b") {                     // b Vector
-    b_r = std::stoi(file.substr(0, unders1));                       // read rows from filename
-    b_c = std::stoi(file.substr(unders1 + 1, (unders2 - unders1))); // read cols from filename
+  } else if (file.substr(undersLast + 1) == "b") {                             // b Vector
+    b_r = std::stoi(file.substr(0, undersFirst));                              // read rows from filename
+    b_c = std::stoi(file.substr(undersFirst + 1, (undersLast - undersFirst))); // read cols from filename
     printf("Loading matrix b(%d,%d)...", b_r, b_c);
     readArrayFromFile(path.c_str(), b_r, b_c, b);
     printf(" done\n");
   } else { // err
-    printf("Error while trying to read %s, please rename to either \"NumOfRows_1_b.vec\" or \"NumOfRows_NumOfCols_A.mat\" \n", path);
+    printf("Error while trying to read %s, please rename to either \"#rows_1_b.vec\" or \"#rows_#columns_sparsity(0-95)_A.mat\" \n", path);
   }
-}
+};
 
 std::string timeNowString() {
   auto now = std::chrono::system_clock::now();
@@ -196,4 +174,4 @@ std::string timeNowString() {
   out = std::to_string(t.tm_year + 1900) + "-" + std::to_string(t.tm_mon + 1) + "-" + std::to_string(t.tm_mday) + "T" + std::to_string(t.tm_hour) +
         std::to_string(t.tm_min);
   return out;
-}
+};

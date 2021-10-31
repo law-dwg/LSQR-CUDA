@@ -88,7 +88,7 @@ inline void cusparseAssert(cusparseStatus_t code, const char *file, int line, bo
 }
 #endif
 
-/** cuSolver */
+/** cuSOLVER */
 extern cusolverStatus_t solStat;
 extern cusolverSpHandle_t solHandle;
 void cusolverStart();
