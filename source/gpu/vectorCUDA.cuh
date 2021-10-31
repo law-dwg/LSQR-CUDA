@@ -25,7 +25,14 @@ public:
     cudaErrCheck(cudaMemcpy(d_columns, &c, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemset(d_mat, ZERO, h_rows * h_columns * sizeof(double)));
   };
-  VectorGPU(unsigned r, unsigned c, double *m) : VectorGPU(r, c) { // Constr. #2
+  VectorGPU(unsigned r, unsigned c, double *m) : h_rows(r), h_columns(c) { // Constr. #2
+    // allocate to device
+    cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
+    cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
+    cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * r * c));
+    // copy to device
+    cudaErrCheck(cudaMemcpy(d_rows, &r, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, &c, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_mat, m, sizeof(double) * r * c, cudaMemcpyHostToDevice));
   };
   VectorGPU(const VectorGPU &v) : h_rows(v.h_rows), h_columns(v.h_columns) { // Copy Constr.

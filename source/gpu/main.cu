@@ -92,17 +92,17 @@ int main() {
          "    %s\n"
          "    %s\n\n",
          implementations[0].c_str(), implementations[1].c_str(), implementations[2].c_str(), implementations[3].c_str(), implementations[4].c_str());
-  printf("This solver requires inputs:\n"
+  printf("This solver requires inputs, feel free to add your own:\n"
          "    A - 'input/m_n_A_sp.mat'\n"
          "    b - 'input/m_1_b.vec'\n"
-         "and writes the solution to:\n"
-         "    x - 'output/n_1_x_implementation.vec'\n"
-         "    report - 'output/speedups.csv'\n\n");
+         "and writes outputs to:\n"
+         "    x - 'output/%s/n_1_x_implementation.vec'\n"
+         "    report - 'output/%s/%s_LSQR-CUDA.csv'\n\n",NOW.c_str(),NOW.c_str(),NOW.c_str());
   std::cout << "Would you like me to make some test data for you? (y/n): ";
   bool matBuild = yesNo();
   if (matBuild) { // build matrices
-    unsigned start = 500;
-    unsigned end = 1000;
+    unsigned start = 100;
+    unsigned end = 100;
     unsigned increment = 500;
     unsigned numOfTests = ((end - start) / increment) + 1;
     printf("\nGreat, I will create %d sets of inputs for you\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-0.95: ",

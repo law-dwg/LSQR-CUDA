@@ -27,7 +27,15 @@ VectorCUBLAS VectorCUBLAS::operator*(double i) {
   return out;
 };
 
-void VectorCUBLAS::operator=(VectorCPU &v){};
+void VectorCUBLAS::operator=(VectorCPU &v){
+  cudaErrCheck(cudaFree(d_mat));
+  h_rows = v.getRows();
+  h_columns = v.getColumns();
+  cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.getRows() * v.getColumns()));
+  cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+  cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
+  cudaErrCheck(cudaMemcpy(d_mat, v.getMat(), sizeof(double) * h_rows * h_columns, cudaMemcpyHostToDevice));
+};
 
 VectorCUBLAS VectorCUBLAS::operator-(const VectorCUBLAS &v) {
   VectorCUBLAS out(this->h_rows, this->h_columns);
