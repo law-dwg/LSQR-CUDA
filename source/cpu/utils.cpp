@@ -126,23 +126,12 @@ void matrixBuilder(unsigned r, unsigned c, double sparsity, const char *dir, con
   }
   std::random_shuffle(mat.begin(), mat.end());
   std::string fileExt = (*matLetter == 'A') ? "mat" : "vec";
+  std::string sparsityStr = (*matLetter == 'A') ? ("_" + std::to_string((int)(sparsity * 100))) : "";
   std::stringstream fileName;
-  fileName << dir << r << "_" << c << "_" << (int)(sparsity * 100) << "_" << matLetter << "." << fileExt;
+  fileName << dir << r << "_" << c << sparsityStr << "_" << matLetter << "." << fileExt;
   writeArrayToFile(fileName.str(), r, c, mat.data());
 };
 
-void loading() {
-  std::cout << "Loading";
-  std::cout.flush();
-  for (;;) {
-    for (int i = 0; i < 3; i++) {
-      std::cout << ".";
-      std::cout.flush();
-      sleep(1);
-    }
-    std::cout << "\b\b\b   \b\b\b";
-  }
-}
 
 bool yesNo() {
   while (true) {
@@ -161,7 +150,8 @@ bool yesNo() {
   }
 }
 
-void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vector<double> &A, unsigned &b_r, unsigned &b_c, std::vector<double> &b) {
+void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vector<double> &A, unsigned &b_r, unsigned &b_c, std::vector<double> &b,
+                      double &sp) {
   std::string path = file.c_str(); // keep path for reading data
 
   // parse filename
@@ -176,9 +166,15 @@ void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vecto
   // read and allocate data
   if (file.substr(unders2 + 1) == "A") { // A Matrix
     std::string temp = file.substr(unders1 + 1, (unders2 - unders1));
+    printf("%s\n", temp.c_str());
     size_t unders3 = temp.find(delim[2]);
+    size_t unders4 = temp.find_last_of(delim[2]);
     A_r = std::stoi(file.substr(0, unders1)); // read rows from filename
+    std::cout << A_r <<std::endl;
     A_c = std::stoi(temp.substr(0, unders3)); // read cols from filename
+    std::cout << A_c <<std::endl;
+    sp = (double)std::stoi(temp.substr(unders3 + 1, unders4 - unders3 - 1)) / 100;
+    printf("%f\n", sp);
     printf("Loading matrix A(%d,%d)...", A_r, A_c);
     readArrayFromFile(path.c_str(), A_r, A_c, A);
     printf(" done\n");
@@ -191,4 +187,13 @@ void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vecto
   } else { // err
     printf("Error while trying to read %s, please rename to either \"NumOfRows_1_b.vec\" or \"NumOfRows_NumOfCols_A.mat\" \n", path);
   }
+}
+
+std::string timeNowString() {
+  auto now = std::chrono::system_clock::now();
+  std::time_t now_time = std::chrono::system_clock::to_time_t(now);
+  tm t = *localtime(&now_time);
+  std::string out;
+  out = std::to_string(t.tm_year + 1900) + "-" + std::to_string(t.tm_mon + 1) + "-" + std::to_string(t.tm_mday) + "T" + std::to_string(t.tm_hour) + std::to_string(t.tm_min);
+  return out;
 }

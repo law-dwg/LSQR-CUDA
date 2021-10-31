@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 double D2Norm(double a, double b);
-
 template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   /** LSQR-alg */
 
@@ -91,7 +90,6 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
   }
 
   // 2. For i=1,2,3....
-  printf("2. For i=1,2,3....\n");
   do {
     if (A.getRows() >= 6000) {
       if ((itn == (0.125) * itnlim) || (itn == 0.25 * itnlim) || (itn == (0.25 + 0.125) * itnlim) || (itn == 0.5 * itnlim) ||
@@ -186,7 +184,6 @@ template <typename Mat, typename Vec> Vec lsqr(Mat &A, Vec &b) {
     Arnorm = alpha * std::fabs(tau);
 
     // 6. Test for convergence
-    // printf("6. Test for convergence\n");
     test1 = rnorm / bnorm;
     test2 = Arnorm / (Anorm * rnorm + epsilon);
     test3 = one / (Acond + epsilon);

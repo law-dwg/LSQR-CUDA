@@ -30,9 +30,7 @@ VectorCUBLAS MatrixCUSPARSE::operator*(VectorCUBLAS &v) {
 };
 
 MatrixCUSPARSE MatrixCUSPARSE::transpose() {
-  MatrixCUSPARSE out(this->h_columns, this->h_rows, this->h_nnz);
-  cudaErrCheck(cudaMemset(out.d_csrColInd, ZERO, out.h_nnz * sizeof(int)));
-  cudaErrCheck(cudaMemset(out.d_csrVal, ZERO, out.h_nnz * sizeof(double)));
+  MatrixCUSPARSE out(this->h_columns, this->h_rows, this->h_nnz); // zero initialize
   cusparseErrCheck(cusparseCsr2cscEx2_bufferSize(spHandle, this->h_rows, this->h_columns, this->h_nnz, this->d_csrVal, this->d_csrRowPtr,
                                                  this->d_csrColInd, out.d_csrVal, out.d_csrRowPtr, out.d_csrColInd, CUDA_R_64F,
                                                  CUSPARSE_ACTION_NUMERIC, CUSPARSE_INDEX_BASE_ZERO, CUSPARSE_CSR2CSC_ALG1, &out.bufferSize));

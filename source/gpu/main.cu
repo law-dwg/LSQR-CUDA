@@ -21,9 +21,14 @@
 #include <sstream>
 #include <string>
 #include <time.h>
+#include <iostream>
+#include <algorithm>
+#include <string>
+
+const std::string NOW = timeNowString();
 
 template <typename Mat, typename Vec>
-float lsqrGPU(unsigned A_r, unsigned A_c, double *A, unsigned b_r, unsigned b_c, double *b, std::string implem, std::string fout) {
+float lsqrGPU(unsigned A_r, unsigned A_c, double *A, unsigned b_r, unsigned b_c, double *b, std::string implem, std::string fout, double sp) {
   printf("---------------------------------------------\n");
   printf("%s\n\nAx=b where A(%d,%d) and b(%d,1)\n", implem.c_str(), A_r, A_c, b_r);
   cublasStart();
@@ -41,7 +46,8 @@ float lsqrGPU(unsigned A_r, unsigned A_c, double *A, unsigned b_r, unsigned b_c,
   float duration = 0;
   cudaErrCheck(cudaEventElapsedTime(&duration, start, stop));
   printf("GPU time used = %f ms for lsqr\n", duration);
-  std::string file_out = "output/" + std::to_string(A_c) + "_1_x_" + fout + ".vec";
+  std::string sparsityStr = ((int)fout.find("SPARSE"))>(-1) ?  "-"+std::to_string((int)(sp*100))  : "";
+  std::string file_out = "output/" + NOW + "/" +std::to_string(A_c) + "_1_x_" + fout + sparsityStr + ".vec";
   VectorCPU x_g_out = x_g.matDeviceToHost();
   writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
   cusparseStop();
@@ -50,10 +56,25 @@ float lsqrGPU(unsigned A_r, unsigned A_c, double *A, unsigned b_r, unsigned b_c,
   return duration;
 };
 
+float lsqrCPU(unsigned A_r, unsigned A_c, double *A, unsigned b_r, unsigned b_c, double *b, std::string implem, std::string fout) {
+  printf("---------------------------------------------\n");
+  printf("%s\n\nAx=b where A(%d,%d) and b(%d,1)\n", implem.c_str(), A_r, A_c, b_r);
+  VectorCPU A_cpu(A_r, A_c, A);
+  VectorCPU b_cpu(b_r, b_c, b);
+  std::clock_t c_start = std::clock();
+  VectorCPU x = lsqr<VectorCPU, VectorCPU>(A_cpu, b_cpu);
+  std::clock_t c_end = std::clock();
+  float duration = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
+  printf("CPU time used = %f ms for lsqr\n", duration);
+  std::string file_out = "output/" + NOW + "/"+ std::to_string(A_c) + "_1_x_" + fout + ".vec";
+  writeArrayToFile(file_out, x.getRows(), x.getColumns(), x.getMat());
+  printf("---------------------------------------------\n");
+  return duration;
+};
+
 namespace fs = std::filesystem;
 
 int main() {
-  double sp;
   std::vector<std::string> fileOut = {"Cpp-DENSE", "CUDA-DENSE", "CUDA-SPARSE", "CUBLAS-DENSE", "CUSPARSE-SPARSE"};
   std::vector<std::string> implementations = {"1. CPU C++ - Dense Matrix Implementation", "2. GPU CUDA - Dense Matrix Implementation",
                                               "3. GPU CUDA - Sparse Matrix Implementation", "4. GPU CUBLAS -  Dense Matrix Implementation",
@@ -79,15 +100,15 @@ int main() {
          "    report - 'output/speedups.csv'\n\n");
   std::cout << "Would you like me to make some test data for you? (y/n): ";
   bool matBuild = yesNo();
-
   if (matBuild) { // build matrices
-    unsigned start = 100;
-    unsigned end = 100;
-    unsigned increment = 100;
+    unsigned start = 500;
+    unsigned end = 1000;
+    unsigned increment = 500;
     unsigned numOfTests = ((end - start) / increment) + 1;
     printf("\nGreat, I will create %d sets of inputs for you\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-0.95: ",
            numOfTests);
-    sp = valInput<double>(0.0, 0.95);
+    double sp; 
+    bool test = valInput<double>(0.0, 0.95, sp);
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
     for (int i = start; i <= end; i += increment) {
       matrixBuilder(i, i, sp, "input/", "A");
@@ -109,79 +130,104 @@ int main() {
   };
   checkDevice();
   std::set<fs::path>::iterator it = sorted_by_name.begin();
-
+  fs::create_directory("output/"+NOW);
   auto now = std::chrono::system_clock::now();
   std::time_t now_time = std::chrono::system_clock::to_time_t(now);
   tm t = *localtime(&now_time);
   std::cout << std::ctime(&now_time) << std::endl;
   std::ofstream report;
   std::stringstream reportName;
-  reportName << "output/" << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << "T" << t.tm_hour << ":" << t.tm_min << "_LSQR-CUDA.csv";
+  //reportName << "output/" << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << "T" << t.tm_hour << ":" << t.tm_min << "_LSQR-CUDA.csv";
+  reportName << "output/" << NOW << "/" << timeNowString() << "_LSQR-CUDA.csv";
   report.open(reportName.str());
-  report << "IMPLEMENTATION,A_ROWS,A_COLUMNS,TIME(ms),SPEEDUP\n";
+  report << "IMPLEMENTATION,A_ROWS,A_COLUMNS,SPARSITY,TIME(ms),SPEEDUP\n";
   report.close();
   report.open(reportName.str(), std::ios_base::app);
   while (it != sorted_by_name.end()) { // iterate through sorted files
     cudaErrCheck(cudaDeviceReset());
     std::string file1, file2;
-    file1 = *it;
-    ++it;
-    file2 = *it;
-    ++it; // iterate every two files
-    std::vector<std::string> files{file1, file2};
-    unsigned A_rows, A_cols, b_rows, b_cols;
-    std::vector<double> A, b;
-    for (auto file : files) {
-      fileParserLoader(file, A_rows, A_cols, A, b_rows, b_cols, b);
-    }
-    bool A_sizecheck, b_sizecheck, Ab_rowscheck, b_colscheck, all_checks;
-    A_sizecheck = A.size() == A_rows * A_cols && A_rows != 0 && A_cols != 0;
-    b_sizecheck = b.size() == b_rows * b_cols && b_rows != 0 && b_cols == 1;
-    Ab_rowscheck = A_rows == b_rows;
-    all_checks = A_sizecheck && b_sizecheck && Ab_rowscheck;
-    if (!all_checks) {
-      printf("\n\nERROR, please check the matrix file naming convention (\"NumOfRows_NumOfCols_A_sp.mat\" and "
-             "\"NumOfRows_1_b.vec\" format) and make sure the naming convention (rows * columns) matches the number of values in each file\n\n");
-      exit(1);
-    }
-    /** 1. CPU C++ - Dense Matrix Implementation */
-    long double CPU_Cpp_ms;
-    if (true) {
-      printf("---------------------------------------------\n");
-      printf("1. CPU C++ - Dense Matrix Implementation\n\nAx=b where A(%d,%d) and b(%d,1)\n", A_rows, A_cols, b_rows);
-      VectorCPU A_c(A_rows, A_cols, A.data());
-      VectorCPU b_c(b_rows, b_cols, b.data());
-      std::clock_t c_start = std::clock();
-      VectorCPU x_c = lsqr<VectorCPU, VectorCPU>(A_c, b_c);
-      std::clock_t c_end = std::clock();
-      CPU_Cpp_ms = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
-      std::cout << "CPU time used = " << CPU_Cpp_ms << " ms for lsqr\n";
-      std::string file_out = "output/" + std::to_string(A_cols) + "_1_x_" + fileOut[0] + ".vec";
-      writeArrayToFile(file_out, x_c.getRows(), x_c.getColumns(), x_c.getMat());
-      printf("---------------------------------------------\n");
-    }
-    report << fileOut[0] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << "," << std::to_string(CPU_Cpp_ms) << ","
-           << "0"
-           << "\n";
-    /** 2. GPU CUDA - Dense Matrix Implementation */
-    float CUDA_DENSE_ms = lsqrGPU<VectorCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[1], fileOut[1]);
-    cudaErrCheck(cudaDeviceReset());
-    report << fileOut[1] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << "," << std::to_string(CUDA_DENSE_ms) << ","<< CPU_Cpp_ms/CUDA_DENSE_ms <<"\n";;
+    std::string A_file, b_file;
+    A_file = *it;
+    printf("%s\n",A_file.c_str());
+    // parse filename  
+    std::vector<std::string> delim{"/\\", ".", "_"};
+  
+    size_t slash = A_file.find_last_of(delim[0]);         // file prefix location
+    A_file.erase(A_file.begin(), A_file.begin() + slash + 1); // remove file prefix
+    size_t dot = A_file.find_last_of(delim[1]);           // file extension location
+    
+    std::string ext = A_file;
+    std::string A_rowStr = A_file;
+    size_t unders = A_file.find("_");
+    ext.erase(ext.begin(),ext.begin()+dot+1);
+    printf("159\n");
+    A_rowStr.erase(A_rowStr.begin()+unders,A_rowStr.end());
+    
+    if (ext == "mat") {
+      b_file = "input/"+A_rowStr + "_1_b.vec";
+      std::vector<std::string> files{*it, b_file};
+      printf("%s %s\n",A_file.c_str(), b_file.c_str());
+      unsigned A_rows, A_cols, b_rows, b_cols;
+      std::vector<double> A, b;
+      double sp;
+      for (auto file : files) {
+        fileParserLoader(file, A_rows, A_cols, A, b_rows, b_cols, b, sp);
+      }
+      printf("sp = %f\n",sp);
+      std::string sparsityStr = std::to_string(sp);
+      sparsityStr.erase ( sparsityStr.find_last_not_of('0') + 1, std::string::npos );
+      bool A_sizecheck, b_sizecheck, Ab_rowscheck, all_checks;
+      A_sizecheck = A.size() == A_rows * A_cols && A_rows != 0 && A_cols != 0;
+      b_sizecheck = b.size() == b_rows * b_cols && b_rows != 0 && b_cols == 1;
+      Ab_rowscheck = A_rows == b_rows;
+      all_checks = A_sizecheck && b_sizecheck && Ab_rowscheck;
+      if (!all_checks) {
+        printf("\n\nERROR, please check the matrix file naming convention (\"NumOfRows_NumOfCols_A_sp.mat\" and "
+               "\"NumOfRows_1_b.vec\" format) and make sure the naming convention (rows * columns) matches the number of values in each file\n\n");
+        exit(1);
+      }
+      /** 1. CPU C++ - Dense Matrix Implementation */
+      long double CPU_Cpp_ms;
+      if (true) {
+        CPU_Cpp_ms = lsqrCPU(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[0], fileOut[0]);
+        report << fileOut[0] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0,"
+               << std::to_string(CPU_Cpp_ms) << ","
+               << "0"
+               << "\n";
+      }
+      /** 2. GPU CUDA - Dense Matrix Implementation */
+      if (true) {
+        float CUDA_DENSE_ms = lsqrGPU<VectorCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[1], fileOut[1], sp);
+        cudaErrCheck(cudaDeviceReset());
+        report << fileOut[1] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0,"
+               << std::to_string(CUDA_DENSE_ms) << "," << CPU_Cpp_ms / CUDA_DENSE_ms << "\n";
+      }
+      if (true) {
+        float CUDA_SPARSE_ms = lsqrGPU<MatrixCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[2], fileOut[2], sp);
+        cudaErrCheck(cudaDeviceReset());
+        report << fileOut[2] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << "," << sparsityStr << ","
+               << std::to_string(CUDA_SPARSE_ms) << "," << CPU_Cpp_ms / CUDA_SPARSE_ms << "\n";
+      }
 
-    float CUDA_SPARSE_ms = lsqrGPU<MatrixCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[2], fileOut[2]);
-    cudaErrCheck(cudaDeviceReset());
-    report << fileOut[2] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << "," << std::to_string(CUDA_SPARSE_ms) << ","<< CPU_Cpp_ms/CUDA_SPARSE_ms <<"\n";
-    
-    float CUBLAS_DENSE_ms = lsqrGPU<VectorCUBLAS, VectorCUBLAS>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[3], fileOut[3]);
-    cudaErrCheck(cudaDeviceReset());
-    report << fileOut[3] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << "," << std::to_string(CUBLAS_DENSE_ms) << ","<< CPU_Cpp_ms/CUBLAS_DENSE_ms <<"\n";
-    
-    float CUSPARSE_SPARSE_ms =
-        lsqrGPU<MatrixCUSPARSE, VectorCUBLAS>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[4], fileOut[4]);
-    cudaErrCheck(cudaDeviceReset());
-    report << fileOut[4] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << "," << std::to_string(CUSPARSE_SPARSE_ms) << "," << CPU_Cpp_ms/CUSPARSE_SPARSE_ms <<"\n";
-    
-    cudaLastErrCheck();
+      if (true) {
+        float CUBLAS_DENSE_ms =
+            lsqrGPU<VectorCUBLAS, VectorCUBLAS>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[3], fileOut[3], sp);
+        cudaErrCheck(cudaDeviceReset());
+        report << fileOut[3] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0,"
+               << std::to_string(CUBLAS_DENSE_ms) << "," << CPU_Cpp_ms / CUBLAS_DENSE_ms << "\n";
+      }
+
+      if (true) {
+        float CUSPARSE_SPARSE_ms =
+            lsqrGPU<MatrixCUSPARSE, VectorCUBLAS>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[4], fileOut[4], sp);
+        cudaErrCheck(cudaDeviceReset());
+        report << fileOut[4] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << "," << sparsityStr << ","
+               << std::to_string(CUSPARSE_SPARSE_ms) << "," << CPU_Cpp_ms / CUSPARSE_SPARSE_ms << "\n";
+      }
+
+      cudaLastErrCheck();
+    };
+    ++it;
   }
   report.close();
 }

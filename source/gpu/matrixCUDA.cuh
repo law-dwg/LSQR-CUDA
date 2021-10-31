@@ -17,45 +17,47 @@ protected:
   cusparseMatDescr_t descr = NULL;
   void *dBuffer = NULL;
   size_t bufferSize = 0;
-
-public:
-  /** Constructors */
-  MatrixGPU(unsigned r, unsigned c) : h_rows(r), h_columns(c) { // Constr. #1
+  void allocator(unsigned r, unsigned c, unsigned n) {
     cudaErrCheck(cudaMalloc((void **)&d_rows, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_columns, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_nnz, sizeof(unsigned)));
     cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, (h_rows + 1) * sizeof(int)));
-    cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
-    cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMalloc((void **)&d_csrColInd, h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMalloc((void **)&d_csrVal, h_nnz * sizeof(double)));
     cudaErrCheck(cudaMalloc(&dBuffer, bufferSize));
     // cusparse - used for transpose
     cusparseErrCheck(cusparseCreateMatDescr(&descr));
     cusparseErrCheck(cusparseSetMatType(descr, CUSPARSE_MATRIX_TYPE_GENERAL));
     cusparseErrCheck(cusparseSetMatIndexBase(descr, CUSPARSE_INDEX_BASE_ZERO));
   };
-  MatrixGPU(unsigned r, unsigned c, unsigned n) : MatrixGPU(r, c) { // Constr. #2
-    h_nnz = n;
+
+public:
+  /** Constructors */
+  MatrixGPU() : h_rows(0), h_columns(0), h_nnz(0){};                      // Default Constr.
+  MatrixGPU(unsigned r, unsigned c) : h_rows(r), h_columns(c), h_nnz(0) { // Constr. #1
     // allocate
-    cudaErrCheck(cudaMalloc((void **)&d_csrVal, h_nnz * sizeof(double)));
-    cudaErrCheck(cudaMalloc((void **)&d_csrColInd, h_nnz * sizeof(int)));
+    allocator(h_rows, h_columns, h_nnz);
     // copy to device
     cudaErrCheck(cudaMemcpy(d_nnz, &h_nnz, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
-  };
-  MatrixGPU() : MatrixGPU(0, 0, 0u) { // Default Constr.
-    cudaErrCheck(cudaMemset(d_csrVal, ZERO, h_nnz * sizeof(double)));
-    cudaErrCheck(cudaMemset(d_csrColInd, ZERO, h_nnz * sizeof(int)));
+    // zero initialize
     cudaErrCheck(cudaMemset(d_csrRowPtr, ZERO, (h_rows + 1) * sizeof(int)));
+    cudaErrCheck(cudaMemset(d_csrColInd, ZERO, h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMemset(d_csrVal, ZERO, h_nnz * sizeof(double)));
   };
-  MatrixGPU(unsigned r, unsigned c, unsigned n, double *values, int *colInd, int *rowPtr) : MatrixGPU(r, c, n) { // Constr. #3
+  MatrixGPU(unsigned r, unsigned c, unsigned n) : h_rows(r), h_columns(c), h_nnz(n) { // Constr. #2
+    allocator(h_rows, h_columns, h_nnz);
     // copy to device
-    cudaErrCheck(cudaMemcpy(d_csrVal, values, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_csrColInd, colInd, h_nnz * sizeof(int), cudaMemcpyDeviceToDevice));
-    cudaErrCheck(cudaMemcpy(d_csrRowPtr, rowPtr, (h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
-  }
-  MatrixGPU(unsigned r, unsigned c, double *m) : MatrixGPU(r, c) { // Constr. (entry point)
-    h_nnz = 0;
+    cudaErrCheck(cudaMemcpy(d_nnz, &h_nnz, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
+    // zero initialize
+    cudaErrCheck(cudaMemset(d_csrRowPtr, ZERO, (h_rows + 1) * sizeof(int)));
+    cudaErrCheck(cudaMemset(d_csrColInd, ZERO, h_nnz * sizeof(int)));
+    cudaErrCheck(cudaMemset(d_csrVal, ZERO, h_nnz * sizeof(double)));
+  };
+  MatrixGPU(unsigned r, unsigned c, double *m) : h_rows(r), h_columns(c), h_nnz(0) { // Constr. #3
     int row, col;
     col = row = 0;
     std::vector<int> temp_rowPtr, temp_colIdx;
@@ -75,22 +77,34 @@ public:
       }
     }
     temp_rowPtr.push_back(h_nnz);
-
+    printf("# of nnz!: %d\n",h_nnz);
     // allocate
-    cudaErrCheck(cudaMalloc((void **)&d_csrColInd, sizeof(unsigned) * h_nnz));
-    cudaErrCheck(cudaMalloc((void **)&d_csrVal, sizeof(double) * h_nnz));
+    allocator(h_rows, h_columns, h_nnz);
     // copy to device
+    cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_nnz, &h_nnz, sizeof(unsigned), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrRowPtr, temp_rowPtr.data(), sizeof(unsigned) * (r + 1), cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrColInd, temp_colIdx.data(), sizeof(unsigned) * h_nnz, cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrVal, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice));
   };
-  MatrixGPU(const MatrixGPU &m) : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr){};    // Copy Constr.
-  MatrixGPU(MatrixGPU &&m) noexcept : MatrixGPU(m.h_rows, m.h_columns, m.h_nnz, m.d_csrVal, m.d_csrColInd, m.d_csrRowPtr) { // MatrixGPU Move Constr.
+  MatrixGPU(const MatrixGPU &m) : h_rows(m.h_rows), h_columns(m.h_columns), h_nnz(m.h_nnz) { // Copy Constr.
+    // allocate
+    allocator(h_rows, h_columns, h_nnz);
+    // copy to device
+    cudaErrCheck(cudaMemcpy(d_nnz, &h_nnz, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrVal, m.d_csrVal, h_nnz * sizeof(double), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrColInd, m.d_csrColInd, h_nnz * sizeof(int), cudaMemcpyDeviceToDevice));
+    cudaErrCheck(cudaMemcpy(d_csrRowPtr, m.d_csrRowPtr, (h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
+  };
+  MatrixGPU(MatrixGPU &&m) noexcept : MatrixGPU(m) { // MatrixGPU Move Constr.
     // free old resources
     cudaErrCheck(cudaFree(m.d_csrVal));
     cudaErrCheck(cudaFree(m.d_csrRowPtr));
     cudaErrCheck(cudaFree(m.d_csrColInd));
+    // zero initialize
     m.h_rows = ZERO;
     m.h_nnz = ZERO;
     m.h_columns = ZERO;
@@ -122,12 +136,14 @@ public:
     // free + memory allocation (if needed)
     if (h_rows != m.h_rows) {
       h_rows = m.h_rows;
+      // reset memory based on rows
       cudaErrCheck(cudaMemcpy(d_rows, m.d_rows, sizeof(unsigned), cudaMemcpyDeviceToDevice));
       cudaErrCheck(cudaFree(d_csrRowPtr));
       cudaErrCheck(cudaMalloc((void **)&d_csrRowPtr, sizeof(int) * (m.h_rows + 1)));
     }
     if (h_nnz != m.h_nnz) {
       h_nnz = m.h_nnz;
+      // reset memory based on nnz
       cudaErrCheck(cudaMemcpy(d_nnz, m.d_nnz, sizeof(unsigned), cudaMemcpyDeviceToDevice));
       cudaErrCheck(cudaFree(d_csrVal));
       cudaErrCheck(cudaFree(d_csrColInd));
@@ -145,10 +161,10 @@ public:
     cudaErrCheck(cudaMemcpy(d_csrRowPtr, m.d_csrRowPtr, (h_rows + 1) * sizeof(int), cudaMemcpyDeviceToDevice));
     return *this;
   };
-
   MatrixGPU &operator=(MatrixGPU &&m) noexcept { // Move Assignment
     // call copy assignment
     *this = m;
+    // zero initialize
     m.h_rows = ZERO;
     m.h_nnz = ZERO;
     m.h_columns = ZERO;
