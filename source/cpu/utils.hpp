@@ -1,8 +1,8 @@
 #pragma once
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <cmath>
 
 bool compareMat(double *MC, int rowC, int colC, double *MG, int rowG, int colG);
 
@@ -24,16 +24,16 @@ void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vecto
                       double &sp);
 
 template <typename T> bool valInput(T lowLim, T upLim, T &out) {
-  while(true){
-  T input;
-  std::cin >> std::ws;
-  std::cin >> input;
-  if ((lowLim <= input && input <= upLim) && (std::cin)) {
-    out = std::ceil(input * 100.0) / 100.0; // round up to 2 decimal places
-    printf("%f\n", out);
-    return false;
-  } else {
-    printf("Invalid input, please enter a value between %0.2f and %0.2f: ",lowLim,upLim);
-  }
+  while (true) {
+    T input;
+    std::cin >> std::ws;
+    std::cin >> input;
+    if ((lowLim <= input && input <= upLim) && (std::cin)) {
+      out = std::ceil(input * 100.0) / 100.0; // round up to 2 decimal places
+      printf("%f\n", out);
+      return false;
+    } else {
+      printf("Invalid input, please enter a value between %0.2f and %0.2f: ", lowLim, upLim);
+    }
   }
 }

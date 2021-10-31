@@ -29,7 +29,7 @@ protected:
     cusparseErrCheck(cusparseSetMatType(descr, CUSPARSE_MATRIX_TYPE_GENERAL));
     cusparseErrCheck(cusparseSetMatIndexBase(descr, CUSPARSE_INDEX_BASE_ZERO));
   };
-  void denseToCSR(double *m){
+  void denseToCSR(double *m) {
     int row, col;
     col = row = 0;
     std::vector<int> temp_rowPtr, temp_colIdx;
@@ -58,10 +58,11 @@ protected:
     cudaErrCheck(cudaMemcpy(d_csrColInd, temp_colIdx.data(), sizeof(unsigned) * h_nnz, cudaMemcpyHostToDevice));
     cudaErrCheck(cudaMemcpy(d_csrVal, temp_vals.data(), sizeof(double) * h_nnz, cudaMemcpyHostToDevice));
   };
+
 public:
   /** Constructors */
-  MatrixGPU() : MatrixGPU(0,0,0u){};                      // Default Constr.
-  MatrixGPU(unsigned r, unsigned c) : MatrixGPU(r,c,0u) {}; // Constr. #1
+  MatrixGPU() : MatrixGPU(0, 0, 0u){};                                                // Default Constr.
+  MatrixGPU(unsigned r, unsigned c) : MatrixGPU(r, c, 0u){};                          // Constr. #1
   MatrixGPU(unsigned r, unsigned c, unsigned n) : h_rows(r), h_columns(c), h_nnz(n) { // Constr. #2
     allocator(h_rows, h_columns, h_nnz);
     // copy to device

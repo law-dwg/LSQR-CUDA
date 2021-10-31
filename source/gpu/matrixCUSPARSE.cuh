@@ -38,14 +38,14 @@ protected:
 
 public:
   /** Constructors */
-  MatrixCUSPARSE() : MatrixGPU(0,0,0u){};                                          // Default Constr.
-  MatrixCUSPARSE(unsigned r, unsigned c) : MatrixGPU(r, c, 0u){};                // Constr. #1
+  MatrixCUSPARSE() : MatrixGPU(0, 0, 0u){};                                  // Default Constr.
+  MatrixCUSPARSE(unsigned r, unsigned c) : MatrixGPU(r, c, 0u){};            // Constr. #1
   MatrixCUSPARSE(unsigned r, unsigned c, unsigned n) : MatrixGPU(r, c, n){}; // Constr. #2
-  MatrixCUSPARSE(unsigned r, unsigned c, double *m) : MatrixGPU(r,c,0u) {          // Constr. #3
+  MatrixCUSPARSE(unsigned r, unsigned c, double *m) : MatrixGPU(r, c, 0u) {  // Constr. #3
     // free resources that will be reallocated
     cudaErrCheck(cudaFree(d_csrVal));
     cudaErrCheck(cudaFree(d_csrColInd));
-  
+
     // dense to sparse
     denseToCUSPARSE(m);
   };

@@ -27,7 +27,7 @@ VectorCUBLAS VectorCUBLAS::operator*(double i) {
   return out;
 };
 
-void VectorCUBLAS::operator=(VectorCPU &v){
+void VectorCUBLAS::operator=(VectorCPU &v) {
   cudaErrCheck(cudaFree(d_mat));
   h_rows = v.getRows();
   h_columns = v.getColumns();

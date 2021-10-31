@@ -9,6 +9,7 @@
 #include "vectorCUBLAS.cuh"
 #include "vectorCUDA.cuh"
 // Libs
+#include <algorithm>
 #include <cassert>
 #include <chrono>
 #include <ctime>
@@ -21,9 +22,6 @@
 #include <sstream>
 #include <string>
 #include <time.h>
-#include <iostream>
-#include <algorithm>
-#include <string>
 
 const std::string NOW = timeNowString();
 
@@ -46,8 +44,8 @@ float lsqrGPU(unsigned A_r, unsigned A_c, double *A, unsigned b_r, unsigned b_c,
   float duration = 0;
   cudaErrCheck(cudaEventElapsedTime(&duration, start, stop));
   printf("GPU time used = %f ms for lsqr\n", duration);
-  std::string sparsityStr = ((int)fout.find("SPARSE"))>(-1) ?  "-"+std::to_string((int)(sp*100))  : "";
-  std::string file_out = "output/" + NOW + "/" +std::to_string(A_c) + "_1_x_" + fout + sparsityStr + ".vec";
+  std::string sparsityStr = ((int)fout.find("SPARSE")) > (-1) ? "-" + std::to_string((int)(sp * 100)) : "";
+  std::string file_out = "output/" + NOW + "/" + std::to_string(A_c) + "_1_x_" + fout + sparsityStr + ".vec";
   VectorCPU x_g_out = x_g.matDeviceToHost();
   writeArrayToFile(file_out, x_g_out.getRows(), x_g_out.getColumns(), x_g_out.getMat());
   cusparseStop();
@@ -66,7 +64,7 @@ float lsqrCPU(unsigned A_r, unsigned A_c, double *A, unsigned b_r, unsigned b_c,
   std::clock_t c_end = std::clock();
   float duration = 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC;
   printf("CPU time used = %f ms for lsqr\n", duration);
-  std::string file_out = "output/" + NOW + "/"+ std::to_string(A_c) + "_1_x_" + fout + ".vec";
+  std::string file_out = "output/" + NOW + "/" + std::to_string(A_c) + "_1_x_" + fout + ".vec";
   writeArrayToFile(file_out, x.getRows(), x.getColumns(), x.getMat());
   printf("---------------------------------------------\n");
   return duration;
@@ -97,7 +95,8 @@ int main() {
          "    b - 'input/m_1_b.vec'\n"
          "and writes outputs to:\n"
          "    x - 'output/%s/n_1_x_implementation.vec'\n"
-         "    report - 'output/%s/%s_LSQR-CUDA.csv'\n\n",NOW.c_str(),NOW.c_str(),NOW.c_str());
+         "    report - 'output/%s/%s_LSQR-CUDA.csv'\n\n",
+         NOW.c_str(), NOW.c_str(), NOW.c_str());
   std::cout << "Would you like me to make some test data for you? (y/n): ";
   bool matBuild = yesNo();
   if (matBuild) { // build matrices
@@ -107,7 +106,7 @@ int main() {
     unsigned numOfTests = ((end - start) / increment) + 1;
     printf("\nGreat, I will create %d sets of inputs for you\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-0.95: ",
            numOfTests);
-    double sp; 
+    double sp;
     bool test = valInput<double>(0.0, 0.95, sp);
     std::cout << "Building A Matrices of sparsity " << sp << "\n";
     for (int i = start; i <= end; i += increment) {
@@ -130,14 +129,15 @@ int main() {
   };
   checkDevice();
   std::set<fs::path>::iterator it = sorted_by_name.begin();
-  fs::create_directory("output/"+NOW);
+  fs::create_directory("output/" + NOW);
   auto now = std::chrono::system_clock::now();
   std::time_t now_time = std::chrono::system_clock::to_time_t(now);
   tm t = *localtime(&now_time);
   std::cout << std::ctime(&now_time) << std::endl;
   std::ofstream report;
   std::stringstream reportName;
-  //reportName << "output/" << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << "T" << t.tm_hour << ":" << t.tm_min << "_LSQR-CUDA.csv";
+  // reportName << "output/" << t.tm_year + 1900 << "-" << t.tm_mon + 1 << "-" << t.tm_mday << "T" << t.tm_hour << ":" << t.tm_min <<
+  // "_LSQR-CUDA.csv";
   reportName << "output/" << NOW << "/" << timeNowString() << "_LSQR-CUDA.csv";
   report.open(reportName.str());
   report << "IMPLEMENTATION,A_ROWS,A_COLUMNS,SPARSITY,TIME(ms),SPEEDUP\n";
@@ -148,34 +148,34 @@ int main() {
     std::string file1, file2;
     std::string A_file, b_file;
     A_file = *it;
-    printf("%s\n",A_file.c_str());
-    // parse filename  
+    printf("%s\n", A_file.c_str());
+    // parse filename
     std::vector<std::string> delim{"/\\", ".", "_"};
-  
-    size_t slash = A_file.find_last_of(delim[0]);         // file prefix location
+
+    size_t slash = A_file.find_last_of(delim[0]);             // file prefix location
     A_file.erase(A_file.begin(), A_file.begin() + slash + 1); // remove file prefix
-    size_t dot = A_file.find_last_of(delim[1]);           // file extension location
-    
+    size_t dot = A_file.find_last_of(delim[1]);               // file extension location
+
     std::string ext = A_file;
     std::string A_rowStr = A_file;
     size_t unders = A_file.find("_");
-    ext.erase(ext.begin(),ext.begin()+dot+1);
+    ext.erase(ext.begin(), ext.begin() + dot + 1);
     printf("159\n");
-    A_rowStr.erase(A_rowStr.begin()+unders,A_rowStr.end());
-    
+    A_rowStr.erase(A_rowStr.begin() + unders, A_rowStr.end());
+
     if (ext == "mat") {
-      b_file = "input/"+A_rowStr + "_1_b.vec";
+      b_file = "input/" + A_rowStr + "_1_b.vec";
       std::vector<std::string> files{*it, b_file};
-      printf("%s %s\n",A_file.c_str(), b_file.c_str());
+      printf("%s %s\n", A_file.c_str(), b_file.c_str());
       unsigned A_rows, A_cols, b_rows, b_cols;
       std::vector<double> A, b;
       double sp;
       for (auto file : files) {
         fileParserLoader(file, A_rows, A_cols, A, b_rows, b_cols, b, sp);
       }
-      printf("sp = %f\n",sp);
+      printf("sp = %f\n", sp);
       std::string sparsityStr = std::to_string(sp);
-      sparsityStr.erase ( sparsityStr.find_last_not_of('0') + 1, std::string::npos );
+      sparsityStr.erase(sparsityStr.find_last_not_of('0') + 1, std::string::npos);
       bool A_sizecheck, b_sizecheck, Ab_rowscheck, all_checks;
       A_sizecheck = A.size() == A_rows * A_cols && A_rows != 0 && A_cols != 0;
       b_sizecheck = b.size() == b_rows * b_cols && b_rows != 0 && b_cols == 1;
@@ -190,8 +190,7 @@ int main() {
       long double CPU_Cpp_ms;
       if (true) {
         CPU_Cpp_ms = lsqrCPU(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[0], fileOut[0]);
-        report << fileOut[0] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0,"
-               << std::to_string(CPU_Cpp_ms) << ","
+        report << fileOut[0] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0," << std::to_string(CPU_Cpp_ms) << ","
                << "0"
                << "\n";
       }
@@ -199,11 +198,12 @@ int main() {
       if (true) {
         float CUDA_DENSE_ms = lsqrGPU<VectorCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[1], fileOut[1], sp);
         cudaErrCheck(cudaDeviceReset());
-        report << fileOut[1] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0,"
-               << std::to_string(CUDA_DENSE_ms) << "," << CPU_Cpp_ms / CUDA_DENSE_ms << "\n";
+        report << fileOut[1] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0," << std::to_string(CUDA_DENSE_ms) << ","
+               << CPU_Cpp_ms / CUDA_DENSE_ms << "\n";
       }
       if (true) {
-        float CUDA_SPARSE_ms = lsqrGPU<MatrixCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[2], fileOut[2], sp);
+        float CUDA_SPARSE_ms =
+            lsqrGPU<MatrixCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[2], fileOut[2], sp);
         cudaErrCheck(cudaDeviceReset());
         report << fileOut[2] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << "," << sparsityStr << ","
                << std::to_string(CUDA_SPARSE_ms) << "," << CPU_Cpp_ms / CUDA_SPARSE_ms << "\n";
@@ -213,8 +213,8 @@ int main() {
         float CUBLAS_DENSE_ms =
             lsqrGPU<VectorCUBLAS, VectorCUBLAS>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[3], fileOut[3], sp);
         cudaErrCheck(cudaDeviceReset());
-        report << fileOut[3] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0,"
-               << std::to_string(CUBLAS_DENSE_ms) << "," << CPU_Cpp_ms / CUBLAS_DENSE_ms << "\n";
+        report << fileOut[3] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0," << std::to_string(CUBLAS_DENSE_ms) << ","
+               << CPU_Cpp_ms / CUBLAS_DENSE_ms << "\n";
       }
 
       if (true) {

@@ -132,7 +132,6 @@ void matrixBuilder(unsigned r, unsigned c, double sparsity, const char *dir, con
   writeArrayToFile(fileName.str(), r, c, mat.data());
 };
 
-
 bool yesNo() {
   while (true) {
     std::string s;
@@ -170,9 +169,9 @@ void fileParserLoader(std::string file, unsigned &A_r, unsigned &A_c, std::vecto
     size_t unders3 = temp.find(delim[2]);
     size_t unders4 = temp.find_last_of(delim[2]);
     A_r = std::stoi(file.substr(0, unders1)); // read rows from filename
-    std::cout << A_r <<std::endl;
+    std::cout << A_r << std::endl;
     A_c = std::stoi(temp.substr(0, unders3)); // read cols from filename
-    std::cout << A_c <<std::endl;
+    std::cout << A_c << std::endl;
     sp = (double)std::stoi(temp.substr(unders3 + 1, unders4 - unders3 - 1)) / 100;
     printf("%f\n", sp);
     printf("Loading matrix A(%d,%d)...", A_r, A_c);
@@ -194,6 +193,7 @@ std::string timeNowString() {
   std::time_t now_time = std::chrono::system_clock::to_time_t(now);
   tm t = *localtime(&now_time);
   std::string out;
-  out = std::to_string(t.tm_year + 1900) + "-" + std::to_string(t.tm_mon + 1) + "-" + std::to_string(t.tm_mday) + "T" + std::to_string(t.tm_hour) + std::to_string(t.tm_min);
+  out = std::to_string(t.tm_year + 1900) + "-" + std::to_string(t.tm_mon + 1) + "-" + std::to_string(t.tm_mday) + "T" + std::to_string(t.tm_hour) +
+        std::to_string(t.tm_min);
   return out;
 }
