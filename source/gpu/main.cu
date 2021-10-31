@@ -145,7 +145,15 @@ int main() {
 
   printf("\nCUDA capable device check:\n");
   /** Iterate through files in inputs/ */
-  if (checkDevice() > 0) {
+  if (checkDevice() > 0) { // only uses first device
+    cudaDeviceProp deviceProp;
+    cudaGetDeviceProperties(&deviceProp, 0); // first device
+    std::ofstream deviceProps;
+    std::stringstream devicePropsFile;
+    devicePropsFile << "output/" << NOW << "/deviceProps.csv";
+    deviceProps.open(devicePropsFile.str());
+    deviceProps << "DEVICE_NAME,COMPUTE_CAPABILITY\n" << deviceProp.name << "," << deviceProp.major << "." << deviceProp.minor << "\n";
+    deviceProps.close();
     while (it != sorted_by_name.end()) { // iterate through sorted files
       cudaErrCheck(cudaDeviceReset());
 

@@ -37,6 +37,7 @@ DEBUG_TARGET := lsqr_debug
 DEBUG_BUILD_DIR := ./build_debug
 DEBUG_OBJS_CU := $(SOURCES_CU:%=$(DEBUG_BUILD_DIR)/%.o)
 DEBUG_OBJS_CPP := $(SOURCES_CPP:%=$(DEBUG_BUILD_DIR)/%.o)
+DEBUG_OBJS_MAIN := $(DEBUG_BUILD_DIR)/$(SRC_MAIN).o
 
 # Main build
 $(BUILD_DIR)/$(TARGET): $(OBJS_CPP) $(OBJS_CU) $(OBJ_MAIN)
@@ -58,27 +59,31 @@ $(BUILD_DIR)/%.cpp.o: %.cpp %.hpp
 .PHONY: debug all clean clean_mats run $(BUILD_DIR)/$(TARGET) format
 
 debug: $(DEBUG_BUILD_DIR)/$(DEBUG_TARGET)
-$(DEBUG_BUILD_DIR)/$(DEBUG_TARGET): $(DEBUG_OBJS_CPP) $(DEBUG_OBJS_CU)
-	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_DEBUG_FLAGS) -g $(OBJS_CPP) $(OBJS_CU) -o $@
+$(DEBUG_BUILD_DIR)/$(DEBUG_TARGET): $(DEBUG_OBJS_CPP) $(DEBUG_OBJS_CU) $(DEBUG_OBJS_MAIN)
+	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_BE_QUIET) $(NVCC_DEBUG_FLAGS) $(CC_DEBUG_FLAGS) $(DEBUG_OBJS_CPP) $(DEBUG_OBJS_CU) $(DEBUG_OBJS_MAIN) $() -o $@
+
+$(DEBUG_OBJS_MAIN): $(SRC_MAIN)
+	mkdir -p $(dir $@)
+	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_BE_QUIET) $(NVCC_OPT_FLAGS) -dc $< -o $@
 
 $(DEBUG_BUILD_DIR)/%.cu.o: %.cu %.cuh
 	mkdir -p $(dir $@)
-	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_DEBUG_FLAGS) -dc $< -o $@
+	$(NVCC) $(NVCC_FLAGS) $(NVCC_COMPUTE_FLAGS) $(NVCC_BE_QUIET) $(NVCC_DEBUG_FLAGS) -dc $< -o $@
 
 $(DEBUG_BUILD_DIR)/%.cpp.o: %.cpp %.hpp
 	mkdir -p $(dir $@)
 	$(CC) $(CC_DEBUG_FLAGS) -c $< -o $@
 
-all: format clean clean_mats $(BUILD_DIR)/$(TARGET) run
+all: clean clean_mats run
 
 clean:
-	rm -r $(BUILD_DIR)
+	rm -r $(BUILD_DIR) || true
 
 clean_mats:
-	rm input/*.mat input/*.vec
+	rm input/*.mat input/*.vec || true
 
 clean_debug:
-	rm -r $(DEBUG_BUILD_DIR)
+	rm -r $(DEBUG_BUILD_DIR) || true
 
 run: $(BUILD_DIR)/$(TARGET)
 	$(BUILD_DIR)/$(TARGET)
