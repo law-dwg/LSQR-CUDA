@@ -60,7 +60,7 @@ double MatrixCUDA::Dnrm2() {
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
   // cudaLastErrCheck();
-  
+
   // sanity checks
   assert(!(h_out != h_out));
   assert(h_out > 0);
