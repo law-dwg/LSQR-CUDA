@@ -1,6 +1,8 @@
 from scipy.sparse import csc_matrix,csr_matrix,coo_matrix
 from scipy.sparse.linalg import lsqr
 from numpy import linalg as LA
+import datetime
+import csv
 import numpy as np
 import os 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -10,53 +12,62 @@ import time
 import pandas as pd
 from os import listdir
 from os.path import isfile, join
-mypath = "../source/output"
-outputDirs = listdir(mypath)
-outputDirs.sort()
-onlyfiles = [f for f in listdir(mypath+"/"+outputDirs[-1]) if isfile(join(mypath+"/"+outputDirs[-1], f))]
-print(outputDirs[-1])
-print(onlyfiles)
-#data= pd.read_csv("Salary_Data.csv")
-#data
+from os import walk
 
-#for i in range(1000,1100,500):
-#i = 100
-#i_2= i
-#i_s = str(i)
-#i_s_2 = str(i_2)
-#A_path="../source/input/"+i_s_2+"_"+i_s+"_0_A.txt"
-#b_path="../source/input/"+i_s_2+"_1_0_b.txt"
-##x_c_path="../source/output/"+i_s+"_1_x_CPU.txt"
-#x_py_path=dir_path + "/output/"+i_s+"_1_x_python.txt"
-#A = np.loadtxt(A_path, dtype=np.double)
-#b = np.loadtxt(b_path, dtype=np.double)
-##x_c= np.loadtxt(x_c_path, dtype=np.double)
-#A=A.reshape((i_2,i))
-#b=b.reshape((i_2,1))
-##x_c=x_c.reshape((i,1))
-#print("A=\n",A)
-#print("b=\n",b)
-##sM = csr_matrix(A)
-##out = np.array(sM)
-##print(out.shape)
-##
-##print(out)
-#start = time.time()
-#x, istop, itn, normr = lsqr(A, b, show=True)[:4]
-#end = time.time()
-#print("elapsed time =",end-start)
-#np.savetxt(x_py_path,x,delimiter=' ')
-#same = True
-##for j in range(i):
-##    if x[j]==x_c[j]:
-##        continue
-##    else:
-##        print("results do not match index ",j, "has difference of", x[j]-x_c[j])
-##        same=False
-##        break
-##
-##if(not same):
-##    
-##    with open(x_py_path, "a") as myfile:
-##        myfile.write("\nresults do not match")
-#
+outpath = "./output/"
+outputspath = "../source/output"
+content = []
+for (dirpath, dirnames, filenames) in walk(outputspath):
+    content.extend(dirnames)
+    break
+content.sort()
+print(content)
+
+now = datetime.datetime.now()
+now = now.strftime('%Y-%m-%dT%H%M')
+inpath = "../source/input"
+
+
+csvpath = outpath + "/" + now + "_LSQR_python.csv"
+f = open(csvpath, 'w')
+writer = csv.writer(f)
+writer.writerow(['IMPLEMENTATION','A_ROWS','A_COLUMNS','SPARSITY','TIME(ms)'])
+f.close()
+inputs = listdir(inpath)
+inputs.sort()
+mats = [m for m in inputs if ".mat" in m]
+vecs = [v for v in inputs if ".vec" in v]
+
+LSQRCUDA = pd.read_csv('msft.csv')
+data=pd.read_csv("")
+data
+
+for i in mats:
+    A = np.loadtxt(inpath+"/"+i, dtype=np.double)
+    A_props = (i.split(".")[0]).split("_")
+    A_rows = float(A_props[0])
+    A_cols = float(A_props[1])
+    A_sp = (float(A_props[2]) / 100)
+    print(A_rows, A_cols, A_sp)
+    if ((A_props[0]+"_1_b.vec") in vecs):
+        b_path = (A_props[0]+"_1_b.vec")
+        print(b_path)
+    else:
+        raise Exception('b-file',A_props[0]+"_1_b.vec",'does not exist')
+
+    b = np.loadtxt(inpath+"/"+b_path, dtype=np.double)
+    x_py_path=outpath+str(A_cols)+"_1_x_python-lsqr.vec"
+    start = datetime.datetime.now()
+    x, istop, itn, normr = lsqr(A, b, show=True)[:4]
+    end = datetime.datetime.now()
+    elapsed = end - start
+    elapsedms = elapsed.total_seconds()*1000
+    print("elapsed time =",elapsedms,"ms")
+    np.savetxt(x_py_path,x,delimiter=' ')
+    row = ['scipy-lsqr', A_props[0], A_props[1] , str(A_sp) , str(elapsedms)]
+    
+    # write to csv
+    with open(csvpath, 'a') as fd:
+        writer=csv.writer(fd)
+        writer.writerow(row)
+    
