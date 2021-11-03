@@ -5,16 +5,26 @@
 
 VectorCUDA MatrixCUDA::operator*(VectorCUDA &v) { // Multiplication
   VectorCUDA out(this->h_rows, 1);
-  unsigned blocksX = ((this->h_rows * this->h_columns) / (BLOCK_SIZE_X * BLOCK_SIZE_X)) + 1;
-  dim3 grid(blocksX, 1, 1);
+  int kern = 2;
   dim3 block(BLOCK_SIZE_X * BLOCK_SIZE_X, 1, 1);
   if (this->h_columns == v.getRows()) {
-    // printf("grid(%d,%d,%d), block(%d,%d,%d)\n", grid.x, grid.y, grid.z, block.x, block.y, block.z);
-    spmvNaive<<<grid, block>>>(this->d_rows, this->d_columns, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.getMat(), out.getMat());
+    unsigned totalNumThreads = this->getRows() * WARP_SIZE; // one warp per row
+    if (kern == 2) {
+      dim3 grid((totalNumThreads / block.x) + 1, 1, 1);
+      spmvCSRVector<<<grid, block>>>(this->d_rows, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.getMat(), out.getMat());
+    } else if (kern == 1) {
+      dim3 grid((totalNumThreads / block.x) + 1, 1, 1);
+      spmvCSRVectorShared<<<grid, block, block.x * sizeof(double)>>>(this->d_rows, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.getMat(),
+                                                                     out.getMat());
+    } else {
+      dim3 grid(((this->h_rows * this->h_columns) / block.x) + 1, 1, 1); // one thread per entry
+      spmvNaive<<<grid, block>>>(this->d_rows, this->d_csrRowPtr, this->d_csrColInd, this->d_csrVal, v.getMat(), out.getMat());
+    }
   } else {
     printf("Cannot perform multiplication, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
     exit(1);
   }
+  // cudaLastErrCheck();
   return out;
 }
 
@@ -49,6 +59,8 @@ double MatrixCUDA::Dnrm2() {
   cudaErrCheck(cudaDeviceSynchronize());
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
+  // cudaLastErrCheck();
+  
   // sanity checks
   assert(!(h_out != h_out));
   assert(h_out > 0);

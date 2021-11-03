@@ -5,6 +5,7 @@
  *=========================================================================*/
 
 #include "kernels.cuh"
+#define FULL_MASK 0xffffffff
 #if !defined(__CUDA_ARCH__) || __CUDA_ARCH__ >= 600
 #else
 /** atomicAdd for doubles (if not supported) */
@@ -32,6 +33,15 @@ static __inline__ __device__ double atomicMax(double *address, double val) {
 };
 
 /** VectorCUDA and MatrixCUDA Kernels */
+double __device__ warpReduce(double sdata) {
+  // Reference:
+  // https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/
+  //
+  for (int offset = warpSize / 2; offset > 0; offset /= 2)
+    sdata += __shfl_down_sync(FULL_MASK, sdata, offset, warpSize);
+  return sdata;
+};
+
 void __global__ print(double *input, unsigned *r, unsigned *c) {
   // used for debugging
   const unsigned bid = blockIdx.x                               // 1D
@@ -213,13 +223,80 @@ void __global__ transposeTiled(double *in1, double *output, unsigned *rows, unsi
 };
 
 /** MatrixCUDA Kernels */
-void __global__ spmvNaive(unsigned *rows, unsigned *col, int *rowPtr, int *colIdx, double *val, double *rhs, double *out) {
-  int gid = blockIdx.x * blockDim.x + threadIdx.x;
-  int bid;
+void __global__ spmvNaive(unsigned *rows, int *csrRowPtr, int *csrColIdn, double *csrVal, double *rhs, double *out) {
+  int gid = blockIdx.x * blockDim.x + threadIdx.x; // global scope tid
   if (gid < *rows) {
-    out[gid] = double(0.0);
-    for (bid = rowPtr[gid]; bid < rowPtr[gid + 1]; ++bid) {
-      out[gid] += val[bid] * rhs[colIdx[bid]];
+    out[gid] = 0.0;
+    for (int i = csrRowPtr[gid]; i < csrRowPtr[gid + 1]; ++i) {
+      out[gid] += csrVal[i] * rhs[csrColIdn[i]];
+    }
+  }
+};
+
+void __global__ spmvCSRVector(unsigned *rows, int *csrRowPtr, int *csrColInd, double *csrVal, double *rhs, double *out) {
+  // Reference:
+  // https://medium.com/analytics-vidhya/sparse-matrix-vector-multiplication-with-cuda-42d191878e8f
+  //
+  unsigned gid = blockIdx.x * blockDim.x + threadIdx.x; // global id
+  unsigned wid = gid / warpSize;                        // warp id
+  unsigned lane = threadIdx.x % warpSize;               // id within warp (0-31)
+  unsigned row = wid;                                   // one row == one warp
+  // printf("grid%d %d %d",gridDim.x,gridDim.y,gridDim.z);
+  if (row < *rows) {
+    int rowStart = csrRowPtr[row];
+    int rowEnd = csrRowPtr[row + 1];
+    double sum = 0;
+    for (int i = rowStart + lane; i < rowEnd; i += warpSize) {
+      sum += csrVal[i] * rhs[csrColInd[i]];
+    };
+
+    // __shfl_down_sync
+    double temp = warpReduce(sum);
+
+    if (lane == 0) {
+      out[row] = temp;
+    }
+  }
+};
+
+void __global__ spmvCSRVectorShared(unsigned *rows, int *csrRowPtr, int *csrColInd, double *csrVal, double *rhs, double *out) {
+  // Reference:
+  // https://medium.com/analytics-vidhya/sparse-matrix-vector-multiplication-with-cuda-42d191878e8f
+  // and
+  // https://github.com/poojahira/spmv-cuda/blob/master/code/src/spmv_csr_vector.cu
+  // use of shared memory rather than __shfl_down_sync
+  // no speedup between with and without shared memory
+  //
+  unsigned gid = blockIdx.x * blockDim.x + threadIdx.x; // global id
+  unsigned wid = gid / warpSize;                        // warp id
+  unsigned lane = threadIdx.x % warpSize;               // id within warp (0-31)
+  unsigned row = wid;                                   // one row == one warp
+  extern __shared__ volatile double sumSpmv[];          // shared + volatile
+  // printf("grid%d %d %d",gridDim.x,gridDim.y,gridDim.z);
+  if (row < *rows) {
+    int rowStart = csrRowPtr[row];
+    int rowEnd = csrRowPtr[row + 1];
+    sumSpmv[threadIdx.x] = 0;
+    for (int i = rowStart + lane; i < rowEnd; i += warpSize) {
+      sumSpmv[threadIdx.x] += csrVal[i] * rhs[csrColInd[i]];
+    };
+
+    // reduce 32 threads down to one -> add up sums between 32 threads
+    __syncthreads();
+    if (lane < 16)
+      sumSpmv[threadIdx.x] += sumSpmv[threadIdx.x + 16]; // e.g. sumSpmv[15] = sumSpmv[15] + sumSpmv[31]
+    if (lane < 8)
+      sumSpmv[threadIdx.x] += sumSpmv[threadIdx.x + 8];
+    if (lane < 4)
+      sumSpmv[threadIdx.x] += sumSpmv[threadIdx.x + 4];
+    if (lane < 2)
+      sumSpmv[threadIdx.x] += sumSpmv[threadIdx.x + 2];
+    if (lane < 1)
+      sumSpmv[threadIdx.x] += sumSpmv[threadIdx.x + 1]; // final reduction
+    __syncthreads();
+
+    if (lane == 0) {
+      out[row] = sumSpmv[threadIdx.x];
     }
   }
 };

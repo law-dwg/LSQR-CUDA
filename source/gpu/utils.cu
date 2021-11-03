@@ -2,6 +2,7 @@
 #include <iostream>
 const unsigned BLOCK_SIZE_X = 16;
 const unsigned BLOCK_SIZE_Y = 16;
+const unsigned WARP_SIZE = 32; // assumed, can be changed to match hardware
 const double ONE = 1.0;
 const double ZERO = 0.0;
 const double NEGONE = -1.0;

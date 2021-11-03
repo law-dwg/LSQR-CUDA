@@ -13,6 +13,7 @@
 #endif
 extern const unsigned BLOCK_SIZE_X;
 extern const unsigned BLOCK_SIZE_Y;
+extern const unsigned WARP_SIZE;
 extern const double ONE;
 extern const double ZERO;
 extern const double NEGONE;

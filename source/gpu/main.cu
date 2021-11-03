@@ -104,9 +104,9 @@ int main() {
   std::cout << "Would you like me to make some test data for you? (y/n): ";
   bool matBuild = yesNo();
   if (matBuild) { // build matrices
-    unsigned start = 100;
-    unsigned end = 300;
-    unsigned increment = 100;
+    unsigned start = 1500;
+    unsigned end = 1500;
+    unsigned increment = 500;
     unsigned numOfTests = ((end - start) / increment) + 1;
     printf("\nGreat, I will create %d set(s) of inputs for you\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-0.95: ",
            numOfTests);
@@ -189,12 +189,12 @@ int main() {
         // 1. CPU C++ - Dense Matrix Implementation
         report.open(reportName.str(), std::ios_base::app);
         long double CPU_Cpp_ms;
-        if (true) {
+        if (false) {
           CPU_Cpp_ms = lsqrCPU(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[0], fileName[0]);
           report << fileName[0] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0," << std::to_string(CPU_Cpp_ms) << "\n";
         };
         // 2. GPU CUDA - Dense Matrix Implementation
-        if (true) {
+        if (false) {
           float CUDA_DENSE_ms =
               lsqrGPU<VectorCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[1], fileName[1], sp);
           cudaErrCheck(cudaDeviceReset());
@@ -209,7 +209,7 @@ int main() {
                  << std::to_string(CUDA_SPARSE_ms) << "\n";
         };
         // 4. GPU CUBLAS -  Dense Matrix Implementation
-        if (true) {
+        if (false) {
           float CUBLAS_DENSE_ms =
               lsqrGPU<VectorCUBLAS, VectorCUBLAS>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[3], fileName[3], sp);
           cudaErrCheck(cudaDeviceReset());
@@ -224,7 +224,7 @@ int main() {
                  << std::to_string(CUSPARSE_SPARSE_ms) << "\n";
         };
         cudaLastErrCheck(); // in case an error was missed
-        report.close(); // write to report
+        report.close();     // write to report
       };
       ++it;
     }

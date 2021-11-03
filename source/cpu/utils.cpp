@@ -171,7 +171,8 @@ std::string timeNowString() {
   std::time_t now_time = std::chrono::system_clock::to_time_t(now);
   tm t = *localtime(&now_time);
   std::string out;
-  out = std::to_string(t.tm_year + 1900) + "-" + std::to_string(t.tm_mon + 1) + "-" + std::to_string(t.tm_mday) + "T" + std::to_string(t.tm_hour) +
-        std::to_string(t.tm_min);
+  std::string min = (t.tm_min < 10) ? "0" + std::to_string(t.tm_min) : std::to_string(t.tm_min);
+  out =
+      std::to_string(t.tm_year + 1900) + "-" + std::to_string(t.tm_mon + 1) + "-" + std::to_string(t.tm_mday) + "T" + std::to_string(t.tm_hour) + min;
   return out;
 };
