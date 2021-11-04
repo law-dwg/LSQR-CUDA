@@ -9,11 +9,11 @@ The goal of this work was to accelerate the computation time of the well-known [
 
 1.  [General](#General)
 1.  [Background](#Background)
-1.  [Methods](#Background)
+1.  [Methods](#Methods)
     1.  [CPU](#CPU)
     1.  [GPU](#CPU)
-1.  [Results](#Background)
-1.  [Conclusion](#Background)
+1.  [Results](#Results)
+1.  [Conclusion](#Conclusion)
 <!-- /MarkdownTOC -->
 </details>
 

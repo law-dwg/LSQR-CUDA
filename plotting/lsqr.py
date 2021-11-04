@@ -49,11 +49,11 @@ CUSPARSE = LSQRCUDA[LSQRCUDA['IMPLEMENTATION']=='CUSPARSE-SPARSE'].drop('IMPLEME
 CUSPARSE=CUSPARSE.rename(columns={"TIME(ms)":"CUSPARSE"})
 #print(CUDASPARSE)
 #print(CUSPARSE)
-all = pd.merge(CUDASPARSE,CUSPARSE,on="A_ROWS")
-print(all)
-all[:5].plot(x='A_ROWS',title=name,grid=True)
-all[5:].plot(x='A_ROWS',title=name,grid=True)
-plt.show()
+#all = pd.merge(CUDASPARSE,CUSPARSE,on="A_ROWS")
+#print(all)
+#all[:5].plot(x='A_ROWS',title=name,grid=True)
+#all[5:].plot(x='A_ROWS',title=name,grid=True)
+#plt.show()
 
 
 for i in mats:
