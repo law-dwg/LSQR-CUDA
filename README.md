@@ -7,10 +7,17 @@ The goal of this work was to accelerate the computation time of the well-known [
 
 ## Requirements
 LSQR-CUDA has the following requirements:
+* *nix system or WSL for windows
 * CUDA Capable GPGPU
 * CUDA v11 or higher 
 * g++ v11 or higher
-* *nix system 
+* make
+
+To run the system, type the following into your terminal
+
+```
+make run
+```
 
 <details open>
 <summary><b>Table of Contents</b></summary>
@@ -30,15 +37,20 @@ LSQR-CUDA has the following requirements:
 
 <a id="General"></a>
 ## 1. General
-The purpose of this work was to implement the LSQR algorithm on a CUDA capabale GPU in order to analyze a potential speedup in calculation time in comparison to a standard sequential CPU implementation. When run in CUDA, many matrix operations (e.g. multiplication, euclidean norm, addition, subtraction, etc.) can be run in parallel  
+The purpose of this work was to implement the LSQR algorithm on a CUDA capabale GPU in order to analyze a potential runtime speedup in comparison to a standard, sequential CPU implementation. When run in CUDA, many matrix operations (e.g. multiplication, euclidean norm, addition, subtraction, etc.) can be run in parallel, and therefore decrease computation time.
 
-This work has both sequential and parallel implementations that works for both sparse and dense inputs.
+This work has both sequential and parallel implementations of LSQR that are intended for both sparse and dense inputs.
 ___
 <a id="Background"></a>
 ## 2. Background
 ___
 <a id="Methods"></a>
 ## 3. Methods
+The LSQR algorithm in this work is largely based off the scipy-lsqr algorithm. The results and speeds found here were compared to that of the scipy implementation. 
+
+### CPU
+All of the source files for implementations that run on the CPU can be found in the [cpu](source/cpu) directory.
+
 ___
 <a id="Results"></a>
 ## 4. Results
