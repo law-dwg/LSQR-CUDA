@@ -4,6 +4,11 @@ LSQR-CUDA was written by Lawrence Ayers under the supervision of Stefan Guthe of
 
 The goal of this work was to accelerate the computation time of the well-known [LSQR](https://web.stanford.edu/group/SOL/software/lsqr/) algorithm using a CUDA capable GPGPU.
 
+The LSQR algorithm is an iterative method used to find the solution x for either of the following problems:
+* ![equation]("http://www.sciweavers.org/tex2img.php?eq=Ax%3Db&bc=Transparent&fc=Black&im=png&fs=12&ff=arev&edit=0")
+* ![equation]("http://www.sciweavers.org/tex2img.php?eq=min%28%7C%7CAx-b%7C%7C%29&bc=Transparent&fc=Black&im=png&fs=12&ff=arev&edit=0)
+
+The LSQR algorithm is  to Chris Paige and Michael Saunders in their work first published [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf).
 
 ## Requirements
 LSQR-CUDA has the following requirements:
@@ -13,11 +18,19 @@ LSQR-CUDA has the following requirements:
 * g++ v11 or higher
 * make
 
-To run the system, type the following into your terminal
+## Execution
 
+To run the system, enter the [source](source/) directory and type the following into your terminal
 ```
 make run
 ```
+You will then be asked if you would like automatic test inputs generated for you. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](input/) directory. 
+Inputs must have the following notation:
+* ```#rows_#cols_A_#sparsity.mat```
+* ```#rows_1_b.vec```
+
+
+Results will be correspondingly written to the [output](output/) folder.
 
 <details open>
 <summary><b>Table of Contents</b></summary>
@@ -48,9 +61,13 @@ ___
 ## 3. Methods
 The LSQR algorithm in this work is largely based off the scipy-lsqr algorithm. The results and speeds found here were compared to that of the scipy implementation. 
 
-### CPU
-All of the source files for implementations that run on the CPU can be found in the [cpu](source/cpu) directory.
+## CPU
+All of the source files for implementations that run on the CPU can be found in the [cpu](source/cpu) directory. 
 
+For this work, there was only one CPU implementation created, [VectorCPU](source/cpu/Vector.cpp), that executes on dense inputs.
+
+## GPU
+All source files pertaining to GPU implementations can be found in
 ___
 <a id="Results"></a>
 ## 4. Results
