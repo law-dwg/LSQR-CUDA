@@ -104,8 +104,8 @@ int main() {
   std::cout << "Would you like me to make some test data for you? (y/n): ";
   bool matBuild = yesNo();
   if (matBuild) { // build matrices
-    unsigned start = 1000;
-    unsigned end = 1000;
+    unsigned start = 2500;
+    unsigned end = 2500;
     unsigned increment = 1000;
     unsigned numOfTests = ((end - start) / increment) + 1;
     printf("\nGreat, I will create %d set(s) of inputs for you\n\nWhat sparsity should matrix A have? Please enter a number between 0.0-0.95: ",

@@ -8,29 +8,44 @@ The LSQR algorithm is an iterative method used to find the solution x for either
 * Ax=b
 * min(||Ax-b||)
 
-The LSQR algorithm is  to Chris Paige and Michael Saunders in their work first published [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf).
+where A is large, often sparse, square or rectangular matrix, and b is a normal vector of size Arows.
+
+LSQR was first authored by Chris Paige and Michael Saunders in their publication [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf), and has since been widely used.
 
 ## Requirements
 LSQR-CUDA has the following requirements:
 * *nix system or WSL for windows
 * CUDA Capable GPGPU
-* CUDA v11 or higher 
+* CUDA (nvcc) v11 or higher 
 * g++ v11 or higher
 * make
 
 ## Execution
 
-To run the system, enter the [source](source/) directory and type the following into your terminal
+To run the system, enter the [source](source/) directory and type the following command into your terminal
 ```
 make run
 ```
-You will then be asked if you would like automatic test inputs generated for you. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](input/) directory. 
+### Inputs
+You will then be asked if you would like automatic test inputs generated for you. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](input/) directory. These must use a white space delimiter: " ", and have a number of values such that Ax=b can be satisfied.
 Inputs must have the following notation:
-* ```#rows_#cols_A_#sparsity.mat```
-* ```#rows_1_b.vec```
+* ```#Arows_#Acols_A_#sparsity.mat```
+* ```#Arows_1_b.vec```
 
+As an example, a sparse matrix A with 1500 rows, 2000 columns, and a sparsity of 0.75% would have the following input files:
 
-Results will be correspondingly written to the [output](output/) folder.
+* ```1500_2000_A_75.mat```
+* ```1500_1_b.vec```
+
+### Outputs
+The solution, x, will be correspondingly written to [output](output/) in a directory corresponding to the time of execution in the format:
+* ```YYYY-MM-DDTHHMM/#Acols_1_x_implementation_#sparsity.vec```
+
+for the above example, the x output file would look like this:
+* ```YYYY-MM-DDTHHMM/2000_1_b.vec```
+
+A csv with the timings of each implementation will be writt
+
 
 <details open>
 <summary><b>Table of Contents</b></summary>
