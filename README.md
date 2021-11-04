@@ -87,10 +87,9 @@ ___
 The LSQR algorithm in this work is largely based off the scipy-lsqr [source code](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568) as well as the C++ port provided by Luis Ibanez. In LSQR-CUDA, this algorithm is located in the lsqr.hpp file, whereby each implemenation is passed as a class type and run 
 
 <a id="Cpp-DENSE"></a>
-### [Cpp-DENSE](source/vectorCPU.hpp)
+### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
 
 
-For this work, there was only one CPU implementation created, [VectorCPU](source/cpu/Vector.cpp), that executes on dense inputs.
 <a id="CUDA-DENSE"></a>
 <a id="CUDA-SPARSE"></a>
 <a id="CUBLAS-DENSE"></a>
