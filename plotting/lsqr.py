@@ -5,6 +5,8 @@ import datetime
 import csv
 import numpy as np
 import os 
+import matplotlib.pyplot as plt
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 print(dir_path)
 print(np.finfo(np.float64).eps)
@@ -38,9 +40,21 @@ inputs.sort()
 mats = [m for m in inputs if ".mat" in m]
 vecs = [v for v in inputs if ".vec" in v]
 
-LSQRCUDA = pd.read_csv('msft.csv')
-data=pd.read_csv("")
-data
+LSQRCUDA = pd.read_csv("../source/sol/2021-11-3T2141/2021-11-3T2147_LSQR-CUDA.csv")
+DEVICE = pd.read_csv("../source/sol/2021-11-3T2141/deviceProps.csv")
+name = DEVICE['DEVICE_NAME'][0]
+CUDASPARSE = LSQRCUDA[LSQRCUDA['IMPLEMENTATION']=='CUDA-SPARSE'].drop('IMPLEMENTATION',1).drop('A_COLUMNS',1).drop('SPARSITY',1)
+CUDASPARSE=CUDASPARSE.rename(columns={"TIME(ms)":"CUDASPARSE"})
+CUSPARSE = LSQRCUDA[LSQRCUDA['IMPLEMENTATION']=='CUSPARSE-SPARSE'].drop('IMPLEMENTATION',1).drop('A_COLUMNS',1).drop('SPARSITY',1)
+CUSPARSE=CUSPARSE.rename(columns={"TIME(ms)":"CUSPARSE"})
+#print(CUDASPARSE)
+#print(CUSPARSE)
+all = pd.merge(CUDASPARSE,CUSPARSE,on="A_ROWS")
+print(all)
+all[:5].plot(x='A_ROWS',title=name,grid=True)
+all[5:].plot(x='A_ROWS',title=name,grid=True)
+plt.show()
+
 
 for i in mats:
     A = np.loadtxt(inpath+"/"+i, dtype=np.double)
