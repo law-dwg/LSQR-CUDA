@@ -1,6 +1,6 @@
 # LSQR-CUDA
 ## Overview
-LSQR-CUDA was written by Lawrence Ayers under the supervision of Stefan Guthe of the [GRIS](https://www.informatik.tu-darmstadt.de/gris/startseite_1/team/index.de.jsp) institute at the Technische Universität Darmstadt.
+LSQR-CUDA is written by Lawrence Ayers under the supervision of Stefan Guthe of the [GRIS](https://www.informatik.tu-darmstadt.de/gris/startseite_1/team/index.de.jsp) institute at the Technische Universität Darmstadt. It is a CUDA port of the LSQR algorithm of Chris Paige and Michael Saunders
 
 The goal of this work was to accelerate the computation time of the well-known [LSQR](https://web.stanford.edu/group/SOL/software/lsqr/) algorithm using a CUDA capable GPGPU.
 
@@ -8,7 +8,7 @@ The LSQR algorithm is an iterative method used to find the solution x for either
 * Ax=b
 * min(||Ax-b||)
 
-where A is a large, often sparse, square or rectangular matrix, and b is a normal vector of size #A-rows.
+where A is a large, often sparse, square or rectangular matrix, and b is a vector of size #A-rows.
 
 LSQR was first authored by Chris Paige and Michael Saunders in their publication [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf), and has since been widely used for various applications.
 
@@ -50,14 +50,14 @@ ___
 <summary><b>Table of Contents</b></summary>
 <!-- MarkdownTOC -->
 
-1.  [General](#General)
+1.  [Introduction](#Introduction)
 1.  [Background](#Background)
 1.  [Methods](#Methods)
-    1.  [Cpp-DENSE](CUDA-DENSE)
-    1.  [CUDA-DENSE](CUDA-DENSE)
-    1.  [CUDA-SPARSE](CUDA-SPARSE)
-    1.  [CUBLAS-DENSE](CUBLAS-DENSE)
-    1.  [CUSPARSE-SPARSE](CUSPARSE-SPARSE)
+    1.  [Cpp-DENSE](#Cpp-DENSE)
+    1.  [CUDA-DENSE](#CUDA-DENSE)
+    1.  [CUDA-SPARSE](#CUDA-SPARSE)
+    1.  [CUBLAS-DENSE](#CUBLAS-DENSE)
+    1.  [CUSPARSE-SPARSE](#CUSPARSE-SPARSE)
 1.  [Results](#Results)
     1.   [Speedup](#Speedup)
     1.   [Accuracy](#Accuracy)
@@ -65,8 +65,8 @@ ___
 <!-- /MarkdownTOC -->
 </details>
 
-<a id="General"></a>
-## 1. General
+<a id="Introduction"></a>
+## 1. Introduction
 The purpose of this work was to implement the LSQR algorithm on a CUDA-capabale GPU to analyze any potential runtime speedups in comparison to a standard, sequential CPU implementation. When run in CUDA, many matrix operations (e.g. multiplication, euclidean norm, addition, subtraction, etc.) can be run in parallel, and can, therefore, decrease computation time.
 
 This work has both sequential and parallel implementations of LSQR that are intended for both sparse and dense inputs. The 5 implementations are listed as follows:
@@ -77,20 +77,24 @@ This work has both sequential and parallel implementations of LSQR that are inte
 1.  CUBLAS-DENSE (GPU)
 1.  CUSPARSE-SPARSE (GPU)
 
-A sparse sequential algorithmn was not written for this work, rather, the robust scipy-lsqr algorithm was as the sparse sequential implementation.
+A sparse sequential algorithmn was not explicitly created for this work, rather, the robust [scipy-lsqr](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html) algorithm was used instead for verifying results and comparison of runtimes.
 ___
 <a id="Background"></a>
 ## 2. Background
 ___
 <a id="Methods"></a>
 ## 3. Methods
-The LSQR algorithm in this work is largely based off the scipy-lsqr algorithm. The results and speeds found here were compared to that of the scipy implementation. 
+The LSQR algorithm in this work is largely based off the scipy-lsqr [source code](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568) as well as the C++ port provided by Luis Ibanez. In LSQR-CUDA, this algorithm is located in the lsqr.hpp file, whereby each implemenation is passed as a class type and run 
 
-## CPU
-All of the source files for implementations that run on the CPU can be found in the [cpu](source/cpu) directory. 
+<a id="Cpp-DENSE"></a>
+### [Cpp-DENSE]()
+
 
 For this work, there was only one CPU implementation created, [VectorCPU](source/cpu/Vector.cpp), that executes on dense inputs.
-
+<a id="CUDA-DENSE"></a>
+<a id="CUDA-SPARSE"></a>
+<a id="CUBLAS-DENSE"></a>
+<a id="CUSPARSE-SPARSE"></a>
 ## GPU
 All source files pertaining to GPU implementations can be found in
 ___
