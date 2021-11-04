@@ -5,8 +5,8 @@ LSQR-CUDA was written by Lawrence Ayers under the supervision of Stefan Guthe of
 The goal of this work was to accelerate the computation time of the well-known [LSQR](https://web.stanford.edu/group/SOL/software/lsqr/) algorithm using a CUDA capable GPGPU.
 
 The LSQR algorithm is an iterative method used to find the solution x for either of the following problems:
-* ![equation](http://www.sciweavers.org/tex2img.php?eq=Ax%3Db&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0)
-* ![equation](http://www.sciweavers.org/tex2img.php?eq=min%28%7C%7CAx%3Db%7C%7C%29&bc=White&fc=Black&im=png&fs=12&ff=arev&edit=0)
+* Ax=b
+* min(||Ax-b||)
 
 The LSQR algorithm is  to Chris Paige and Michael Saunders in their work first published [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf).
 
