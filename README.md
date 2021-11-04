@@ -8,44 +8,43 @@ The LSQR algorithm is an iterative method used to find the solution x for either
 * Ax=b
 * min(||Ax-b||)
 
-where A is large, often sparse, square or rectangular matrix, and b is a normal vector of size Arows.
+where A is a large, often sparse, square or rectangular matrix, and b is a normal vector of size #A-rows.
 
-LSQR was first authored by Chris Paige and Michael Saunders in their publication [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf), and has since been widely used.
+LSQR was first authored by Chris Paige and Michael Saunders in their publication [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf), and has since been widely used for various applications.
 
 ## Requirements
 LSQR-CUDA has the following requirements:
-* *nix system or WSL for windows
+* *nix system or WSL for windows machines
 * CUDA Capable GPGPU
 * CUDA (nvcc) v11 or higher 
 * g++ v11 or higher
 * make
 
 ## Execution
-
-To run the system, enter the [source](source/) directory and type the following command into your terminal
+To run the software, enter the [source](source/) directory and type the following command into your terminal
 ```
 make run
 ```
 ### Inputs
-You will then be asked if you would like automatic test inputs generated for you. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](input/) directory. These must use a white space delimiter: " ", and have a number of values such that Ax=b can be satisfied.
-Inputs must have the following notation:
+You will then be asked if you would like automatic test inputs generated for you and what sparsity you would like to have Matrix A set to. The range of auto-generated inputs is set in ln 107-109 of [main.cu](source/gpu/main.cu), but can be manually changed if desired. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](input/) directory. These must use a white space delimiter: " ", and have a number of values such that Ax=b can be satisfied.
+
+Inputs should have the following notation:
 * ```#Arows_#Acols_A_#sparsity.mat```
 * ```#Arows_1_b.vec```
 
 As an example, a sparse matrix A with 1500 rows, 2000 columns, and a sparsity of 0.75% would have the following input files:
-
 * ```1500_2000_A_75.mat```
 * ```1500_1_b.vec```
 
 ### Outputs
-The solution, x, will be correspondingly written to [output](output/) in a directory corresponding to the time of execution in the format:
-* ```YYYY-MM-DDTHHMM/#Acols_1_x_implementation_#sparsity.vec```
+The solution, x, will be written to [output](output/) in a directory corresponding to the time of execution in the format:
+* ```YYYY-MM-DDTHHMM/#Acols_1_x_implementation.vec```
 
 for the above example, the x output file would look like this:
-* ```YYYY-MM-DDTHHMM/2000_1_b.vec```
+* ```YYYY-MM-DDTHHMM/2000_1_x_CUDA-SPARSE.vec```
 
-A csv with the timings of each implementation will be writt
-
+The 5 different implementations in this work will then run on each set of inputs located in the [input/](source/input/) directory, with the runtime of each saved to a csv called ```YYYY-MM-DDTHHMM/YYYY-MM-DDTHHMM_LSQR-CUDA.csv```
+___
 
 <details open>
 <summary><b>Table of Contents</b></summary>
@@ -55,7 +54,12 @@ A csv with the timings of each implementation will be writt
 1.  [Background](#Background)
 1.  [Methods](#Methods)
     1.  [CPU](#CPU)
-    1.  [GPU](#CPU)
+        1.  [Cpp-DENSE](CUDA-DENSE)
+    1.  [GPU](#GPU)
+        1.  [CUDA-DENSE](CUDA-DENSE)
+        1.  [CUDA-SPARSE](CUDA-SPARSE)
+        1.  [CUBLAS-DENSE](CUBLAS-DENSE)
+        1.  [CUSPARSE-SPARSE](CUSPARSE-SPARSE)
 1.  [Results](#Results)
     1.   [Speedup](#Speedup)
     1.   [Accuracy](#Accuracy)
@@ -65,9 +69,17 @@ A csv with the timings of each implementation will be writt
 
 <a id="General"></a>
 ## 1. General
-The purpose of this work was to implement the LSQR algorithm on a CUDA capabale GPU in order to analyze a potential runtime speedup in comparison to a standard, sequential CPU implementation. When run in CUDA, many matrix operations (e.g. multiplication, euclidean norm, addition, subtraction, etc.) can be run in parallel, and therefore decrease computation time.
+The purpose of this work was to implement the LSQR algorithm on a CUDA-capabale GPU to analyze any potential runtime speedups in comparison to a standard, sequential CPU implementation. When run in CUDA, many matrix operations (e.g. multiplication, euclidean norm, addition, subtraction, etc.) can be run in parallel, and can, therefore, decrease computation time.
 
-This work has both sequential and parallel implementations of LSQR that are intended for both sparse and dense inputs.
+This work has both sequential and parallel implementations of LSQR that are intended for both sparse and dense inputs. The 5 implementations are listed as follows:
+
+1.  Cpp-DENSE (CPU)
+1.  CUDA-DENSE (GPU)
+1.  CUDA-SPARSE (GPU)
+1.  CUBLAS-DENSE (GPU)
+1.  CUSPARSE-SPARSE (GPU)
+
+A sparse sequential algorithmn was not written for this work, rather, the robust scipy-lsqr algorithm was as the sparse sequential implementation.
 ___
 <a id="Background"></a>
 ## 2. Background
