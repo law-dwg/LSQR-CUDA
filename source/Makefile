@@ -79,7 +79,7 @@ all: clean clean_mats run
 clean:
 	rm -r $(BUILD_DIR) || true
 
-clean_mats:
+clean_inputs:
 	rm input/*.mat input/*.vec || true
 
 clean_debug:
