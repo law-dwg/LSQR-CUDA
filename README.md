@@ -43,7 +43,7 @@ The solution, x, will be written to [output](source/output/) in a directory corr
 for the above example, the x output file would look like this:
 * ```YYYY-MM-DDTHHMM/2000_1_x_CUDA-SPARSE.vec```
 
-The 5 different implementations in this work will then run on each set of inputs located in the [input](source/input/) directory, with the runtime of each saved to a csv called ```YYYY-MM-DDTHHMM/YYYY-MM-DDTHHMM_LSQR-CUDA.csv```
+The 5 different implementations created for this work will then run on each set of inputs located in the [input](source/input/) directory, with the runtime of each saved to a csv called ```YYYY-MM-DDTHHMM/YYYY-MM-DDTHHMM_LSQR-CUDA.csv```
 ___
 
 <details open>
@@ -100,15 +100,24 @@ Scipy's lsqr solver runs on either sparse or dense inputs and is used as a basel
 ## GPU Implementations
 All source files pertaining to GPU implementations can be found in in the [gpu](source/gpu/) directory.
 
+For all kernels designed in this work, the blockSize (i.e. the number of threads in a block) is set to a constant value found in [utils.cuh](source/gpu/utils.cu#L3). This means that the The use of cached memory lowers the latency in comparison to global memory in cal,
+
 The kernels used for these implementations is where the majority of development for LSQR-CUDA was spent. 
 
 ### [CUDA-DENSE](source/gpu/vectorCUDA.cuh)
 The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation takes in two dense sources and runs them through lsqr with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. 
 
 #### Multiplication
-The most time intensive operation of LSQR is the matrix-vector and vector-vector multiplication operations. Since this implementation works only with dense inputs, this operation is treated the same for both matrix-vector and vector-vector multiplication (i.e. neither matrix and vector are in a compressed format). For better results, a "tiled" approach to multiplication was used, where inputs are first loaded into GPU-cache memory, or "tiles", that iteratively "sweep" across inputs, saving and continuously summing up the result in each iteration.
+The most time intensive operation of LSQR is the matrix-vector and vector-vector multiplication operations. Since CUDA-DENSE works only with dense inputs, this operation is treated the same for both matrix-vector and vector-vector multiplication (i.e. neither matrix nor vector are in a compressed format). 
+
+A naive approach to multiplication would be have a singular thread solve for one entry in the solution matrix, i.e. a thread accesses one row of the first input and one column of the second input from global memory to perform the dot product of these two arrays in a loop. Since the latency of global memory accesses can be quite high a cached, "tiled" memory solution was used. Although not used in this work, a functioning [multiplyNaive](source/gpu/kernels.cu#L114) kernel was created for reference.
+
+In the "tiled" approach to matrix multiplication, [multiplyTiled](source/gpu/kernels.cu#L125), inputs are first loaded into GPU-cached (["shared"](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)) memory, or "tiles", that iteratively "sweep" across inputs, saving and continuously summing up the result with the running total in each iteration. Each thread works in parallel towards calculating one value in the resultant matrix. An excellent visual representation of this can be found in Penny Xu's work, [Tiled Matrix Multiplication](https://penny-xu.github.io/blog/tiled-matrix-multiplication).
+
+In multiplyTiled, the use of cache memory halves the number of global memory accesses required for each thread in comparison to the naive approach. For a dense input of 2500x2500, this implementation has a speedup of about 1.5x when switching from multiplyNaive to multiplyTiled.
 
 #### Euclidean Norm
+
 
 #### Transform
 

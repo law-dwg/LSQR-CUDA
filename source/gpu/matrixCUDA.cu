@@ -41,9 +41,9 @@ MatrixCUDA MatrixCUDA::transpose() {
 };
 
 double MatrixCUDA::Dnrm2() {
-  dim3 threads(BLOCK_SIZE_X * BLOCK_SIZE_X, 1);
-  int blockX = ((this->h_nnz + threads.x - 1) / threads.x);
-  dim3 blocks(blockX, 1);
+  dim3 block(BLOCK_SIZE_X * BLOCK_SIZE_X, 1);
+  int gridX = ((this->h_nnz + block.x - 1) / block.x);
+  dim3 grid(gridX, 1);
   double *d_out, *d_max;
   double zero = 0.0;
   double h_max;
@@ -53,9 +53,9 @@ double MatrixCUDA::Dnrm2() {
 
   cudaErrCheck(cudaMemcpy(d_out, &zero, sizeof(double), cudaMemcpyHostToDevice));
   cudaErrCheck(cudaMemcpy(d_max, &zero, sizeof(double), cudaMemcpyHostToDevice));
-  maxVal<<<blocks, threads, threads.x * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max); // find max value for better precision
-  cudaErrCheck(cudaDeviceSynchronize());                                                          // necessary synchronize between two kernels
-  dnrm2<<<blocks, threads, threads.x * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max, d_out);
+  maxVal<<<grid, block, block.x * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max); // find max value for better precision
+  cudaErrCheck(cudaDeviceSynchronize());                                                    // necessary synchronize between two kernels
+  dnrm2<<<grid, block, block.x * sizeof(double)>>>(this->d_csrVal, this->h_nnz, 1, d_max, d_out);
   cudaErrCheck(cudaDeviceSynchronize());
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));

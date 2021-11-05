@@ -100,10 +100,10 @@ double VectorCUBLAS::Dnrm2() {
 };
 
 void VectorCUBLAS::printMat() {
-  unsigned blocksX = (this->h_rows / BLOCK_SIZE_X) + 1;
-  unsigned blocksY = (this->h_columns / BLOCK_SIZE_Y) + 1;
-  dim3 grid(blocksX, blocksY, 1);
   dim3 block(BLOCK_SIZE_X, BLOCK_SIZE_Y, 1);
+  unsigned gridX = (this->h_rows / block.x) + 1;
+  unsigned gridY = (this->h_columns / block.y) + 1;
+  dim3 grid(gridX, gridY, 1);
   print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
 }
 

@@ -11,6 +11,7 @@ NVCC := nvcc
 NVCC_FLAGS = -std=c++17 -lcublas -lcusparse -lcusolver
 NVCC_COMPUTE_FLAGS = -arch=sm_50
 NVCC_OPT_FLAGS = -Xptxas -O3 -use_fast_math
+NVCC_MEM_FLAGS = --ptxas-options=-v
 NVCC_BE_QUIET = -Wno-deprecated-gpu-targets
 NVCC_DEBUG_FLAGS = -G
 SOURCES_CU =	$(SRC_GPU)/vectorCUDA.cu \
