@@ -199,8 +199,7 @@ void __global__ add(double *in1, double *in2, unsigned *rows, unsigned *cols, do
     out[gid] = in1[gid] + (s * in2[gid]);
 };
 void __global__ transposeTiled(double *in1, double *output, unsigned *rows, unsigned *cols) {
-  // BLOCK SWEEPS ACROSS TILE (TILE SIZE > BLOCK SIZE)
-  // source: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
+  // reference: https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/
 
   extern __shared__ double A[];                  // Add +1 to prevent bank-conflicts
   int x = blockIdx.x * blockDim.x + threadIdx.x; // col

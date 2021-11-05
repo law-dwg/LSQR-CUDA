@@ -85,7 +85,7 @@ ___
 ___
 <a id="Methods"></a>
 ## 3. Methods
-The LSQR algorithm in this work is largely based off the scipy-lsqr [source code](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568) as well as the C++ port provided by Luis Ibanez. In LSQR-CUDA, this algorithm is located in the lsqr.hpp file, whereby each implemenation is passed as a class type and run 
+The LSQR algorithm in this work is largely based off the scipy-lsqr [source code](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568) as well as the [C++ port](https://github.com/tvercaut/LSQR-cpp) provided by Luis Ibanez. In LSQR-CUDA, this algorithm is located in the lsqr.hpp file, whereby each implemenation is passed as a class type and run 
 
 <a id="Cpp-DENSE"></a>
 ## CPU Implementations
@@ -105,31 +105,30 @@ For all kernels designed in this work, the blockSize (i.e. the number of threads
 The kernels used for these implementations is where the majority of development for LSQR-CUDA was spent. 
 
 ### [CUDA-DENSE](source/gpu/vectorCUDA.cuh)
-The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation takes in two dense sources and runs them through lsqr with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. 
+The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation takes in two dense sources and runs them through lsqr with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. All operations used for this implementation are defined within the [VectorCUDA](source/gpu/VectorCUDA.cu) class.
 
-An output of nvprof for this implementation can be seen here:
+An output of nvprof for test-run (2500_2500_A_0.mat) of this implementation can be seen here:
 ![nvprofCUDA-DENSE](images/nvprofCUDA-DENSE.png)
 
-
 #### Multiplication
-The most time intensive operation of LSQR is the matrix-vector and vector-vector multiplication operations. Since CUDA-DENSE works only with dense inputs, this operation is treated the same for both matrix-vector and vector-vector multiplication (i.e. neither matrix nor vector are in a compressed format). 
+From the nvprof output above it is clear to see that the most time intensive operation of LSQR is the matrix-vector and vector-vector multiplication operations. Since CUDA-DENSE works only with dense inputs, this operation is treated the same for both matrix-vector and vector-vector multiplication (i.e. neither matrix nor vector are in a compressed format). 
 
-A naive approach to multiplication would be have a singular thread solve for one entry in the solution matrix, i.e. a thread accesses one row of the first input and one column of the second input from global memory to perform the dot product of these two arrays in a loop. Since the latency of global memory accesses can be quite high a cached, "tiled" memory solution was used. Although not used in this work, a functioning [multiplyNaive](source/gpu/kernels.cu#L114) kernel was created for reference.
+A naive approach to parallel multiplication is to have a each thread solve for one entry in the solution matrix, i.e. a thread accesses one row of the first input and one column of the second input from global memory to perform the dot product of these two arrays in a loop. Since the latency of global memory accesses can be quite high, a cached, "tiled", memory solution is used instead, [multiplyTiled](source/gpu/kernels.cu#L125). A [multiplyNaive](source/gpu/kernels.cu#L114) kernel is available for reference.
 
-In the "tiled" approach to matrix multiplication, [multiplyTiled](source/gpu/kernels.cu#L125), inputs are first loaded into GPU-cached (["shared"](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)) memory, or "tiles", that iteratively "sweep" across inputs, saving and continuously summing up the result with the running total in each iteration. Each thread works in parallel towards calculating one value in the resultant matrix. An excellent visual representation of this can be found in Penny Xu's work, [Tiled Matrix Multiplication](https://penny-xu.github.io/blog/tiled-matrix-multiplication).
+In the [multiplyTiled](source/gpu/kernels.cu#L125) approach to parallel matrix multiplication, inputs are first loaded into GPU-cached (["shared"](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)) memory, or "tiles", that iteratively "sweep" across inputs,continuously summing up the dot product result with the running total in each iteration. Each thread works in parallel towards calculating one value in the resultant matrix. An excellent visual representation of this can be found in Penny Xu's work, [Tiled Matrix Multiplication](https://penny-xu.github.io/blog/tiled-matrix-multiplication).
 
 In multiplyTiled, the use of cache memory halves the number of global memory accesses required for each thread in comparison to the naive approach. For a dense input of 2500x2500, this implementation has a speedup of about 1.5x when switching from multiplyNaive to multiplyTiled.
 
-#### Scale
-The scale operation utilizes a naive approach. Since 
+#### Scale, Addition, and Subtraction
+Due to their already low computation time within the LSQR algorithm, the [scale](source/gpu/kernels.cu#L168), [add, and subtract](source/gpu/kernels.cu#L186) operations utilize naive approaches. No further development for these operations was deemed necessary.
 
 #### Euclidean Norm
-The euclidean norm or Dnrm2 kernel is the second most expensive operation in this implementation, 
+The euclidean norm, or Dnrm2 operation, is split into two different kernels. The first, [maxVal](source/gpu/kernels.cu#61), finds the max value within the matrix or vector, and the second, [dnrm2](source/gpu/kernels.cu#86), then divides all values by this max value whilst performing the necessary multiplication and addition operations, e.g. a[0]/maxVal ** 2 + a[1]/maxVal ** 2 + ... . This is the same method used by Ibanez in [LSQR-cpp](https://github.com/tvercaut/LSQR-cpp) and ensures numerical stability.
 
-#### Transform
+In both of these kernels, standard parallel reduction techniques are used, whereby the number of working threads in a block is halved in each iteration, and memory accesses are coalesced. Much of the development here was inspired by Mark Harris' webinar, "[Optimizing Parallel Reduction in CUDA](https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf)" and the topics covered in the PMPP course at TUD. Both these kernels also utilize cache memory as to decrease latency.
 
-
-#### Addition and Subtraction
+#### Matrix Transpose
+Like the multiplcation operation, the matrix transpose operation, [transposeTiled](gpu/source/kernels.cu#201) utilizes a "tiled" approach, where a cached "tile" is swept across the the matrix, iteratively  transposing it section by section. Where the multiplyTiled kernel used two tiles (one for each input), transposeTiled requires only one that temporarily stores a section of the matrix before loading it to the soluiton with swapped indices, e.g. ```output[3][2]=input[2][3]```. This method outlined in Nvidias blog post, "[An Efficient Matrix Transpose in CUDA C/++](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)", authored by Mark Harris.
 
 <a id="CUDA-SPARSE"></a>
 ### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
