@@ -26,7 +26,7 @@ To run the software, enter the [source](source/) directory and type the followin
 make run
 ```
 ### Inputs
-You will then be asked if you would like automatic test inputs generated for you and what sparsity you would like to have Matrix A set to. The range of auto-generated inputs is set in ln 107-109 of [main.cu](source/gpu/main.cu), but can be manually changed if desired. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](source/input/) directory. These must use a white space delimiter: " ", and have a number of values such that Ax=b can be satisfied.
+You will then be asked if you would like automatic test inputs generated for you and what sparsity you would like to have Matrix A set to. The range of auto-generated inputs is set in the start, end, and iteration variables of [main.cu](source/gpu/main.cu#107), but can be manually changed if desired. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](source/input/) directory. These must use a white space delimiter: " ", and have a number of values such that Ax=b can be satisfied.
 
 Inputs should have the following notation:
 * ```#Arows_#Acols_A_#sparsity.mat```
@@ -131,10 +131,10 @@ In both of these kernels, standard parallel reduction techniques are used, where
 Like the multiplcation operation, the matrix transpose operation, [transposeTiled](gpu/source/kernels.cu#201) utilizes a "tiled" approach, where a cached "tile" is swept across the the matrix, iteratively  transposing it section by section. Where the multiplyTiled kernel used two tiles (one for each input), transposeTiled requires only one that temporarily stores a section of the matrix before loading it to the soluiton with swapped indices, e.g. ```output[3][2]=input[2][3]```. This method outlined in Nvidias blog post, "[An Efficient Matrix Transpose in CUDA C/++](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)", authored by Mark Harris.
 
 <a id="CUDA-SPARSE"></a>
-### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
+### [CUDA-SPARSE](source/gpu/matrixCUDA.hpp)
 
 <a id="CUBLAS-DENSE"></a>
-### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
+### [CUBLAS-DENSE](source/cpu/vectorCPU.hpp)
 
 <a id="CUSPARSE-SPARSE"></a>
 ### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
@@ -148,22 +148,3 @@ ___
 ## 5. Conclusion
 ___
 
-# C++ and CUDA implementations of the lsqr algorithm
-The following repository is split into two folders, one for the cpu implementation of lsqr, and one for the gpu implementation of lsqr.
-___
-# CPU Implementation
-___
-# GPU Implementation
-The Kernels used in this implementation are all 2-Dimensional, and can all handle matricies of large various sizes depending on the capabilities of the GPU.
-
-Here, the speed of both naive and optimizied algorithms are analyzed and compared. 
-
-## Naive kernels
-
-
-## Optimized kernels
-
-### Transpose
-The transpose kernel utilizes coalesced memory access via shared memory (block scope).
-
-### Multiply
