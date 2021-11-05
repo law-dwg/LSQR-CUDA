@@ -56,8 +56,8 @@ ___
     1.  [Cpp-DENSE](#Cpp-DENSE)
     1.  [CUDA-DENSE](#CUDA-DENSE)
     1.  [CUDA-SPARSE](#CUDA-SPARSE)
-    1.  [CUBLAS-DENSE](#CUBLAS-DENSE)
-    1.  [CUSPARSE-SPARSE](#CUSPARSE-SPARSE)
+    1.  [cuBLAS-DENSE](#cuBLAS-DENSE)
+    1.  [cuSPARSE-SPARSE](#cuSPARSE-SPARSE)
 1.  [Results](#Results)
     1.   [Speedup](#Speedup)
     1.   [Accuracy](#Accuracy)
@@ -75,8 +75,8 @@ This work has both sequential and parallel implementations of LSQR that are inte
 1.  Cpp-DENSE (CPU)
 1.  CUDA-DENSE (GPU)
 1.  CUDA-SPARSE (GPU)
-1.  CUBLAS-DENSE (GPU)
-1.  CUSPARSE-SPARSE (GPU)
+1.  cuBLAS-DENSE (GPU)
+1.  cuSPARSE-SPARSE (GPU)
 
 A sparse sequential algorithmn was not explicitly created for this work, rather, the robust [scipy-lsqr](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html) algorithm was used instead for verifying results and comparison of runtimes.
 ___
@@ -105,7 +105,7 @@ For all kernels designed in this work, the blockSize (i.e. the number of threads
 The kernels used for these implementations is where the majority of development for LSQR-CUDA was spent. 
 
 ### [CUDA-DENSE](source/gpu/vectorCUDA.cuh)
-The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation takes in two dense sources and runs them through lsqr with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. All operations used for this implementation are defined within the [VectorCUDA](source/gpu/VectorCUDA.cu) class.
+The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation has two dense inputs of type VectorCUDA and runs them through lsqr with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. All operations used for this implementation are defined within the [VectorCUDA](source/gpu/VectorCUDA.cu) class.
 
 An output of nvprof for test-run (2500_2500_A_0.mat) of this implementation can be seen here:
 ![nvprofCUDA-DENSE](images/nvprofCUDA-DENSE.png)
@@ -132,13 +132,26 @@ Like the multiplcation operation, the matrix transpose operation, [transposeTile
 
 <a id="CUDA-SPARSE"></a>
 ### [CUDA-SPARSE](source/gpu/matrixCUDA.hpp)
+The CUDA-SPARSE implementation is written written with the standard CUDA library, and has inputs of type  MatrixCUDA and VectorCUDA. When loading A into MatrixCUDA, it is converted into CSR form, reducing it by a factor of its sparsity.
 
-<a id="CUBLAS-DENSE"></a>
-### [CUBLAS-DENSE](source/cpu/vectorCPU.hpp)
+All operations used here are the same as the CUDA-DENSE implementation besides matrix-vector multiplication and matrix transpose operations.
 
-<a id="CUSPARSE-SPARSE"></a>
+#### SpMV
+
+#### cuSPARSE Transpose
+
+
+<a id="cuBLAS-DENSE"></a>
+### [cuBLAS-DENSE](source/cpu/vectorCPU.hpp)
+The cuBLAS-DENSE implementation is written using both the CUDA and cuBLAS. cuBLAS is a library from NVIDIA that provides "basic linear algebra" operations on a GPU. For this implementation, two inputs of [VectorCUBLAS]() type are used.
+
+Information regarding cuBLAS how to use it is documented extensively in the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cublas/index.html), and will therefore, not be further discussed here.
+
+To see how these cuBLAS operations were used for this implementation, please refer to the [VectorCUBLAS source files](source/gpu/vectorCUBLAS.cu)
+
+<a id="cuSPARSE-SPARSE"></a>
 ### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
-
+The cuSPARSE-SPARSE implementation is written using both CUDA and cuSPARSE libraries.
 
 ___
 <a id="Results"></a>
