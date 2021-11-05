@@ -37,13 +37,13 @@ As an example, a sparse matrix A with 1500 rows, 2000 columns, and a sparsity of
 * ```1500_1_b.vec```
 
 ### Outputs
-The solution, x, will be written to [output](source/output/) in a directory corresponding to the time of execution in the format:
+The solution, x, will be written to [output](source/output/) in a directory corresponding to the time of execution (Year-Month-DayTHourMinute) in the format:
 * ```YYYY-MM-DDTHHMM/#Acols_1_x_implementation.vec```
 
 for the above example, the x output file would look like this:
 * ```YYYY-MM-DDTHHMM/2000_1_x_CUDA-SPARSE.vec```
 
-The 5 different implementations in this work will then run on each set of inputs located in the [input/](source/input/) directory, with the runtime of each saved to a csv called ```YYYY-MM-DDTHHMM/YYYY-MM-DDTHHMM_LSQR-CUDA.csv```
+The 5 different implementations in this work will then run on each set of inputs located in the [input](source/input/) directory, with the runtime of each saved to a csv called ```YYYY-MM-DDTHHMM/YYYY-MM-DDTHHMM_LSQR-CUDA.csv```
 ___
 
 <details open>
@@ -65,6 +65,7 @@ ___
 <!-- /MarkdownTOC -->
 </details>
 
+___
 <a id="Introduction"></a>
 ## 1. Introduction
 The purpose of this work was to implement the LSQR algorithm on a CUDA-capabale GPU to analyze any potential runtime speedups in comparison to a standard, sequential CPU implementation. When run in CUDA, many matrix operations (e.g. multiplication, euclidean norm, addition, subtraction, etc.) can be run in parallel, and can, therefore, decrease computation time.
@@ -87,15 +88,42 @@ ___
 The LSQR algorithm in this work is largely based off the scipy-lsqr [source code](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568) as well as the C++ port provided by Luis Ibanez. In LSQR-CUDA, this algorithm is located in the lsqr.hpp file, whereby each implemenation is passed as a class type and run 
 
 <a id="Cpp-DENSE"></a>
+## CPU Implementations
+### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
+The Cpp-Dense implementation is written in C++ and runs the sequentially on the CPU. This implementation uses Naive operations for add, subtract, multiply, Dnrm2, etc. It is the slowest of the implementations and used as a baseline to compare to Dense GPU implementations.
+Corresponding source files are [vectorCPU.cpp](source/cpu/vectorCPU.cpp) and [vectorCPU.hpp](vectorCPU.hpp)
+
+### [scipy-lsqr](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568)
+Scipy's lsqr solver runs on either sparse or dense inputs and is used as a baseline to compare to the sparse LSQR-CUDA implementations created here. Related information can be found on scipy's [website](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html), and its use in this work can be found in [lsqr.py](python/lsqr.py)
+
+<a id="CUDA-DENSE"></a>
+## GPU Implementations
+All source files pertaining to GPU implementations can be found in in the [gpu](source/gpu/) directory.
+
+The kernels used for these implementations is where the majority of development for LSQR-CUDA was spent. 
+
+### [CUDA-DENSE](source/gpu/vectorCUDA.cuh)
+The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation takes in two dense sources and runs them through lsqr with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. 
+
+#### Multiplication
+The most time intensive operation of LSQR is the matrix-vector and vector-vector multiplication operations. Since this implementation works only with dense inputs, this operation is treated the same for both matrix-vector and vector-vector multiplication (i.e. neither matrix and vector are in a compressed format). For better results, a "tiled" approach to multiplication was used, where inputs are first loaded into GPU-cache memory, or "tiles", that iteratively "sweep" across inputs, saving and continuously summing up the result in each iteration.
+
+#### Euclidean Norm
+
+#### Transform
+
+#### Addition and Subtraction
+
+<a id="CUDA-SPARSE"></a>
+### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
+
+<a id="CUBLAS-DENSE"></a>
+### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
+
+<a id="CUSPARSE-SPARSE"></a>
 ### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
 
 
-<a id="CUDA-DENSE"></a>
-<a id="CUDA-SPARSE"></a>
-<a id="CUBLAS-DENSE"></a>
-<a id="CUSPARSE-SPARSE"></a>
-## GPU
-All source files pertaining to GPU implementations can be found in
 ___
 <a id="Results"></a>
 ## 4. Results
