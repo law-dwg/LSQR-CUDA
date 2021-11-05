@@ -107,6 +107,10 @@ The kernels used for these implementations is where the majority of development 
 ### [CUDA-DENSE](source/gpu/vectorCUDA.cuh)
 The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation takes in two dense sources and runs them through lsqr with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. 
 
+An output of nvprof for this implementation can be seen here:
+![nvprofCUDA-DENSE](images/nvprofCUDA-DENSE.png)
+
+
 #### Multiplication
 The most time intensive operation of LSQR is the matrix-vector and vector-vector multiplication operations. Since CUDA-DENSE works only with dense inputs, this operation is treated the same for both matrix-vector and vector-vector multiplication (i.e. neither matrix nor vector are in a compressed format). 
 
@@ -116,10 +120,14 @@ In the "tiled" approach to matrix multiplication, [multiplyTiled](source/gpu/ker
 
 In multiplyTiled, the use of cache memory halves the number of global memory accesses required for each thread in comparison to the naive approach. For a dense input of 2500x2500, this implementation has a speedup of about 1.5x when switching from multiplyNaive to multiplyTiled.
 
-#### Euclidean Norm
+#### Scale
+The scale operation utilizes a naive approach. Since 
 
+#### Euclidean Norm
+The euclidean norm or Dnrm2 kernel is the second most expensive operation in this implementation, 
 
 #### Transform
+
 
 #### Addition and Subtraction
 
