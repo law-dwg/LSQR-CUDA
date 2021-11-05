@@ -26,7 +26,7 @@ To run the software, enter the [source](source/) directory and type the followin
 make run
 ```
 ### Inputs
-You will then be asked if you would like automatic test inputs generated for you and what sparsity you would like to have Matrix A set to. The range of auto-generated inputs is set in ln 107-109 of [main.cu](source/gpu/main.cu), but can be manually changed if desired. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](input/) directory. These must use a white space delimiter: " ", and have a number of values such that Ax=b can be satisfied.
+You will then be asked if you would like automatic test inputs generated for you and what sparsity you would like to have Matrix A set to. The range of auto-generated inputs is set in ln 107-109 of [main.cu](source/gpu/main.cu), but can be manually changed if desired. If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matricies) and .vec (vectors) extensions in the [input](source/input/) directory. These must use a white space delimiter: " ", and have a number of values such that Ax=b can be satisfied.
 
 Inputs should have the following notation:
 * ```#Arows_#Acols_A_#sparsity.mat```
@@ -37,7 +37,7 @@ As an example, a sparse matrix A with 1500 rows, 2000 columns, and a sparsity of
 * ```1500_1_b.vec```
 
 ### Outputs
-The solution, x, will be written to [output](output/) in a directory corresponding to the time of execution in the format:
+The solution, x, will be written to [output](source/output/) in a directory corresponding to the time of execution in the format:
 * ```YYYY-MM-DDTHHMM/#Acols_1_x_implementation.vec```
 
 for the above example, the x output file would look like this:
