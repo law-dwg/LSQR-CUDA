@@ -1,3 +1,10 @@
+---
+title: "LSQR-CUDA"
+output: 
+  html_document:
+    number_sections: true
+---
+
 # LSQR-CUDA
 ## Overview
 LSQR-CUDA is written by Lawrence Ayers under the supervision of Stefan Guthe of the [GRIS](https://www.informatik.tu-darmstadt.de/gris/startseite_1/team/index.de.jsp) institute at the Technische Universität Darmstadt. It is a CUDA port of the LSQR algorithm of Chris Paige and Michael Saunders
@@ -87,6 +94,8 @@ ___
 ## 3. Methods
 The LSQR algorithm in this work is largely based off the scipy-lsqr [source code](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568) as well as the [C++ port](https://github.com/tvercaut/LSQR-cpp) provided by Luis Ibanez. In this work, the general LSQR algorithm is located in [lsqr.hpp](source/cpu/lsqr.hpp), whereby each implementation (listed above) is passed to the function as a combination of different class types (via a template).
 
+___
+
 <a id="Cpp-DENSE"></a>
 ## CPU Implementations
 ### [Cpp-DENSE](source/cpu/vectorCPU.hpp)
@@ -95,6 +104,8 @@ Corresponding source files are [vectorCPU.cpp](source/cpu/vectorCPU.cpp) and [ve
 
 ### [scipy-lsqr](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568)
 Scipy's lsqr solver runs on either sparse or dense inputs and is used as a baseline to compare to the sparse LSQR-CUDA implementations created here. Related information can be found on scipy's [website](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html), and its use in this work can be found in [lsqr.py](python/lsqr.py)
+
+___
 
 <a id="CUDA-DENSE"></a>
 ## GPU Implementations
