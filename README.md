@@ -207,7 +207,7 @@ While the first, spmvNaive, uses one thread per row in matrix A to perform the d
 The biggest difference between the other two kernels is their use of shared memory; spmvCSRVectorShared uses shared, cached memory, while spmvCSRVector does not. There was no real significant speedup found between these kernels when they were used in lsqr. spmvCSRVector is set to the default in this implementation, but it can easily be switched via the "kern" variable used in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#8).
 
 The run time of lsqr when using each kernel can be seen in the table below (inputs 2500_2500_A_0.mat and 2500_1_b.vec):
-|kernel             |calculation time (s)|
+|kernel used        |calculation time (s)|
 |-------------------|--------------------|
 |spmvNaive          |198.099             |
 |spmvCSRVector      |61.102              |
