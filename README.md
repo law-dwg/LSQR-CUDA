@@ -135,7 +135,6 @@ An output of nvprof for test-run (2500_2500_A_0.mat) of this implementation can 
 ```
 
 </details>
-<br>
 
 ### Multiplication
 From the nvprof output above it is clear to see that the most time intensive operation of LSQR is the matrix-vector and vector-vector multiplication operations. Since CUDA-DENSE works only with dense inputs, this operation is treated the same for both matrix-vector and vector-vector multiplication (i.e. neither matrix nor vector are in a compressed format). 
@@ -195,7 +194,6 @@ All operations used here are the same as the CUDA-DENSE implementation besides m
                     0.00%  3.1360us         1  3.1360us  3.1360us  3.1360us  void cub::DeviceScanInitKernel<cub::ScanTileState<int, bool=1>>(int, int)
 ```
 </details>
-<br>
 
 ### SpMV
 The nvprof output above shows that the most expensive operation used for this implementation is sparse matrix-vector multiplication operation, or SpMV, that solves for the product between a sparse matrix in compressed format (CSR) and a vector. The result is a vector of size #A-rows x 1.
@@ -237,7 +235,11 @@ ___
 <a id="cuSPARSE-SPARSE"></a>
 
 ## [3.5. cuSPARSE-SPARSE](source/gpu/matrixCUSPARSE.cuh)
-The cuSPARSE-SPARSE implementation is written using both CUDA and cuSPARSE libraries.
+The cuSPARSE-SPARSE implementation is written using both CUDA and cuSPARSE libraries. cuSPARSE is a library from NVIDIA that provides "a set of basic linear algebra subroutines used for handling sparse matrices". For this implementation, one input of type [MatrixCUSPARSE]() (matrix A) and one input of type [VectorCUBLAS]() (vector b) are used.
+
+This implementation uses all the same operations as the cuBLAS-DENSE implementation, besides the SpMV and matrix transform operations, which are both executed using the cuSPARSE library. Information regarding cuBLAS how to use it is documented extensively in the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html), and will therefore, not be further discussed here.
+
+To see how these cuSPARSE operations were used for this implementation, please refer to the [MatrixCUSPARSE source files](source/gpu/matrixCUSPARSE.cu)
 ___
 <a id="Results"></a>
 
