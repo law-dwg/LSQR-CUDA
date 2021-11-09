@@ -102,7 +102,8 @@ int main() {
 
   /** Create inputs */
   std::cout << "Would you like me to make some test data for you? (y/n): ";
-  bool matBuild = yesNo();
+  //bool matBuild = yesNo();
+  bool matBuild = false;
   if (matBuild) { // build matrices
     unsigned start = 2500;
     unsigned end = 2500;

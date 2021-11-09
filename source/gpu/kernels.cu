@@ -41,7 +41,6 @@ double __device__ warpReduce(double sdata) {
     sdata += __shfl_down_sync(FULL_MASK, sdata, offset, warpSize);
   return sdata;
 };
-
 void __global__ print(double *input, unsigned *r, unsigned *c) {
   // used for debugging
   const unsigned bid = blockIdx.x                               // 1D
@@ -233,7 +232,6 @@ void __global__ spmvNaive(unsigned *rows, int *csrRowPtr, int *csrColIdn, double
     }
   }
 };
-
 void __global__ spmvCSRVector(unsigned *rows, int *csrRowPtr, int *csrColInd, double *csrVal, double *rhs, double *out) {
   // Reference:
   // https://medium.com/analytics-vidhya/sparse-matrix-vector-multiplication-with-cuda-42d191878e8f
@@ -259,14 +257,12 @@ void __global__ spmvCSRVector(unsigned *rows, int *csrRowPtr, int *csrColInd, do
     }
   }
 };
-
 void __global__ spmvCSRVectorShared(unsigned *rows, int *csrRowPtr, int *csrColInd, double *csrVal, double *rhs, double *out) {
   // Reference:
   // https://medium.com/analytics-vidhya/sparse-matrix-vector-multiplication-with-cuda-42d191878e8f
   // and
   // https://github.com/poojahira/spmv-cuda/blob/master/code/src/spmv_csr_vector.cu
   // use of shared memory rather than __shfl_down_sync
-  // no speedup between with and without shared memory
   //
   unsigned gid = blockIdx.x * blockDim.x + threadIdx.x; // global id
   unsigned wid = gid / warpSize;                        // warp id
