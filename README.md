@@ -80,11 +80,11 @@ This work has both sequential and parallel implementations of LSQR that are inte
 1.  cuSPARSE-SPARSE (GPU)
 
 A sparse sequential algorithm was not explicitly created for this work, rather, the robust [scipy-lsqr](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html) algorithm was used instead as the baseline for verifying results and comparison of runtimes for sparse inputs.
-___
+
 <a id="Background"></a>
 
 ## 2. Background
-___
+
 <a id="Methods"></a>
 
 ## 3. Methods
