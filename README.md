@@ -117,7 +117,7 @@ An output of nvprof for test-run (2500_2500_A_0.mat) of this implementation can 
 <details close>
 <summary><b>nvprof output of CUDA-DENSE</b></summary>
 
-```bash
+```
             Type  Time(%)      Time     Calls       Avg       Min       Max  Name
  GPU activities:   98.00%  66.9277s      9941  6.7325ms  6.6156ms  7.4214ms  multiplyTiled(double*, unsigned int*, unsigned int*, double*, unsigned int*, unsigned int*, double*)
                     0.51%  351.46ms     34792  10.101us  8.8320us  34.528us  scale(double*, double, double*, unsigned int*, unsigned int*, bool)
@@ -163,7 +163,7 @@ All operations used here are the same as the CUDA-DENSE implementation besides m
 <details close>
 <summary><b>nvprof output of CUDA-SPARSE</b></summary>
 
-```bash
+```
             Type  Time(%)      Time     Calls       Avg       Min       Max  Name
  GPU activities:   97.49%  56.2308s      9947  5.6530ms  5.6171ms  5.6886ms  spmvCSRVector(unsigned int*, int*, int*, double*, double*, double*)
                     0.60%  346.90ms     34813  9.9640us  8.8630us  31.328us  scale(double*, double, double*, unsigned int*, unsigned int*, bool)
