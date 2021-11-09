@@ -90,9 +90,8 @@ ___
 ## 3. Methods
 The LSQR algorithm in this work is largely based off the scipy-lsqr [source code](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568) as well as the [C++ port](https://github.com/tvercaut/LSQR-cpp) provided by Luis Ibanez. In this work, the general LSQR algorithm is located in [lsqr.hpp](source/cpu/lsqr.hpp), whereby each implementation (listed above) is passed to the function as a combination of different class types (via a template).
 
-___
-
 <a id="Cpp-DENSE"></a>
+
 ## CPU Implementations
 ## [3.1. Cpp-DENSE](source/cpu/vectorCPU.hpp)
 The Cpp-Dense implementation is written in C++ and runs the sequentially on the CPU. This implementation uses Naive operations for add, subtract, multiply, Dnrm2, etc. It is the slowest of the implementations and used as a baseline to compare to Dense GPU implementations.
@@ -100,8 +99,6 @@ Corresponding source files are [vectorCPU.cpp](source/cpu/vectorCPU.cpp) and [ve
 
 ## [scipy-lsqr](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568)
 Scipy's lsqr solver runs on either sparse or dense inputs and is used as a baseline to compare to the sparse LSQR-CUDA implementations created here. Related information can be found on scipy's [website](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html), and its use in this work can be found in [lsqr.py](python/lsqr.py)
-
-___
 
 <a id="CUDA-DENSE"></a>
 
@@ -155,7 +152,7 @@ Standard, parallel reduction techniques are used for both of these kernels, wher
 
 ### Matrix Transpose
 Like the multiplcation operation, the matrix transpose operation, [transposeTiled](gpu/source/kernels.cu#201), also utilizes a "tiled" approach, where a cached "tile" is swept across the matrix iteratively transposing it section by section. While the multiplyTiled kernel requires two seperate tiles (one for each input), transposeTiled requires only one that temporarily stores a section of the matrix before loading it to global memory with swapped indices, e.g. ```output[3][2]=input[2][3]```. This method outlined in Nvidias blog post, "[An Efficient Matrix Transpose in CUDA C/++](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)", authored by Mark Harris.
-___
+
 <a id="CUDA-SPARSE"></a>
 
 ## [3.3. CUDA-SPARSE](source/gpu/matrixCUDA.cuh)
@@ -222,7 +219,7 @@ The transpose of a CSR matrix is its compressed sparse column, CSC, counterpart.
 Also, as can be seen from the nvprof output, the transpose operation is only called once within the entire lsqr algorithm. It was, therefore, not seen as high priority seeing as it would have little impact on its overall speedup.
 
 Therefore, the existing cusparseCsr2cscEx2 function within the cuSPARSE library was used. This implementation can be found in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#37) More information regarding the cuSPARSE library can be found within the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html).
-___
+
 <a id="cuBLAS-DENSE"></a>
 
 ## [3.4. cuBLAS-DENSE](source/gpu/vectorCUBLAS.cuh)
@@ -231,22 +228,22 @@ The cuBLAS-DENSE implementation is written using both the CUDA and cuBLAS. cuBLA
 Information regarding cuBLAS how to use it is documented extensively in the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cublas/index.html), and will therefore, not be further discussed here.
 
 To see how these cuBLAS operations were used for this implementation, please refer to the [VectorCUBLAS source files](source/gpu/vectorCUBLAS.cu)
-___
+
 <a id="cuSPARSE-SPARSE"></a>
 
 ## [3.5. cuSPARSE-SPARSE](source/gpu/matrixCUSPARSE.cuh)
-The cuSPARSE-SPARSE implementation is written using both CUDA and cuSPARSE libraries. cuSPARSE is a library from NVIDIA that provides "a set of basic linear algebra subroutines used for handling sparse matrices". For this implementation, one input of type [MatrixCUSPARSE]() (matrix A) and one input of type [VectorCUBLAS]() (vector b) are used.
+The cuSPARSE-SPARSE implementation is written using both CUDA, cuBLAS, and cuSPARSE libraries. cuSPARSE is a library from NVIDIA that provides "a set of basic linear algebra subroutines used for handling sparse matrices". For this implementation, one input of type [MatrixCUSPARSE]() (matrix A) and one input of type [VectorCUBLAS]() (vector b) are used.
 
 This implementation uses all the same operations as the cuBLAS-DENSE implementation, besides the SpMV and matrix transform operations, which are both executed using the cuSPARSE library. Information regarding cuBLAS how to use it is documented extensively in the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html), and will therefore, not be further discussed here.
 
 To see how these cuSPARSE operations were used for this implementation, please refer to the [MatrixCUSPARSE source files](source/gpu/matrixCUSPARSE.cu)
-___
+
 <a id="Results"></a>
 
 ## 4. Results
-___
+
 <a id="Conclusion"></a>
 
 ## 5. Conclusion
-___
+
 
