@@ -317,6 +317,7 @@ Root mean squared error values in comparison to scipy-lsqr baseline:
 
 All of the implementations yielded very accurate results, with none having a RMSE above 0.10 (besides one outlier in the Cpp-DENSE implementation). Any missing data is marked with N/A, and is due to the incredibly high computation time required for the Cpp-DENSE implementation
 
+
 <a id="Conclusion"></a>
 
 ## 5. Conclusion
