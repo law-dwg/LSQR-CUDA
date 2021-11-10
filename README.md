@@ -5,8 +5,8 @@ LSQR-CUDA is written by Lawrence Ayers under the supervision of Stefan Guthe of 
 The goal of this work was to accelerate the computation time of the well-known [LSQR](https://web.stanford.edu/group/SOL/software/lsqr/) algorithm using a CUDA capable GPGPU.
 
 The LSQR algorithm is an iterative method used to find the solution x for either of the following problems:
-* Ax=b
-* min(||Ax-b||)
+* ```Ax=b```
+* ```min(||Ax-b||)```
 
 where A is a large, often sparse, square or rectangular matrix, and b is a vector of size #A-rows.
 
@@ -50,16 +50,27 @@ ___
 <summary><b>Table of Contents</b></summary>
 
 * [1. Introduction](#Introduction)
+
 * [2. Background](#Background)
+
 * [3. Methods](#Methods)
+
     + [3.1. Cpp-DENSE](#Cpp-DENSE)
+
     + [3.2. CUDA-DENSE](#CUDA-DENSE)
+
     + [3.3. CUDA-SPARSE](#CUDA-SPARSE)
+
     + [3.4. cuBLAS-DENSE](#cuBLAS-DENSE)
+
     + [3.5. cuSPARSE-SPARSE](#cuSPARSE-SPARSE)
+
 * [4. Results](#Results)
+
     + [4.1. Speedup](#Speedup)
+
     + [4.2. Accuracy](#Accuracy)
+
 * [5. Conclusion](#Conclusion)
 
 </details>
@@ -118,6 +129,7 @@ An output of nvprof for test-run (2500_2500_A_0.mat) of this implementation can 
 <summary><b>nvprof output of CUDA-DENSE</b></summary>
 
 ```
+
             Type  Time(%)      Time     Calls       Avg       Min       Max  Name
  GPU activities:   98.00%  66.9277s      9941  6.7325ms  6.6156ms  7.4214ms  multiplyTiled(double*, unsigned int*, unsigned int*, double*, unsigned int*, unsigned int*, double*)
                     0.51%  351.46ms     34792  10.101us  8.8320us  34.528us  scale(double*, double, double*, unsigned int*, unsigned int*, bool)
@@ -129,6 +141,7 @@ An output of nvprof for test-run (2500_2500_A_0.mat) of this implementation can 
                     0.13%  87.822ms     14912  5.8890us  5.0230us  26.016us  maxVal(double*, unsigned int, unsigned int, double*)
                     0.06%  37.655ms     29827  1.2620us  1.1200us  25.344us  [CUDA memcpy DtoH]
                     0.01%  7.9884ms         1  7.9884ms  7.9884ms  7.9884ms  transposeTiled(double*, double*, unsigned int*, unsigned int*)
+
 ```
 
 </details>
@@ -207,6 +220,7 @@ While the first, spmvNaive, uses one thread per row in matrix A to perform the d
 The biggest difference between the other two kernels is their use of shared memory; spmvCSRVectorShared uses shared, cached memory, while spmvCSRVector does not. There was no real significant speedup found between these kernels when they were used in lsqr. spmvCSRVector is set to the default in this implementation, but it can easily be switched via the "kern" variable used in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#8).
 
 The run time of lsqr when using each kernel can be seen in the table below (inputs 2500_2500_A_0.mat and 2500_1_b.vec):
+
 |kernel used        |calculation time (s)|
 |-------------------|--------------------|
 |spmvNaive          |198.099             |
@@ -247,6 +261,7 @@ To see how these cuSPARSE operations were used for this implementation, please r
 ## 4.1. Speedup
 
 Total runtimes on testsets:
+
 |A_ROWS|scipy-lsqr           |Cpp-DENSE            |CUDA-DENSE|CUDA-SPARSE|CUBLAS-DENSE|CUSPARSE-SPARSE|
 |------|---------------------|---------------------|----------|-----------|------------|---------------|
 |1000  |5.36911              |9.03528              |6.06791   |2.25782    |4.23762     |2.57307        |
@@ -270,6 +285,7 @@ Total runtimes on testsets:
 
 
 Speedups in comparison to scipy for sparse implementations:
+
 |A_ROWS|CUDA-SPARSE|CUSPARSE-SPARSE|
 |:----:|:---------:|:-------------:|
 |1000  |2.37800490 |2.08665417     |
