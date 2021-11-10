@@ -7,6 +7,7 @@ VectorCUDA MatrixCUDA::operator*(VectorCUDA &v) { // Multiplication
   VectorCUDA out(this->h_rows, 1);
   int kern = 2;
   dim3 block(BLOCK_SIZE_X * BLOCK_SIZE_X, 1, 1);
+
   if (this->h_columns == v.getRows()) {
     unsigned totalNumThreads = this->getRows() * WARP_SIZE; // one warp per row
     if (kern == 2) {
@@ -26,7 +27,7 @@ VectorCUDA MatrixCUDA::operator*(VectorCUDA &v) { // Multiplication
   }
   // cudaLastErrCheck();
   return out;
-}
+};
 
 MatrixCUDA MatrixCUDA::transpose() {
   MatrixCUDA out(this->h_columns, this->h_rows, this->h_nnz);
@@ -48,6 +49,7 @@ double MatrixCUDA::Dnrm2() {
   double zero = 0.0;
   double h_max;
   double h_out;
+
   cudaErrCheck(cudaMalloc(&d_out, sizeof(double)));
   cudaErrCheck(cudaMalloc(&d_max, sizeof(double)));
 
@@ -65,4 +67,4 @@ double MatrixCUDA::Dnrm2() {
   assert(!(h_out != h_out));
   assert(h_out > 0);
   return (std::abs(h_max) * sqrt(h_out));
-}
+};

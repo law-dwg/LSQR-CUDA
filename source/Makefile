@@ -90,4 +90,4 @@ run: $(BUILD_DIR)/$(TARGET)
 	$(BUILD_DIR)/$(TARGET)
 
 format:
-	clang-format -i --verbose --style={'ColumnLimit: 150'} $(SRC_GPU)/*.* $(SRC_CPU)/*.* test/*/*.cu*
+	clang-format -i --verbose --style={'ColumnLimit: 150'} $(SRC_GPU)/*.* $(SRC_CPU)/*.*

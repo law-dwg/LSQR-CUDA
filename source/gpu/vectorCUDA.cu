@@ -13,7 +13,7 @@ VectorCUDA VectorCUDA::operator*(double h_i) {
   dim3 grid(gridX, gridY, 1);
   scale<<<grid, block>>>(this->d_mat, h_i, out.d_mat, this->d_rows, this->d_columns, false);
   return out;
-}
+};
 
 VectorCUDA VectorCUDA::operator*(VectorCUDA &v) {
   VectorCUDA out(this->h_rows, v.h_columns);
@@ -36,7 +36,7 @@ VectorCUDA VectorCUDA::operator*(VectorCUDA &v) {
   }
 
   return out;
-}
+};
 
 VectorCUDA VectorCUDA::operator-(const VectorCUDA &v) {
   VectorCUDA out(this->h_rows, this->h_columns);
@@ -44,6 +44,7 @@ VectorCUDA VectorCUDA::operator-(const VectorCUDA &v) {
   unsigned blocksX = (this->h_rows / block.x) + 1;
   unsigned blocksY = (this->h_columns / block.y) + 1;
   dim3 grid(blocksX, blocksY, 1);
+
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat, false);
   } else {
@@ -51,17 +52,19 @@ VectorCUDA VectorCUDA::operator-(const VectorCUDA &v) {
     exit(1);
   }
   return out;
-}
+};
 
-void VectorCUDA::operator=(VectorCPU &v) { // Copy assignment VectorCPU -> this VectorCUDA
+void VectorCUDA::operator=(VectorCPU &v) { // Copy assignment VectorCPU -> this VectorCUDA - not used
   cudaErrCheck(cudaFree(d_mat));
+
   h_rows = v.getRows();
   h_columns = v.getColumns();
+
   cudaErrCheck(cudaMalloc((void **)&d_mat, sizeof(double) * v.getRows() * v.getColumns()));
   cudaErrCheck(cudaMemcpy(d_rows, &h_rows, sizeof(unsigned), cudaMemcpyHostToDevice));
   cudaErrCheck(cudaMemcpy(d_columns, &h_columns, sizeof(unsigned), cudaMemcpyHostToDevice));
   cudaErrCheck(cudaMemcpy(d_mat, v.getMat(), sizeof(double) * h_rows * h_columns, cudaMemcpyHostToDevice));
-}
+};
 
 VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
   VectorCUDA out(this->h_rows, this->h_columns);
@@ -69,6 +72,7 @@ VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
   unsigned blocksX = (this->h_rows / block.x) + 1;
   unsigned blocksY = (this->h_columns / block.y) + 1;
   dim3 grid(blocksX, blocksY, 1);
+
   if (this->h_rows == v.h_rows && this->h_columns == v.h_columns) {
     add<<<grid, block>>>(this->d_mat, v.d_mat, this->d_rows, this->d_columns, out.d_mat, true);
   } else {
@@ -76,7 +80,7 @@ VectorCUDA VectorCUDA::operator+(const VectorCUDA &v) {
     exit(1);
   }
   return out;
-}
+};
 
 /** Member Functions */
 void VectorCUDA::printMat() {
@@ -85,7 +89,7 @@ void VectorCUDA::printMat() {
   unsigned gridY = (this->h_columns / block.y) + 1;
   dim3 grid(gridX, gridY, 1);
   print<<<grid, block>>>(this->d_mat, this->d_rows, this->d_columns);
-}
+};
 
 VectorCPU VectorCUDA::matDeviceToHost() {
   double *out = new double[this->h_columns * this->h_rows]; // heap to prevent a stack overflow
@@ -93,13 +97,14 @@ VectorCPU VectorCUDA::matDeviceToHost() {
   cudaErrCheck(cudaMemcpy(out, this->d_mat, sizeof(double) * this->h_columns * this->h_rows, cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&rows, this->d_rows, sizeof(unsigned), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&cols, this->d_columns, sizeof(unsigned), cudaMemcpyDeviceToHost));
+
   if (rows != this->h_rows || cols != this->h_columns) {
     printf("Cannot perform move to host, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
     exit(1);
   }
   VectorCPU v_cpu(this->h_rows, this->h_columns, out);
   return v_cpu;
-}
+};
 
 VectorCUDA VectorCUDA::transpose() {
   VectorCUDA out(this->h_columns, this->h_rows);
@@ -117,8 +122,10 @@ double VectorCUDA::Dnrm2() {
   dim3 grid(gridX, 1);
   double *d_out, *d_max;
   double h_max, h_out;
+
   cudaErrCheck(cudaMalloc(&d_out, sizeof(double)));
   cudaErrCheck(cudaMalloc(&d_max, sizeof(double)));
+
   cudaErrCheck(cudaMemcpy(d_out, &ZERO, sizeof(double), cudaMemcpyHostToDevice));
   cudaErrCheck(cudaMemcpy(d_max, &ZERO, sizeof(double), cudaMemcpyHostToDevice));
   maxVal<<<grid, block, block.x * sizeof(double)>>>(this->d_mat, this->h_rows, this->h_columns, d_max);
@@ -127,6 +134,7 @@ double VectorCUDA::Dnrm2() {
   cudaErrCheck(cudaDeviceSynchronize());
   cudaErrCheck(cudaMemcpy(&h_out, d_out, sizeof(double), cudaMemcpyDeviceToHost));
   cudaErrCheck(cudaMemcpy(&h_max, d_max, sizeof(double), cudaMemcpyDeviceToHost));
+
   // sanity checks
   assert(!(h_out != h_out));
   assert(h_out > 0);
