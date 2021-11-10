@@ -50,27 +50,16 @@ ___
 <summary><b>Table of Contents</b></summary>
 
 * [1. Introduction](#Introduction)
-
 * [2. Background](#Background)
-
 * [3. Methods](#Methods)
-
-    + [3.1. Cpp-DENSE](#Cpp-DENSE)
-
-    + [3.2. CUDA-DENSE](#CUDA-DENSE)
-
-    + [3.3. CUDA-SPARSE](#CUDA-SPARSE)
-
-    + [3.4. cuBLAS-DENSE](#cuBLAS-DENSE)
-
-    + [3.5. cuSPARSE-SPARSE](#cuSPARSE-SPARSE)
-
+    * [3.1. Cpp-DENSE](#Cpp-DENSE)
+    * [3.2. CUDA-DENSE](#CUDA-DENSE)
+    * [3.3. CUDA-SPARSE](#CUDA-SPARSE)
+    * [3.4. cuBLAS-DENSE](#cuBLAS-DENSE)
+    * [3.5. cuSPARSE-SPARSE](#cuSPARSE-SPARSE)
 * [4. Results](#Results)
-
-    + [4.1. Speedup](#Speedup)
-
-    + [4.2. Accuracy](#Accuracy)
-
+    * [4.1. Speedup](#Speedup)
+    * [4.2. Accuracy](#Accuracy)
 * [5. Conclusion](#Conclusion)
 
 </details>
