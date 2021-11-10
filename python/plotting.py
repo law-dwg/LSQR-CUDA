@@ -98,7 +98,7 @@ for pyout in PYTHONOUTS:
             maxRmse=rmse
         # write to csv
         implementation = o.split(".")[0].split("_")[3]
-        rowcsv = [implementation,rowsStr,rmse]
+        rowcsv = [implementation,rowsStr,f'{rmse:.8f}']
         with open(csvpath, 'a') as fd:
             writer=csv.writer(fd)
             writer.writerow(rowcsv)
