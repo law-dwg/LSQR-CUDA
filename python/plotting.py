@@ -58,7 +58,7 @@ CUSPARSE = CUSPARSE[:15]
 all = pd.merge(CUSPARSE,CUDASPARSE,on="A_ROWS")
 all = pd.merge(BASELINE,all,on="A_ROWS")
 fig = all.plot(x='A_ROWS', ylabel="TIME(s)",title=name,grid=True).get_figure()
-fig.savefig("../images/"+now+"_1000-8000_SPARSESOLUTION.png")
+#fig.savefig("../images/"+now+"_1000-8000_SPARSESOLUTION.png")
 
 ###############################################
 ### Calculation of root mean squared error (rmse) ###
@@ -103,4 +103,22 @@ for pyout in PYTHONOUTS:
             writer=csv.writer(fd)
             writer.writerow(rowcsv)
 
-print(maxRmse)
+errors = pd.read_csv(csvpath)
+I1 = errors[errors['IMPLEMENTATION']=='CUDA-DENSE'].drop(columns='IMPLEMENTATION')
+I1=I1.rename(columns={"RMSE":"CUDA-DENSE"})
+
+I2 = errors[errors['IMPLEMENTATION']=='CUDA-SPARSE-80'].drop(columns='IMPLEMENTATION')
+I2=I2.rename(columns={"RMSE":"CUDA-SPARSE"})
+
+I3 = errors[errors['IMPLEMENTATION']=='CUBLAS-DENSE'].drop(columns='IMPLEMENTATION')
+I3=I3.rename(columns={"RMSE":"CUBLAS-DENSE"})
+
+I4 = errors[errors['IMPLEMENTATION']=='CUSPARSE-SPARSE-80'].drop(columns='IMPLEMENTATION')
+I4=I4.rename(columns={"RMSE":"CUSPARSE-SPARSE"})
+
+I = pd.merge(I3,I4,on="A_ROWS")
+I = pd.merge(I2,I,on="A_ROWS")
+I = pd.merge(I1,I,on="A_ROWS")
+
+I.to_csv(csvpath,index=False)
+
