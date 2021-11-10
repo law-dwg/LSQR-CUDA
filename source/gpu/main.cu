@@ -102,8 +102,8 @@ int main() {
 
   /** Create inputs */
   std::cout << "Would you like me to make some test data for you? (y/n): ";
-  bool matBuild = yesNo();
-  // bool matBuild = false;
+  // bool matBuild = yesNo();
+  bool matBuild = false;
   if (matBuild) { // build matrices
     unsigned start = 1000;
     unsigned end = 9500;
@@ -190,19 +190,19 @@ int main() {
         // 1. CPU C++ - Dense Matrix Implementation
         report.open(reportName.str(), std::ios_base::app);
         long double CPU_Cpp_ms;
-        if (false) {
+        if (true) {
           CPU_Cpp_ms = lsqrCPU(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[0], fileName[0]);
           report << fileName[0] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0," << std::to_string(CPU_Cpp_ms) << "\n";
         };
         // 2. GPU CUDA - Dense Matrix Implementation
-        if (true) {
+        if (false) {
           float CUDA_DENSE_ms =
               lsqrGPU<VectorCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[1], fileName[1], sp);
           cudaErrCheck(cudaDeviceReset());
           report << fileName[1] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0," << std::to_string(CUDA_DENSE_ms) << "\n";
         };
         // 3. GPU CUDA - Sparse Matrix Implementation
-        if (true) {
+        if (false) {
           float CUDA_SPARSE_ms =
               lsqrGPU<MatrixCUDA, VectorCUDA>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[2], fileName[2], sp);
           cudaErrCheck(cudaDeviceReset());
@@ -210,14 +210,14 @@ int main() {
                  << std::to_string(CUDA_SPARSE_ms) << "\n";
         };
         // 4. GPU CUBLAS -  Dense Matrix Implementation
-        if (true) {
+        if (false) {
           float CUBLAS_DENSE_ms =
               lsqrGPU<VectorCUBLAS, VectorCUBLAS>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[3], fileName[3], sp);
           cudaErrCheck(cudaDeviceReset());
           report << fileName[3] << "," << std::to_string(A_rows) << "," << std::to_string(A_cols) << ",0," << std::to_string(CUBLAS_DENSE_ms) << "\n";
         };
         // 5. GPU CUBLAS/CUSPARSE - Sparse Matrix Implementation
-        if (true) {
+        if (false) {
           float CUSPARSE_SPARSE_ms =
               lsqrGPU<MatrixCUSPARSE, VectorCUBLAS>(A_rows, A_cols, A.data(), b_rows, b_cols, b.data(), implementations[4], fileName[4], sp);
           cudaErrCheck(cudaDeviceReset());
