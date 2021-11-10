@@ -253,9 +253,8 @@ To see how these cuSPARSE operations were used for this implementation, please r
 ## 4.2. Accuracy
 
 Root mean squared error values in comparison to scipy-lsqr baseline:
-
 |A_ROWS|CUDA-DENSE|CUDA-SPARSE|CUBLAS-DENSE|CUSPARSE-SPARSE|
-|------|----------|-----------|------------|---------------|
+|:----:|:--------:|:---------:|:----------:|:-------------:|
 |1000  |0.00344305|0.00024119 |0.00417303  |0.00041658     |
 |1500  |0.04058821|0.00145154 |0.02305746  |0.00983023     |
 |2000  |0.0306184 |0.05117174 |0.06697243  |0.04953013     |
