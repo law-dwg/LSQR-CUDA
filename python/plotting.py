@@ -16,72 +16,91 @@ from os import listdir
 from os.path import isfile, join
 from os import walk
 
+########################
+### Plotting results ###
+########################
+
+# LSQR-CUDA data
 outpath = "./output/"
-outputspath = "../source/output"
-content = []
-for (dirpath, dirnames, filenames) in walk(outputspath):
-    content.extend(dirnames)
-    break
-content.sort()
-print(content)
+outputspath = "../examples/2021109/output"
 
 now = datetime.datetime.now()
 now = now.strftime('%Y-%m-%dT%H%M')
-inpath = "../source/input"
-
-
-csvpath = outpath + "/" + now + "_LSQR_python.csv"
-f = open(csvpath, 'w')
-writer = csv.writer(f)
-writer.writerow(['IMPLEMENTATION','A_ROWS','A_COLUMNS','SPARSITY','TIME(ms)'])
-f.close()
+inpath = "../examples/2021109/input"
 inputs = listdir(inpath)
 inputs.sort()
 mats = [m for m in inputs if ".mat" in m]
 vecs = [v for v in inputs if ".vec" in v]
 
-LSQRCUDA = pd.read_csv("../source/sol/2021-11-3T2141/2021-11-3T2147_LSQR-CUDA.csv")
-DEVICE = pd.read_csv("../source/sol/2021-11-3T2141/deviceProps.csv")
+# Sparse plotting
+LSQRCUDA = pd.read_csv(outputspath+"/2021-11-09T2101_LSQR-CUDA.csv")
+DEVICE = pd.read_csv(outputspath+"/deviceProps.csv")
+
+# python data
+scipylsqr = pd.read_csv(outpath + "/2021-11-10T0956_LSQR_python.csv")
+
 name = DEVICE['DEVICE_NAME'][0]
-CUDASPARSE = LSQRCUDA[LSQRCUDA['IMPLEMENTATION']=='CUDA-SPARSE'].drop('IMPLEMENTATION',1).drop('A_COLUMNS',1).drop('SPARSITY',1)
-CUDASPARSE=CUDASPARSE.rename(columns={"TIME(ms)":"CUDASPARSE"})
-CUSPARSE = LSQRCUDA[LSQRCUDA['IMPLEMENTATION']=='CUSPARSE-SPARSE'].drop('IMPLEMENTATION',1).drop('A_COLUMNS',1).drop('SPARSITY',1)
-CUSPARSE=CUSPARSE.rename(columns={"TIME(ms)":"CUSPARSE"})
-#print(CUDASPARSE)
-#print(CUSPARSE)
-#all = pd.merge(CUDASPARSE,CUSPARSE,on="A_ROWS")
-#print(all)
-#all[:5].plot(x='A_ROWS',title=name,grid=True)
-#all[5:].plot(x='A_ROWS',title=name,grid=True)
-#plt.show()
+
+CUDASPARSE = LSQRCUDA[LSQRCUDA['IMPLEMENTATION']=='CUDA-SPARSE'].drop(columns='IMPLEMENTATION').drop(columns='A_COLUMNS').drop(columns='SPARSITY')
+CUDASPARSE=CUDASPARSE.rename(columns={"TIME(ms)":"CUDA-SPARSE"})
+CUDASPARSE["CUDA-SPARSE"] = CUDASPARSE["CUDA-SPARSE"].mul(1/1000)
+
+CUSPARSE = LSQRCUDA[LSQRCUDA['IMPLEMENTATION']=='CUSPARSE-SPARSE'].drop(columns='IMPLEMENTATION').drop(columns='A_COLUMNS').drop(columns='SPARSITY')
+CUSPARSE=CUSPARSE.rename(columns={"TIME(ms)":"CUSPARSE-SPARSE"})
+CUSPARSE["CUSPARSE-SPARSE"] = CUSPARSE["CUSPARSE-SPARSE"].mul(1/1000)
+
+BASELINE = scipylsqr[scipylsqr['IMPLEMENTATION']=='scipy-lsqr'].drop(columns='IMPLEMENTATION').drop(columns='A_COLUMNS').drop(columns='SPARSITY')
+BASELINE = BASELINE.rename(columns={"TIME(ms)":"scipy-lsqr"})
+BASELINE["scipy-lsqr"] = BASELINE["scipy-lsqr"].mul(1/1000)
+CUDASPARSE = CUDASPARSE[:15]
+CUSPARSE = CUSPARSE[:15]
+
+all = pd.merge(CUSPARSE,CUDASPARSE,on="A_ROWS")
+all = pd.merge(BASELINE,all,on="A_ROWS")
+fig = all.plot(x='A_ROWS', ylabel="TIME(s)",title=name,grid=True).get_figure()
+fig.savefig("../images/"+now+"_1000-8000_SPARSESOLUTION.png")
+
+###############################################
+### Calculation of root mean squared error (rmse) ###
+###############################################
+
+# Baseline data
+PYTHONOUTS = []
+for (dirpath, dirnames, filenames) in walk(outpath):
+    PYTHONOUTS.extend(filenames)
+    break
+PYTHONOUTS.sort()
+PYTHONOUTS = [v for v in PYTHONOUTS if ".vec" in v]
 
 
-for i in mats:
-    A = np.loadtxt(inpath+"/"+i, dtype=np.double)
-    A_props = (i.split(".")[0]).split("_")
-    A_rows = float(A_props[0])
-    A_cols = float(A_props[1])
-    A_sp = (float(A_props[2]) / 100)
-    print(A_rows, A_cols, A_sp)
-    if ((A_props[0]+"_1_b.vec") in vecs):
-        b_path = (A_props[0]+"_1_b.vec")
-        print(b_path)
-    else:
-        raise Exception('b-file',A_props[0]+"_1_b.vec",'does not exist')
+LSQROUTS = []
+for (dirpath, dirnames, filenames) in walk(outputspath):
+    LSQROUTS.extend(filenames)
+    break
+LSQROUTS.sort()
+LSQROUTS = [v for v in LSQROUTS if ".vec" in v]
 
-    b = np.loadtxt(inpath+"/"+b_path, dtype=np.double)
-    x_py_path=outpath+str(A_cols)+"_1_x_python-lsqr.vec"
-    start = datetime.datetime.now()
-    x, istop, itn, normr = lsqr(A, b, show=True)[:4]
-    end = datetime.datetime.now()
-    elapsed = end - start
-    elapsedms = elapsed.total_seconds()*1000
-    print("elapsed time =",elapsedms,"ms")
-    np.savetxt(x_py_path,x,delimiter=' ')
-    row = ['scipy-lsqr', A_props[0], A_props[1] , str(A_sp) , str(elapsedms)]
-    
-    # write to csv
-    with open(csvpath, 'a') as fd:
-        writer=csv.writer(fd)
-        writer.writerow(row)
-    
+csvpath = "../images/" + now + "_RMSE.csv"
+f = open(csvpath, 'w')
+writer = csv.writer(f)
+writer.writerow(['IMPLEMENTATION','A_ROWS','RMSE'])
+f.close()
+maxRmse=0
+for pyout in PYTHONOUTS:
+    rows = int(float(pyout.split("_")[0]))
+    rowsStr = str(rows)
+    outs = [v for v in LSQROUTS if rowsStr in v]
+    p = np.loadtxt(outpath+"/"+pyout,dtype=np.double)
+    for o in outs:
+        l = np.loadtxt(outputspath+"/"+o,dtype=np.double)
+        rmse = np.sqrt(np.mean((l-p)**2))
+        if (rmse>maxRmse):
+            maxRmse=rmse
+        # write to csv
+        implementation = o.split(".")[0].split("_")[3]
+        rowcsv = [implementation,rowsStr,rmse]
+        with open(csvpath, 'a') as fd:
+            writer=csv.writer(fd)
+            writer.writerow(rowcsv)
+
+print(maxRmse)
