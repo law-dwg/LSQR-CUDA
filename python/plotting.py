@@ -61,13 +61,13 @@ all = pd.merge(CUDASPARSE,all,on="A_ROWS")
 all = pd.merge(CUDADENSE,all,on="A_ROWS")
 all = pd.merge(CPPDENSE,all,how='right',on="A_ROWS")
 all = pd.merge(BASELINE,all,how='right',on="A_ROWS")
-#all.to_csv("../results/"+now+"_TIMES.csv",index=False,float_format='%.5f')
+#all.to_csv("../results/"+now+"_RUNTIMES.csv",index=False,float_format='%.5f')
 
 # Sparse implementation plots
 sparse = pd.merge(CUSPARSE,CUDASPARSE,on="A_ROWS")
 sparse = pd.merge(BASELINE,sparse,on="A_ROWS")
-fig = sparse.plot(x='A_ROWS', ylabel="TIME(s)",title=name+" - sparse input implementations",grid=True).get_figure()
-#fig.savefig("../images/"+now+"_1000-8000_SPARSESOLUTION.png")
+fig = sparse.plot(x='A_ROWS', xlabel="# of Rows in Square Matrix A", ylabel="RUNTIME (s)",title=name+" - Sparse Inputs",grid=True).get_figure()
+#fig.savefig("../results/"+now+"_1000-8000_SPARSE-INPUTS.png")
 
 #csvtimes = "../results/"+now+"_SPARSETIMES.csv"
 #sparse.to_csv(csvtimes,index=False,float_format='%.8f')
@@ -90,8 +90,8 @@ SPEEDUPS = pd.concat([ROWS_SPEEDUP,CUDASPARSE_SPEEDUP,CUSPARSE_SPEEDUP], axis=1)
 ## Dense implementation plots
 dense = pd.merge(CUDADENSE,CUBLASDENSE,on="A_ROWS")
 dense = pd.merge(CPPDENSE,dense,on="A_ROWS")
-fig = dense.plot(x='A_ROWS', ylabel="TIME(s)",title=name+" - dense input implementations",grid=True).get_figure()
-#fig.savefig("../images/"+now+"_1000-8000_DENSESOLUTION.png")
+fig = dense.plot(x='A_ROWS', xlabel="# of Rows in Square Matrix A", ylabel="RUNTIME (s)",title=name+" - Dense Inputs",grid=True).get_figure()
+#fig.savefig("../results/"+now+"_1000-8000_DENSE-INPUTS.png")
 
 #####################################################
 ### Calculation of root mean squared error (rmse) ###

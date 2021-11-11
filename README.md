@@ -294,8 +294,9 @@ Speedups in comparison to scipy for sparse implementations:
 |8000  |3.49471983 |3.00031174     |
 
 
-![plot](images/2021-11-10T1919_1000-8000_SPARSESOLUTION.png)
+![plot](results/2021-11-11T0918_1000-8000_SPARSE-INPUTS.png)
 
+![plot](results/2021-11-11T0918_1000-8000_DENSE-INPUTS.png)
 <a id="Accuracy"></a>
 
 ## 4.2. Accuracy
