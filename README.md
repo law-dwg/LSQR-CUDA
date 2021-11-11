@@ -251,39 +251,42 @@ To see how these cuSPARSE operations were used for this implementation, please r
 
 ## 4. Results
 
-To test LSQR-CUDA, randomly generated, square A-matrices of sparsity 0.8 are available, ranging from size 1000x1000 to 8000x8000, as well as their corresponding dense b-vectors (1000x1 - 8000x1). These inputs can be found in [inputs.zip](results/inputs.zip). The runtime of each implementation of LSQR-CUDA is saved to a csv so they can be compared to the runtime of the baseline, scipy-lsqr solver.
+To test LSQR-CUDA, randomly generated, square A-matrices of sparsity 0.8 are available, ranging from size 1000x1000 to 8000x8000, as well as their corresponding dense, b-vectors (sizes 1000 to 8000). These inputs can be found in the inputs.zip files in [results](results/) (split into two zip files due to their size). Their corresponding x-vector solutions for each implementation can be found in [outputs.zip](results/outputs.zip). The runtime of each implementation of LSQR-CUDA is saved to a csv, [RUNTIMES.csv](results/RUNTIMES.csv), such that they can be compared to the runtime of the baseline, scipy-lsqr solver.
 
-The accuracy of these implementations is also measured via root mean squared error metrics, which are calculated by comparing the results to that of the scipy-lsqr solver. 
+The accuracy of these implementations is also measured via root mean squared error values, which are calculated against the results of the scipy-lsqr solver. RMSE values can be found in [RMSE.csv](results/RMSE.csv).
+
+The organization and analysis of the test data was done via the [plotting.py](python/plotting.py) python script, which is provided for reference.
 
 <a id="Speedup"></a>
 
 ## 4.1. Speedup
 
-Total runtimes on testsets:
+Below, the computation time of each implementations for different sized inputs are displayed. For the following results, A_ROWS refers to the number of rows in each square A matrix, e.g. A_ROWS=1000 refers to a matrix of size A_ROWS * A_COLUMNS == 1500 * 1500 == 2150000 matrix-elements. 
 
-|A_ROWS|scipy-lsqr|Cpp-DENSE  |CUDA-DENSE|CUDA-SPARSE|CUBLAS-DENSE|CUSPARSE-SPARSE|
-|:----:|:--------:|:---------:|:--------:|:---------:|:----------:|:-------------:|
-|1000  |5.36911   |9.03528    |6.06791   |2.25782    |4.23762     |2.57307        |
-|1500  |13.91778  |30.57563   |16.30271  |4.80371    |11.05773    |5.59088        |
-|2000  |33.73029  |72.58957   |37.55610  |9.31562    |22.89881    |10.27482       |
-|2500  |75.45058  |342.40522  |71.61881  |15.67865   |42.03487    |17.49148       |
-|3000  |67.19402  |602.61113  |115.69176 |25.07935   |69.78010    |27.93229       |
-|3500  |86.04460  |1031.17675 |189.35206 |37.92124   |108.18631   |42.33548       |
-|4000  |115.40540 |1524.24163 |281.95625 |55.00457   |158.94691   |61.39182       |
-|4500  |152.97966 |2117.63550 |390.68038 |76.19237   |224.51022   |85.30340       |
-|5000  |221.17113 |2979.51575 |548.95388 |102.28826  |306.09594   |115.30341      |
-|5500  |347.02812 |3941.48175 |721.66800 |132.16242  |400.06641   |150.34353      |
-|6000  |416.14977 |5702.59200 |928.49088 |172.34811  |524.00603   |197.15688      |
-|6500  |508.41177 |6652.28650 |1209.02975|218.11569  |663.90925   |250.62997      |
-|7000  |649.83381 |7486.82650 |1486.45062|269.35181  |824.29088   |310.20653      |
-|7500  |844.21635 |9084.99600 |1818.77300|330.60550  |1011.73656  |380.85144      |
-|8000  |1392.32401|11089.35200|2211.38200|398.40791  |1226.46113  |464.05978      |
-|8500  |          |           |2650.12625|474.72984  |1468.06038  |559.47944      |
-|9000  |          |           |3126.97725|560.89731  |1740.42025  |668.96362      |
-|9500  |          |           |3703.03425|657.37138  |2046.06525  |838.99550      |
+|A_ROWS|scipy-lsqr (SPARSE)|Cpp-DENSE  |CUDA-DENSE|CUDA-SPARSE|CUBLAS-DENSE|CUSPARSE-SPARSE|
+|:----:|:-----------------:|:---------:|:--------:|:---------:|:----------:|:-------------:|
+|1000  |5.36911            |9.03528    |6.06791   |2.25782    |4.23762     |2.57307        |
+|1500  |13.91778           |30.57563   |16.30271  |4.80371    |11.05773    |5.59088        |
+|2000  |33.73029           |72.58957   |37.55610  |9.31562    |22.89881    |10.27482       |
+|2500  |75.45058           |342.40522  |71.61881  |15.67865   |42.03487    |17.49148       |
+|3000  |67.19402           |602.61113  |115.69176 |25.07935   |69.78010    |27.93229       |
+|3500  |86.04460           |1031.17675 |189.35206 |37.92124   |108.18631   |42.33548       |
+|4000  |115.40540          |1524.24163 |281.95625 |55.00457   |158.94691   |61.39182       |
+|4500  |152.97966          |2117.63550 |390.68038 |76.19237   |224.51022   |85.30340       |
+|5000  |221.17113          |2979.51575 |548.95388 |102.28826  |306.09594   |115.30341      |
+|5500  |347.02812          |3941.48175 |721.66800 |132.16242  |400.06641   |150.34353      |
+|6000  |416.14977          |5702.59200 |928.49088 |172.34811  |524.00603   |197.15688      |
+|6500  |508.41177          |6652.28650 |1209.02975|218.11569  |663.90925   |250.62997      |
+|7000  |649.83381          |7486.82650 |1486.45062|269.35181  |824.29088   |310.20653      |
+|7500  |844.21635          |9084.99600 |1818.77300|330.60550  |1011.73656  |380.85144      |
+|8000  |1392.32401         |11089.35200|2211.38200|398.40791  |1226.46113  |464.05978      |
 
+### Sparse input implementations
+The results show that the sparse input GPU implementations, CUSPARSE-SPARSE and CUDA-SPARSE, required less computation time in comparison to the scipy-lsqr solver. 
 
-Speedups in comparison to scipy for sparse implementations:
+![plot](results/SPARSE-INPUTS.png)
+
+Another useful metric when calculating the GPU implementations' speeds in comparison to the scipy-lsqr solver is the "speedup" value, which is calculated by dividing CPU-runtime by GPU-runtime, i.e ```GPU-runtime / CPU-runtime```: 
 
 |A_ROWS|CUDA-SPARSE|CUSPARSE-SPARSE|
 |:----:|:---------:|:-------------:|
@@ -303,35 +306,43 @@ Speedups in comparison to scipy for sparse implementations:
 |7500  |2.55354598 |2.21665527     |
 |8000  |3.49471983 |3.00031174     |
 
+These values vary, but show a speedup of at least 2x for the CUDA-SPARSE implementation and 1.5x for the CUSPARSE-SPARSE implementation for all tests.
 
-![plot](results/2021-11-11T0918_1000-8000_SPARSE-INPUTS.png)
+Surprisingly, the CUDA-SPARSE implementation outperformed the CUSPARSE-SPARSE implementation on all executions of LSQR. This is likley due to an error in the MatrixCUSPARSE code, as the pre-defined NVIDIA libraries often outperform CUDA kernels written from scratch. Both, however, outperformed the scipy-lsqr CPU solver and show display the benefit of running LSQR on a GPU.
 
-![plot](results/2021-11-11T0918_1000-8000_DENSE-INPUTS.png)
+### Dense input implementations
+
+The dense input GPU implementations, CUDA-DENSE and CUBLAS-DENSE, were also faster than their CPU counterpart, Cpp-DENSE.
+
+![plot](results/DENSE-INPUTS.png)
+
+As expected, the CUBLAS-DENSE implementation outperformed the CUDA-DENSE implementation. This is because CUBLAS-DENSE uses the well-optimized cuBLAS library instead of CUDA kernels written from scratch.
+
 <a id="Accuracy"></a>
 
 ## 4.2. Accuracy
 
-Root mean squared error values in comparison to scipy-lsqr baseline:
+Root mean squared error (RMSE) values for both sparse and dense input GPU implementations are calculated against the results of the scipy-lsqr solver:
 
-|A_ROWS|Cpp-DENSE|CUDA-DENSE|CUDA-SPARSE|CUBLAS-DENSE|CUSPARSE-SPARSE|
-|------|---------|----------|-----------|------------|---------------|
-|1000  |0.01774  |0.00344   |0.00024    |0.00417     |0.00042        |
-|1500  |0.04451  |0.04059   |0.00145    |0.02306     |0.00983        |
-|2000  |0.78758  |0.03062   |0.05117    |0.06697     |0.04953        |
-|2500  |0.00228  |0.00083   |0.00134    |0.00060     |0.00086        |
-|3000  |0.00153  |0.00041   |0.00012    |0.00034     |0.00014        |
-|3500  |0.00148  |0.00015   |0.00040    |0.00060     |0.00010        |
-|4000  |0.00782  |0.00034   |0.00040    |0.00013     |0.00119        |
-|4500  |0.00991  |0.00098   |0.00853    |0.00739     |0.00575        |
-|5000  |0.00188  |0.00018   |0.00058    |0.00006     |0.00006        |
-|5500  |0.00034  |0.00042   |0.00033    |0.00012     |0.00033        |
-|6000  |0.00772  |0.00237   |0.00151    |0.00173     |0.00230        |
-|6500  |0.00106  |0.00007   |0.00007    |0.00004     |0.00020        |
-|7000  |0.09884  |0.01310   |0.01141    |0.04927     |0.06066        |
-|7500  |0.09606  |0.02260   |0.00758    |0.02353     |0.01435        |
-|8000  |0.10144  |0.00230   |0.06865    |0.04395     |0.02216        |
+|A_ROWS|CUDA-DENSE|CUDA-SPARSE|CUBLAS-DENSE|CUSPARSE-SPARSE|
+|------|----------|-----------|------------|---------------|
+|1000  |0.00344   |0.00024    |0.00417     |0.00042        |
+|1500  |0.04059   |0.00145    |0.02306     |0.00983        |
+|2000  |0.03062   |0.05117    |0.06697     |0.04953        |
+|2500  |0.00083   |0.00134    |0.00060     |0.00086        |
+|3000  |0.00041   |0.00012    |0.00034     |0.00014        |
+|3500  |0.00015   |0.00040    |0.00060     |0.00010        |
+|4000  |0.00034   |0.00040    |0.00013     |0.00119        |
+|4500  |0.00098   |0.00853    |0.00739     |0.00575        |
+|5000  |0.00018   |0.00058    |0.00006     |0.00006        |
+|5500  |0.00042   |0.00033    |0.00012     |0.00033        |
+|6000  |0.00237   |0.00151    |0.00173     |0.00230        |
+|6500  |0.00007   |0.00007    |0.00004     |0.00020        |
+|7000  |0.01310   |0.01141    |0.04927     |0.06066        |
+|7500  |0.02260   |0.00758    |0.02353     |0.01435        |
+|8000  |0.00230   |0.06865    |0.04395     |0.02216        |
 
-All of the implementations yielded very accurate results, with none having a RMSE above 0.10 (besides one outlier in the Cpp-DENSE implementation). Any missing data is marked with N/A, and is due to the incredibly high computation time required for the Cpp-DENSE implementation
+All of the implementations yielded very accurate results, with none having an RMSE above 0.06.
 
 
 <a id="Conclusion"></a>
