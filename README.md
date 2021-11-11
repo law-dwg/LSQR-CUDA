@@ -4,13 +4,7 @@ LSQR-CUDA is written by Lawrence Ayers under the supervision of Stefan Guthe of 
 
 The goal of this work was to accelerate the computation time of the well-known [LSQR](https://web.stanford.edu/group/SOL/software/lsqr/) algorithm using a CUDA-capable GPGPU.
 
-The LSQR algorithm is an iterative method used to find the solution x for either of the following problems:
-* ```Ax=b```
-* ```min(||Ax-b||)```
-
-where A is a large, often sparse, square or rectangular matrix, and b is a vector of size A_ROWS.
-
-LSQR was first authored by Chris Paige and Michael Saunders in their publication [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf), and has since been widely used for various applications.
+LSQR was first authored by Chris Paige and Michael Saunders in their publication [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf).
 
 ## Requirements
 LSQR-CUDA has the following requirements:
@@ -71,7 +65,7 @@ ___
 <a id="Introduction"></a>
 
 ## 1. Introduction
-The purpose of this work was to implement the LSQR algorithm on a CUDA-capable GPU to analyze any potential runtime speedups in comparison to standard, sequential CPU implementations. When run in CUDA, many matrix operations (e.g. multiplication, euclidean norm, addition, subtraction, etc.) can be run in parallel, and can, therefore, decrease computation time.
+The purpose of this work is to implement the LSQR algorithm on a CUDA-capable GPU to analyze any potential runtime speedups in comparison to standard, sequential CPU implementations. When run in CUDA, many matrix operations (e.g. multiplication, euclidean norm, addition, subtraction, etc.) can be run in parallel, and can, therefore, decrease computation time.
 
 This work has both sequential and parallel implementations of LSQR that are intended for both sparse and dense inputs. The 5 implementations are, correspondingly listed as follows:
 
@@ -85,11 +79,18 @@ This work has both sequential and parallel implementations of LSQR that are inte
 
 The implementations with DENSE in their name are those that keep A in a dense format, and, therefore, require more computation time. Those named with SPARSE first compress A into compressed sparse row (CSR) format before running. This saves execution time and memory, but requires different methods to run lsqr.
 
-A sparse input, sequential algorithm was not explicitly created for this work, rather, the robust [scipy-lsqr](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html) python solver was used instead as the baseline for verifying accuracy and comparing runtimes of the implementations made in this work.
+A sparse input, sequential algorithm is not explicitly created for this work, rather, the robust [scipy-lsqr](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html) python solver is used instead as the baseline for verifying accuracy and comparing runtimes of the implementations made in this work.
 
 <a id="Background"></a>
 
 ## 2. Background
+The LSQR algorithm is an iterative method used to find the solution x for either of the following problems:
+* ```Ax=b```
+* ```min(||Ax-b||)```
+
+where A is a large, often sparse, square or rectangular matrix, and b is a vector of size A_ROWS.
+
+LSQR was first authored by Chris Paige and Michael Saunders in their publication [here](https://web.stanford.edu/group/SOL/software/lsqr/lsqr-toms82a.pdf), and has since been widely used for various applications.
 
 <a id="Methods"></a>
 
@@ -156,7 +157,7 @@ Due to their already low computation time within the LSQR algorithm, the [scale]
 ### Euclidean Norm
 The euclidean norm, or Dnrm2 operation, is split into two different kernels. The first, [maxVal](source/gpu/kernels.cu#61), finds the max value within the matrix or vector, and the second, [dnrm2](source/gpu/kernels.cu#86), then divides all values by this max value whilst performing the necessary multiplication and addition operations, e.g. ```(a[0]/maxVal) ** 2 + (a[1]/maxVal) ** 2 + ...```. The norm is then found by taking the square root of the dnrm2 kernel result, before multiplying it by the max-value found in the previous kernel. This is the same method used by Ibanez in [LSQR-cpp](https://github.com/tvercaut/LSQR-cpp) and ensures numerical stability.
 
-Standard, parallel reduction techniques are used for both of these kernels, whereby the number of working threads in a block is halved in each iteration, and memory accesses are coalesced. Much of the development here was inspired by Mark Harris' webinar, "[Optimizing Parallel Reduction in CUDA](https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf)" and the topics covered in the PMPP course at TUD. Both these kernels also utilize cache memory as to decrease memory access latency.
+Standard, parallel reduction techniques are used for both of these kernels, whereby the number of working threads in a block is halved in each iteration, and memory accesses are coalesced. Much of the development here is inspired by Mark Harris' webinar, "[Optimizing Parallel Reduction in CUDA](https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf)" and the topics covered in the PMPP course at TUD. Both these kernels also utilize cache memory as to decrease memory access latency.
 
 ### Matrix Transpose
 Like the multiplcation operation, the matrix transpose operation, [transposeTiled](gpu/source/kernels.cu#201), also utilizes a "tiled" approach, where a cached "tile" is swept across the matrix iteratively transposing it section by section. While the multiplyTiled kernel requires two seperate tiles (one for each input), transposeTiled requires only one that temporarily stores a section of the matrix before loading it to global memory with swapped indices, e.g. ```output[3][2]=input[2][3]```. This method is outlined in Nvidias blog post, "[An Efficient Matrix Transpose in CUDA C/++](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)", authored by Mark Harris.
@@ -223,11 +224,11 @@ The run time of lsqr when using each kernel can be seen in the table below (inpu
 |spmvCSRVectorShared|60.198              |
 
 ### cuSPARSE Transpose
-The transpose of a CSR matrix is its compressed sparse column, CSC, counterpart. A kernel for this operation was not explicitly developed for this work, as it was both difficult to design and difficult to find a good parallel implementation for it.
+The transpose of a CSR matrix is its compressed sparse column, CSC, counterpart. A kernel for this operation was not explicitly developed for this work, as it is difficult to design and/or find a good parallel implementation for it.
 
 Also, as can be seen from the nvprof output, the transpose operation is only called once within the entire lsqr algorithm. It was, therefore, not seen as high priority seeing as it would have little impact on overall speedup.
 
-Therefore, the existing cusparseCsr2cscEx2 function within the cuSPARSE library was used. This implementation can be found in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#37) More information regarding the cuSPARSE library can be found within the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html).
+Therefore, the existing cusparseCsr2cscEx2 function within the cuSPARSE library is used. This implementation can be found in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#37) More information regarding the cuSPARSE library can be found within the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html).
 
 <a id="cuBLAS-DENSE"></a>
 
@@ -255,7 +256,7 @@ To test LSQR-CUDA, randomly generated, square A-matrices of sparsity 0.8 are ava
 
 The accuracy of these implementations is also measured via root mean squared error values, which are calculated against the results of the scipy-lsqr solver. RMSE values can be found in [RMSE.csv](results/RMSE.csv).
 
-The organization and analysis of the test data was done via the [plotting.py](python/plotting.py) python script, which is provided for reference.
+The organization and analysis of the test data is done via the [plotting.py](python/plotting.py) python script, which is provided for reference.
 
 <a id="Speedup"></a>
 
@@ -316,7 +317,7 @@ The dense input GPU implementations, CUDA-DENSE and CUBLAS-DENSE, were also fast
 
 ![plot](results/DENSE-INPUTS.png)
 
-As expected, the CUBLAS-DENSE implementation outperformed the CUDA-DENSE implementation. This is because CUBLAS-DENSE uses the well-optimized cuBLAS library instead of CUDA kernels written from scratch.
+As expected, the CUBLAS-DENSE implementation outperformed the CUDA-DENSE implementation. This is likely due to the fact that CUBLAS-DENSE uses the well-optimized cuBLAS library instead of CUDA kernels written from scratch.
 
 <a id="Accuracy"></a>
 
@@ -349,4 +350,10 @@ All of the implementations yielded very accurate results, with none having an RM
 
 ## 5. Conclusion
 
+The implementations created in this work show the benefit of running LSQR on a GPU as opposed to a CPU. For dense input implementations, a speedup of at least 1.5x is found in comparison to that of the scipy-lsqr python solver, whilst maintaining accurate results.
 
+This speedup, however, may not be as significant when compared to optimized LSQR-C++ solvers, like those provided by [Eigen](https://eigen.tuxfamily.org/dox/group__LeastSquares.html), [boost](https://www.boost.org/doc/libs/master/libs/math/doc/html/math_toolkit/linear_regression.html), or [Ibanez](https://github.com/tvercaut/LSQR-cpp) (as opposed to a python solver). Further research and comparison could be done here.
+
+It should also be noted, that NVIDIA provides an LSQR solver in its cuSOLVER library, [cusolverSpDcsrlsqvqr](https://docs.nvidia.com/cuda/cusolver/index.html), but it currently (seemingly) only works for small datasets, and runs explicitly on the CPU. If and when NVIDIA does implement this solver for the GPU, it would be useful to compare it to the speed and accuracy of the implementations presented here.
+
+Lastly, further measures could be taken to speedup the GPU implementations presented in this work. This could include (but is not limited to), introducing CUDA streams or using different memory allocation techniques (e.g. pinned memory) provided by CUDA. This could be potentially done in a future work.
