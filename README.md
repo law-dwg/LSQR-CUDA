@@ -228,7 +228,7 @@ The transpose of a CSR matrix is its compressed sparse column, CSC, counterpart.
 
 Also, as can be seen from the nvprof output, the transpose operation is only called once within the entire LSQR algorithm. It was, therefore, not seen as high priority seeing as it would have little impact on overall speedup.
 
-Therefore, the existing cusparseCsr2cscEx2 function within the cuSPARSE library is used. This implementation can be found in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#L37) More information regarding the cuSPARSE library can be found within the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html).
+Therefore, the existing cusparseCsr2cscEx2 function within the cuSPARSE library is used. This implementation can be found in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#L38) More information regarding the cuSPARSE library can be found within the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html).
 
 <a id="cuBLAS-DENSE"></a>
 
