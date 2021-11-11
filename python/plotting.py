@@ -61,7 +61,7 @@ all = pd.merge(CUDASPARSE,all,on="A_ROWS")
 all = pd.merge(CUDADENSE,all,on="A_ROWS")
 all = pd.merge(CPPDENSE,all,how='right',on="A_ROWS")
 all = pd.merge(BASELINE,all,how='right',on="A_ROWS")
-all.to_csv("../results/"+now+"_TIMES.csv",index=False,float_format='%.5f')
+#all.to_csv("../results/"+now+"_TIMES.csv",index=False,float_format='%.5f')
 
 # Sparse implementation plots
 sparse = pd.merge(CUSPARSE,CUDASPARSE,on="A_ROWS")
@@ -91,7 +91,7 @@ SPEEDUPS = pd.concat([ROWS_SPEEDUP,CUDASPARSE_SPEEDUP,CUSPARSE_SPEEDUP], axis=1)
 dense = pd.merge(CUDADENSE,CUBLASDENSE,on="A_ROWS")
 dense = pd.merge(CPPDENSE,dense,on="A_ROWS")
 fig = dense.plot(x='A_ROWS', ylabel="TIME(s)",title=name+" - dense input implementations",grid=True).get_figure()
-fig.savefig("../images/"+now+"_1000-8000_DENSESOLUTION.png")
+#fig.savefig("../images/"+now+"_1000-8000_DENSESOLUTION.png")
 
 #####################################################
 ### Calculation of root mean squared error (rmse) ###
@@ -158,5 +158,5 @@ I = pd.merge(I2,I,on="A_ROWS")
 I = pd.merge(I1,I,on="A_ROWS")
 I = pd.merge(I0,I,how='right',on="A_ROWS")
 
-I.to_csv(csvrsmepath,index=False,float_format='%.5f')
+#I.to_csv(csvrsmepath,index=False,float_format='%.5f')
 
