@@ -20,7 +20,7 @@ To run the software, enter the [source](source/) directory and type the followin
 make run
 ```
 ### Inputs
-You will then be asked if you would like automatic test inputs generated for you and the desired degree sparsity of A. The range of auto-generated inputs is set in the ```start```, ```end```, and ```iteration``` variables of [main.cu](source/gpu/main.cu#107), but can be manually changed if desired. While the current setup will only build square matrices, the main.cu file can easily be modified to generate rectangular matrices. 
+You will then be asked if you would like automatic test inputs generated for you and the desired degree sparsity of A. The range of auto-generated inputs is set in the ```start```, ```end```, and ```iteration``` variables of [main.cu](source/gpu/main.cu#L107), but can be manually changed if desired. While the current setup will only build square matrices, the main.cu file can easily be modified to generate rectangular matrices. 
 
 If you have your own inputs available, you will need to save them as files with .mat (dense and sparse matrices) and .vec (vectors) extensions in the [input](source/input/) directory. These must use a white space delimiter: " ", and each have an appropriate number of values such that Ax=b can be satisfied.
 
@@ -102,7 +102,7 @@ The LSQR algorithm in this work is largely based off the scipy-lsqr [source code
 ## CPU Implementations
 ## [3.1. Cpp-DENSE](source/cpu/vectorCPU.hpp)
 The Cpp-Dense implementation is written in C++ and runs sequentially on the CPU. This implementation uses naive operations for add, subtract, multiply, Dnrm2, etc. It is the slowest of the implementations and used as a baseline to compare to dense-input GPU implementations (i.e. CUDA-DENSE and cuBLAS-DENSE).
-Corresponding source files are [vectorCPU.cpp](source/cpu/vectorCPU.cpp) and [vectorCPU.hpp](vectorCPU.hpp)
+Corresponding source files are [vectorCPU.cpp](source/cpu/vectorCPU.cpp) and [vectorCPU.hpp](source/cpu/vectorCPU.hpp)
 
 ## [scipy-lsqr](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568)
 Scipy's LSQR solver is used in this work as a baseline to compare to the sparse input LSQR-CUDA implementations (i.e. CUDA-SPARSE and cuSPARSE-SPARSE). It first compresses A into CSR form before running a max of ```2*A_COLUMNS``` iterations before returning a solution. Related information can be found on scipy's [website](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html), and its use in this work can be found in [lsqr.py](python/lsqr.py)
@@ -145,29 +145,29 @@ An output of nvprof for test-run (2500_2500_A_0.mat) of this implementation can 
 ### Multiplication
 From the nvprof output above it is clear that the most time-intensive operation of LSQR is the matrix-vector and vector-vector multiplication operations. Since CUDA-DENSE works only with dense inputs, this operation is treated the same for both matrix-vector and vector-vector multiplication. 
 
-A naive approach to parallel multiplication is to have a each thread solve for one entry in the solution matrix, i.e. a thread accesses one row of the first input and one column of the second input from global memory to perform the dot product of these two arrays in a loop. Since the latency of global memory accesses can be quite high, a cached, "tiled", memory solution is used instead, [multiplyTiled](source/gpu/kernels.cu#L125). A [multiplyNaive](source/gpu/kernels.cu#L114) kernel is available for reference.
+A naive approach to parallel multiplication is to have a each thread solve for one entry in the solution matrix, i.e. a thread accesses one row of the first input and one column of the second input from global memory to perform the dot product of these two arrays in a loop. Since the latency of global memory accesses can be quite high, a cached, "tiled", memory solution is used instead, [multiplyTiled](source/gpu/kernels.cu#L150). A [multiplyNaive](source/gpu/kernels.cu#L135) kernel is available for reference.
 
-In the [multiplyTiled](source/gpu/kernels.cu#L125) approach to parallel matrix multiplication, inputs are first loaded into GPU-cached, (["shared"](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)) memory, or "tiles", that iteratively "sweep" across inputs,continuously summing up the dot product result with the running total in each iteration. Each thread works in parallel towards calculating one value in the resultant matrix. An excellent visual representation of this can be found in Penny Xu's work, [Tiled Matrix Multiplication](https://penny-xu.github.io/blog/tiled-matrix-multiplication).
+In the [multiplyTiled](source/gpu/kernels.cu#L150) approach to parallel matrix multiplication, inputs are first loaded into GPU-cached, (["shared"](https://developer.nvidia.com/blog/using-shared-memory-cuda-cc/)) memory, or "tiles", that iteratively "sweep" across inputs,continuously summing up the dot product result with the running total in each iteration. Each thread works in parallel towards calculating one value in the resultant matrix. An excellent visual representation of this can be found in Penny Xu's work, [Tiled Matrix Multiplication](https://penny-xu.github.io/blog/tiled-matrix-multiplication).
 
 In multiplyTiled, the use of cache memory halves the number of global memory accesses required for each thread in comparison to the naive approach. For a dense input matrix, A, of size 2500x2500, this implementation has a speedup of about 1.5x when switching from multiplyNaive to multiplyTiled.
 
 ### Scale, Addition, and Subtraction
-Due to their already low computation time within the LSQR algorithm, the [scale](source/gpu/kernels.cu#L168), [add, and subtract](source/gpu/kernels.cu#L186) operations use naive approaches. No further development for these operations was deemed necessary.
+Due to their already low computation time within the LSQR algorithm, the [scale](source/gpu/kernels.cu#L198), [add, and subtract](source/gpu/kernels.cu#L222) operations use naive approaches. No further development for these operations was deemed necessary.
 
 ### Euclidean Norm
-The euclidean norm, or Dnrm2 operation, is split into two different kernels. The first, [maxVal](source/gpu/kernels.cu#61), finds the max value within the matrix or vector, and the second, [dnrm2](source/gpu/kernels.cu#86), then divides all values by this max value whilst performing the necessary multiplication and addition operations, e.g. ```(a[0]/maxVal) ** 2 + (a[1]/maxVal) ** 2 + ...```. The norm is then found by taking the square root of the dnrm2 kernel result, before multiplying it by the max-value found in the previous kernel. This is the same method used by Ibanez in [LSQR-cpp](https://github.com/tvercaut/LSQR-cpp) and ensures numerical stability.
+The euclidean norm, or Dnrm2 operation, is split into two different kernels. The first, [maxVal](source/gpu/kernels.cu#L71), finds the max value within the matrix or vector, and the second, [dnrm2](source/gpu/kernels.cu#L102), then divides all values by this max value whilst performing the necessary multiplication and addition operations, e.g. ```(a[0]/maxVal) ** 2 + (a[1]/maxVal) ** 2 + ...```. The norm is then found by taking the square root of the dnrm2 kernel result, before multiplying it by the max-value found in the previous kernel. This is the same method used by Ibanez in [LSQR-cpp](https://github.com/tvercaut/LSQR-cpp) and ensures numerical stability.
 
 Standard, parallel reduction techniques are used for both of these kernels, whereby the number of working threads in a block is halved in each iteration, and memory accesses are coalesced. Much of the development here is inspired by Mark Harris' webinar, "[Optimizing Parallel Reduction in CUDA](https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf)" and the topics covered in the PMPP course at TUD. Both these kernels also utilize cache memory as to decrease memory access latency.
 
 ### Matrix Transpose
-Like the multiplication operation, the matrix transpose operation, [transposeTiled](gpu/source/kernels.cu#201), also utilizes a "tiled" approach, where a cached "tile" is swept across the matrix iteratively transposing it section by section. While the multiplyTiled kernel requires two separate tiles (one for each input), transposeTiled requires only one that temporarily stores a section of the matrix before loading it to global memory with swapped indices, e.g. ```output[3][2]=input[2][3]```. This method is outlined in NVIDIA's blog post, "[An Efficient Matrix Transpose in CUDA C/++](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)", authored by Mark Harris.
+Like the multiplication operation, the matrix transpose operation, [transposeTiled](source/gpu/kernels.cu#L243), also utilizes a "tiled" approach, where a cached "tile" is swept across the matrix iteratively transposing it section by section. While the multiplyTiled kernel requires two separate tiles (one for each input), transposeTiled requires only one that temporarily stores a section of the matrix before loading it to global memory with swapped indices, e.g. ```output[3][2]=input[2][3]```. This method is outlined in NVIDIA's blog post, "[An Efficient Matrix Transpose in CUDA C/++](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)", authored by Mark Harris.
 
 <a id="CUDA-SPARSE"></a>
 
 ## [3.3. CUDA-SPARSE](source/gpu/matrixCUDA.cuh)
 The CUDA-SPARSE implementation is written with the standard CUDA library, and has inputs of type ```MatrixCUDA``` (matrix A) and ```VectorCUDA``` (vector b). When loading A into MatrixCUDA, it is converted into compressed sparse row (CSR) form, reducing its size and, depending on its sparsity, required memory and computation effort.
 
-All operations used here are the same as the CUDA-DENSE implementation besides the matrix-vector multiplication and matrix transpose operations. These sparse matrix operations can all be found within the MatrixCUDA [source code](source/gpu/matrixCUDA.cu).
+All operations used here are the same as the CUDA-DENSE implementation besides the matrix-vector multiplication and matrix transpose operations. These sparse matrix operations can all be found within the ```MatrixCUDA``` [source code](source/gpu/matrixCUDA.cu).
 
 <details close>
 <summary><b>nvprof output of CUDA-SPARSE</b></summary>
@@ -207,13 +207,13 @@ As before, the nvprof output above again shows that the most expensive operation
 Much of the work done for the SpMV operation is based off Georgi Evushenko's medium article, [Sparse Matrix-Vector Multiplication with CUDA](https://medium.com/analytics-vidhya/sparse-matrix-vector-multiplication-with-cuda-42d191878e8f), and Pooja Hiranandani's report, [Sparse Matrix Vector Multiplication on GPUs: Implementation and analysis of five algorithms](https://github.com/poojahira/spmv-cuda/blob/master/SpMV_Report.pdf) and corresponding github repository, [spmv-cuda](https://github.com/poojahira/spmv-cuda/blob/master/SpMV_Report.pdf).
 
 Three different SpMV kernels are available for this implementation
-* [spmvNaive](source/gpu/kernels.cu#226)
-* [spmvCSRVector](source/gpu/kernels.cu#235)
-* [spmvCSRVectorShared](source/gpu/kernels.cu#260)
+* [spmvNaive](source/gpu/kernels.cu#L269)
+* [spmvCSRVector](source/gpu/kernels.cu#L281)
+* [spmvCSRVectorShared](source/gpu/kernels.cu#L307)
 
 While the first, spmvNaive, uses one thread per row in matrix A to solve for a value in the solution vector, spmvCSRVector and spmvCSRVectorShared use, instead, one warp (i.e. 32 threads) per row in matrix A. This allows for a better utilization of resources, since the naive approach can create bottlenecks if it encounters a row that is significantly more dense than others.
 
-The biggest difference between spmvCSRVector and spmvCSRVectorShared is their use of shared memory; spmvCSRVectorShared uses shared, cached memory, while spmvCSRVector does not. There is no real significant speedup found between these kernels when used in LSQR. spmvCSRVector is set to the default in this implementation, but it can easily be switched via the ```kern``` variable used in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#8).
+The biggest difference between spmvCSRVector and spmvCSRVectorShared is their use of shared memory; spmvCSRVectorShared uses shared, cached memory, while spmvCSRVector does not. There is no real significant speedup found between these kernels when used in LSQR. spmvCSRVector is set to the default in this implementation, but it can easily be switched via the ```kern``` variable used in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#L8).
 
 The run time of LSQR when using each kernel can be seen in the table below (inputs 2500_2500_A_0.mat and 2500_1_b.vec):
 
@@ -228,7 +228,7 @@ The transpose of a CSR matrix is its compressed sparse column, CSC, counterpart.
 
 Also, as can be seen from the nvprof output, the transpose operation is only called once within the entire LSQR algorithm. It was, therefore, not seen as high priority seeing as it would have little impact on overall speedup.
 
-Therefore, the existing cusparseCsr2cscEx2 function within the cuSPARSE library is used. This implementation can be found in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#37) More information regarding the cuSPARSE library can be found within the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html).
+Therefore, the existing cusparseCsr2cscEx2 function within the cuSPARSE library is used. This implementation can be found in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#L37) More information regarding the cuSPARSE library can be found within the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html).
 
 <a id="cuBLAS-DENSE"></a>
 
