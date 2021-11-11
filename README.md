@@ -21,6 +21,8 @@ To run the software, enter the [source](source/) directory and type the followin
 ```
 make run
 ```
+NOTE: Before compiling, please check your GPUs compute capability. It is currently set to sm_50 in the Makefile. For best results, change this to match the capability of your GPU hardware.
+
 ### Inputs
 You will then be asked if you would like automatic test inputs generated for you and the desired degree sparsity of A. The range of auto-generated inputs is set in the ```start```, ```end```, and ```iteration``` variables of [main.cu](source/gpu/main.cu#L107), but can be manually changed if desired. While the current setup will only build square matrices, the main.cu file can easily be modified to generate rectangular matrices. 
 
