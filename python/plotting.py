@@ -88,8 +88,8 @@ SPEEDUPS = pd.concat([ROWS_SPEEDUP,CUDASPARSE_SPEEDUP,CUSPARSE_SPEEDUP], axis=1)
 #SPEEDUPS.to_csv(csvsparsespeedups,index=False,float_format='%.8f')
 
 ## Dense implementation plots
-dense = pd.merge(CUBLASDENSE,CUDADENSE,on="A_ROWS")
-dense = pd.merge(CPPDENSE,dense,how='right',on="A_ROWS")
+dense = pd.merge(CUDADENSE,CUBLASDENSE,on="A_ROWS")
+dense = pd.merge(CPPDENSE,dense,on="A_ROWS")
 fig = dense.plot(x='A_ROWS', ylabel="TIME(s)",title=name+" - dense input implementations",grid=True).get_figure()
 fig.savefig("../images/"+now+"_1000-8000_DENSESOLUTION.png")
 
