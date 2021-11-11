@@ -39,7 +39,7 @@ The solution, x, will be written to [output](source/output/) in a directory corr
 for the above example, the x output file would look like this:
 * ```YYYY-MM-DDTHHMM/2000_1_x_CUDA-SPARSE.vec```
 
-The 5 different implementations created for this work will then run on each set of inputs located in the [input](source/input/) directory, with the runtime of each saved to a csv called ```YYYY-MM-DDTHHMM/YYYY-MM-DDTHHMM_LSQR-CUDA.csv```
+The 5 different implementations created for this work will then run on each set of inputs located in the [input](source/input/) directory, with the runtime of each saved to a CSV file called ```YYYY-MM-DDTHHMM/YYYY-MM-DDTHHMM_LSQR-CUDA.csv```
 ___
 
 <details open>
@@ -77,7 +77,7 @@ This work has both sequential and parallel implementations of LSQR that are inte
 |cuBLAS-DENSE   |dense       |dense   |GPU     |
 |cuSPARSE-SPARSE|sparse (CSR)|dense   |GPU     |
 
-The implementations with DENSE in their name are those that keep A in a dense format, and, therefore, require more computation time. Those named with SPARSE first compress A into compressed sparse row (CSR) format before running. This saves execution time and memory, but requires different methods to run lsqr.
+The implementations with DENSE in their name are those that keep A in a dense format, and, therefore, require more computation time. Those named with SPARSE first compress A into compressed sparse row (CSR) format before running. This saves execution time and memory, but requires different methods to run LSQR.
 
 A sparse input, sequential algorithm is not explicitly created for this work, rather, the robust [scipy-lsqr](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html) python solver is used instead as the baseline for verifying accuracy and comparing runtimes of the implementations made in this work.
 
@@ -105,7 +105,7 @@ The Cpp-Dense implementation is written in C++ and runs sequentially on the CPU.
 Corresponding source files are [vectorCPU.cpp](source/cpu/vectorCPU.cpp) and [vectorCPU.hpp](vectorCPU.hpp)
 
 ## [scipy-lsqr](https://github.com/scipy/scipy/blob/v1.6.1/scipy/sparse/linalg/isolve/lsqr.py#L96-L568)
-Scipy's lsqr solver is used in this work as a baseline to compare to the sparse input LSQR-CUDA implementations (i.e. CUDA-SPARSE and cuSPARSE-SPARSE). It first compresses A into CSR form before running a max of ```2*A_COLUMNS``` iterations before returning a solution. Related information can be found on scipy's [website](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html), and its use in this work can be found in [lsqr.py](python/lsqr.py)
+Scipy's LSQR solver is used in this work as a baseline to compare to the sparse input LSQR-CUDA implementations (i.e. CUDA-SPARSE and cuSPARSE-SPARSE). It first compresses A into CSR form before running a max of ```2*A_COLUMNS``` iterations before returning a solution. Related information can be found on scipy's [website](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.lsqr.html), and its use in this work can be found in [lsqr.py](python/lsqr.py)
 
 <a id="CUDA-DENSE"></a>
 
@@ -117,7 +117,7 @@ For all CUDA kernels designed in this work, the blocksize (i.e. the number of th
 The kernels used for these implementations are where most development time for LSQR-CUDA were spent. 
 
 ## [3.2. CUDA-DENSE](source/gpu/vectorCUDA.cuh)
-The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation has two dense inputs of type ```VectorCUDA``` and runs them through lsqr with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. All operations used for this implementation are defined within the [VectorCUDA](source/gpu/vectorCUDA.cu) class.
+The CUDA-DENSE implementation is written with the standard CUDA library, and executes many of its own [kernels](source/gpu/kernels.cuh) for various vector operations. This implementation has two dense inputs of type ```VectorCUDA``` and runs them through LSQR with accelerated multiplication, addition/subtraction, euclidean norm, and transpose operations. All operations used for this implementation are defined within the [VectorCUDA](source/gpu/vectorCUDA.cu) class.
 
 An output of nvprof for test-run (2500_2500_A_0.mat) of this implementation can be seen here:
 
@@ -160,7 +160,7 @@ The euclidean norm, or Dnrm2 operation, is split into two different kernels. The
 Standard, parallel reduction techniques are used for both of these kernels, whereby the number of working threads in a block is halved in each iteration, and memory accesses are coalesced. Much of the development here is inspired by Mark Harris' webinar, "[Optimizing Parallel Reduction in CUDA](https://developer.download.nvidia.com/assets/cuda/files/reduction.pdf)" and the topics covered in the PMPP course at TUD. Both these kernels also utilize cache memory as to decrease memory access latency.
 
 ### Matrix Transpose
-Like the multiplcation operation, the matrix transpose operation, [transposeTiled](gpu/source/kernels.cu#201), also utilizes a "tiled" approach, where a cached "tile" is swept across the matrix iteratively transposing it section by section. While the multiplyTiled kernel requires two seperate tiles (one for each input), transposeTiled requires only one that temporarily stores a section of the matrix before loading it to global memory with swapped indices, e.g. ```output[3][2]=input[2][3]```. This method is outlined in Nvidias blog post, "[An Efficient Matrix Transpose in CUDA C/++](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)", authored by Mark Harris.
+Like the multiplication operation, the matrix transpose operation, [transposeTiled](gpu/source/kernels.cu#201), also utilizes a "tiled" approach, where a cached "tile" is swept across the matrix iteratively transposing it section by section. While the multiplyTiled kernel requires two separate tiles (one for each input), transposeTiled requires only one that temporarily stores a section of the matrix before loading it to global memory with swapped indices, e.g. ```output[3][2]=input[2][3]```. This method is outlined in NVIDIA's blog post, "[An Efficient Matrix Transpose in CUDA C/++](https://developer.nvidia.com/blog/efficient-matrix-transpose-cuda-cc/)", authored by Mark Harris.
 
 <a id="CUDA-SPARSE"></a>
 
@@ -202,7 +202,7 @@ All operations used here are the same as the CUDA-DENSE implementation besides t
 </details>
 
 ### SpMV
-As before, the nvprof output above again shows that the most expensive operation used for lsqr is multiplication. In this implementation, CUDA-SPARSE, it is the sparse matrix-vector multiplication operation, or SpMV, which solves for the product between a sparse matrix in compressed format (CSR) and a vector in dense format. The result is a vector of size #A-ROWS.
+As before, the nvprof output above again shows that the most expensive operation used for LSQR is multiplication. In this implementation, CUDA-SPARSE, it is the sparse matrix-vector multiplication operation, or SpMV, which solves for the product between a sparse matrix in compressed format (CSR) and a vector in dense format. The result is a vector of size #A-ROWS.
 
 Much of the work done for the SpMV operation is based off Georgi Evushenko's medium article, [Sparse Matrix-Vector Multiplication with CUDA](https://medium.com/analytics-vidhya/sparse-matrix-vector-multiplication-with-cuda-42d191878e8f), and Pooja Hiranandani's report, [Sparse Matrix Vector Multiplication on GPUs: Implementation and analysis of five algorithms](https://github.com/poojahira/spmv-cuda/blob/master/SpMV_Report.pdf) and corresponding github repository, [spmv-cuda](https://github.com/poojahira/spmv-cuda/blob/master/SpMV_Report.pdf).
 
@@ -211,11 +211,11 @@ Three different SpMV kernels are available for this implementation
 * [spmvCSRVector](source/gpu/kernels.cu#235)
 * [spmvCSRVectorShared](source/gpu/kernels.cu#260)
 
-While the first, spmvNaive, uses one thread per row in matrix A to solve for a value in the solution vector, spmvCSRVector and spmvCSRVectorShared use, instaed, one warp (i.e. 32 threads) per row in matrix A. This allows for a better utilization of resources, since the naive approach can create bottlenecks if it encounters a row that is significantly more dense than others.
+While the first, spmvNaive, uses one thread per row in matrix A to solve for a value in the solution vector, spmvCSRVector and spmvCSRVectorShared use, instead, one warp (i.e. 32 threads) per row in matrix A. This allows for a better utilization of resources, since the naive approach can create bottlenecks if it encounters a row that is significantly more dense than others.
 
-The biggest difference between spmvCSRVector and spmvCSRVectorShared is their use of shared memory; spmvCSRVectorShared uses shared, cached memory, while spmvCSRVector does not. There is no real significant speedup found between these kernels when used in lsqr. spmvCSRVector is set to the default in this implementation, but it can easily be switched via the ```kern``` variable used in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#8).
+The biggest difference between spmvCSRVector and spmvCSRVectorShared is their use of shared memory; spmvCSRVectorShared uses shared, cached memory, while spmvCSRVector does not. There is no real significant speedup found between these kernels when used in LSQR. spmvCSRVector is set to the default in this implementation, but it can easily be switched via the ```kern``` variable used in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#8).
 
-The run time of lsqr when using each kernel can be seen in the table below (inputs 2500_2500_A_0.mat and 2500_1_b.vec):
+The run time of LSQR when using each kernel can be seen in the table below (inputs 2500_2500_A_0.mat and 2500_1_b.vec):
 
 |kernel used        |calculation time (s)|
 |-------------------|--------------------|
@@ -226,7 +226,7 @@ The run time of lsqr when using each kernel can be seen in the table below (inpu
 ### cuSPARSE Transpose
 The transpose of a CSR matrix is its compressed sparse column, CSC, counterpart. A kernel for this operation was not explicitly developed for this work, as it is difficult to design and/or find a good parallel implementation for it.
 
-Also, as can be seen from the nvprof output, the transpose operation is only called once within the entire lsqr algorithm. It was, therefore, not seen as high priority seeing as it would have little impact on overall speedup.
+Also, as can be seen from the nvprof output, the transpose operation is only called once within the entire LSQR algorithm. It was, therefore, not seen as high priority seeing as it would have little impact on overall speedup.
 
 Therefore, the existing cusparseCsr2cscEx2 function within the cuSPARSE library is used. This implementation can be found in [matrixCUDA.cu](source/gpu/matrixCUDA.cu#37) More information regarding the cuSPARSE library can be found within the [CUDA toolkit documentation](https://docs.nvidia.com/cuda/cusparse/index.html).
 
@@ -252,7 +252,7 @@ To see how these cuSPARSE operations were used for this implementation, please r
 
 ## 4. Results
 
-To test LSQR-CUDA, randomly generated, square A-matrices of sparsity 0.8 are available, ranging from size 1000x1000 to 8000x8000, as well as their corresponding dense, b-vectors (sizes 1000 to 8000). These inputs can be found in the inputs.zip files in [results](results/) (split into two zip files due to their size). Their corresponding x-vector solutions for each implementation can be found in [outputs.zip](results/outputs.zip). The runtime of each implementation of LSQR-CUDA is saved to a csv, [RUNTIMES.csv](results/RUNTIMES.csv), such that they can be compared to the runtime of the baseline, scipy-lsqr solver.
+To test LSQR-CUDA, randomly generated, square A-matrices of sparsity 0.8 are available, ranging from size 1000x1000 to 8000x8000, as well as their corresponding dense, b-vectors (sizes 1000 to 8000). These inputs can be found in the inputs.zip files in [results](results/) (split into two zip files due to their size). Their corresponding x-vector solutions for each implementation can be found in [outputs.zip](results/outputs.zip). The runtime of each implementation of LSQR-CUDA is saved to a CSV file, [RUNTIMES.csv](results/RUNTIMES.csv), such that they can be compared to the runtime of the baseline, scipy-lsqr solver.
 
 The accuracy of these implementations is also measured via root mean squared error values, which are calculated against the results of the scipy-lsqr solver. RMSE values can be found in [RMSE.csv](results/RMSE.csv).
 
@@ -309,7 +309,7 @@ Another useful metric when calculating the GPU implementations' speeds in compar
 
 These values vary, but show a speedup of at least 2x for the CUDA-SPARSE implementation and 1.5x for the CUSPARSE-SPARSE implementation for all tests.
 
-Surprisingly, the CUDA-SPARSE implementation outperformed the CUSPARSE-SPARSE implementation on all executions of LSQR. This is likley due to an error in the MatrixCUSPARSE code, as the pre-defined NVIDIA libraries often outperform CUDA kernels written from scratch. Both, however, outperformed the scipy-lsqr CPU solver and show display the benefit of running LSQR on a GPU.
+Surprisingly, the CUDA-SPARSE implementation outperformed the CUSPARSE-SPARSE implementation on all executions of LSQR. This is likely due to an error in the MatrixCUSPARSE code, as the pre-defined NVIDIA libraries often outperform CUDA kernels written from scratch. Both, however, outperformed the scipy-lsqr CPU solver and show display the benefit of running LSQR on a GPU.
 
 ### Dense input implementations
 
