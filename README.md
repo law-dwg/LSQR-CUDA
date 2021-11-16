@@ -345,14 +345,14 @@ Root mean squared error (RMSE) values for both sparse and dense input GPU implem
 |7500  |0.02260   |0.00758    |0.02353     |0.01435        |
 |8000  |0.00230   |0.06865    |0.04395     |0.02216        |
 
-All of the implementations yielded very accurate results, with none having an RMSE above 0.06.
+All of the implementations yielded very accurate results, with none having an RMSE above 0.07.
 
 
 <a id="Conclusion"></a>
 
 ## 5. Conclusion
 
-The implementations created in this work show the benefit of running LSQR on a GPU as opposed to a CPU. For dense input implementations, a speedup of at least 1.5x is found in comparison to that of the scipy-lsqr python solver, whilst maintaining accurate results.
+The implementations created in this work show the benefit of running LSQR on a GPU as opposed to a CPU. For sparse input implementations, a speedup of at least 1.5x is found in comparison to that of the scipy-lsqr python solver, whilst maintaining accurate results.
 
 This speedup, however, may not be as significant when compared to optimized LSQR-C++ solvers, like those provided by [Eigen](https://eigen.tuxfamily.org/dox/group__LeastSquares.html), [boost](https://www.boost.org/doc/libs/master/libs/math/doc/html/math_toolkit/linear_regression.html), or [Ibanez](https://github.com/tvercaut/LSQR-cpp) (as opposed to a python solver). Further research and comparison could be done here.
 
