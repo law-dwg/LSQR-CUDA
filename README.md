@@ -15,7 +15,7 @@ LSQR-CUDA has the following requirements:
 * make
 
 ## Execution
-To run the software, enter the [source](source/) directory and type the following command into your terminal
+To run the solver, enter the [source](source/) directory and type the following command into your terminal
 ```
 make run
 ```
