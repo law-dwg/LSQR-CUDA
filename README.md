@@ -1,4 +1,12 @@
 # LSQR-CUDA
+## Video Guide
+
+<div style="position: relative; padding-bottom: NaN%; height: 0;">
+
+<iframe src="https://www.loom.com/embed/68312a5991b4495faad25feb7d94ae0b" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe>
+
+</div>
+
 ## Overview
 LSQR-CUDA is written by Lawrence Ayers under the supervision of Stefan Guthe of the [GRIS](https://www.informatik.tu-darmstadt.de/gris/startseite_1/team/index.de.jsp) institute at the Technische Universität Darmstadt. It is a CUDA port of the LSQR algorithm of Chris Paige and Michael Saunders
 
