@@ -1,10 +1,7 @@
 # LSQR-CUDA
 ## Video Guide
 
-<a href="https://www.loom.com/share/68312a5991b4495faad25feb7d94ae0b">
-    <p>LSQR-CUDA - Google Slides - 6 September 2022 - Watch Video</p>
-    <img style="max-width:300px;" src="https://cdn.loom.com/sessions/thumbnails/68312a5991b4495faad25feb7d94ae0b-with-play.gif">
-</a>
+[![LSQR-CUDA](https://cdn.loom.com/sessions/thumbnails/68312a5991b4495faad25feb7d94ae0b-with-play.gif)](https://www.loom.com/share/68312a5991b4495faad25feb7d94ae0b)
 
 ## Overview
 LSQR-CUDA is written by Lawrence Ayers under the supervision of Stefan Guthe of the [GRIS](https://www.informatik.tu-darmstadt.de/gris/startseite_1/team/index.de.jsp) institute at the Technische Universität Darmstadt. It is a CUDA port of the LSQR algorithm of Chris Paige and Michael Saunders
