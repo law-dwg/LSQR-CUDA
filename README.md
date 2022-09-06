@@ -1,5 +1,5 @@
 # LSQR-CUDA
-## Video Guide
+## Video Introduction
 
 [![LSQR-CUDA](https://cdn.loom.com/sessions/thumbnails/68312a5991b4495faad25feb7d94ae0b-with-play.gif)](https://www.loom.com/share/68312a5991b4495faad25feb7d94ae0b)
 
