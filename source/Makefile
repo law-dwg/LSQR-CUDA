@@ -57,7 +57,7 @@ $(BUILD_DIR)/%.cpp.o: %.cpp %.hpp
 	$(CC) $(CC_OPT_FLAGS) -c $< -o $@
 
 # PHONYS
-.PHONY: debug all clean clean_mats run $(BUILD_DIR)/$(TARGET) format
+.PHONY: debug all clean clean_inputs run $(BUILD_DIR)/$(TARGET) format
 
 debug: $(DEBUG_BUILD_DIR)/$(DEBUG_TARGET)
 $(DEBUG_BUILD_DIR)/$(DEBUG_TARGET): $(DEBUG_OBJS_CPP) $(DEBUG_OBJS_CU) $(DEBUG_OBJS_MAIN)
@@ -75,7 +75,7 @@ $(DEBUG_BUILD_DIR)/%.cpp.o: %.cpp %.hpp
 	mkdir -p $(dir $@)
 	$(CC) $(CC_DEBUG_FLAGS) -c $< -o $@
 
-all: clean clean_mats run
+all: clean clean_inputs run
 
 clean:
 	rm -r $(BUILD_DIR) || true
