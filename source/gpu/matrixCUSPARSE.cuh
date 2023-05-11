@@ -2,6 +2,17 @@
 #include "matrixCUDA.cuh"
 #include "vectorCUBLAS.cuh"
 
+// cusparseSpMVAlg_t descrepancy between nvcc v11 and v12
+#if defined(__CUDACC_VER_MAJOR__)
+#if __CUDACC_VER_MAJOR__ == 12
+#define ALGORITHM CUSPARSE_SPMV_ALG_DEFAULT
+#else
+#define ALGORITHM CUSPARSE_MV_ALG_DEFAULT
+#endif
+#else
+#define ALGORITHM CUSPARSE_MV_ALG_DEFAULT
+#endif
+
 class MatrixCUSPARSE : public MatrixGPU {
 protected:
   cusparseSpMatDescr_t spMatDescr = NULL;

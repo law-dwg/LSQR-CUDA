@@ -6,11 +6,12 @@ template <typename T> void SpMV(MatrixCUSPARSE &M, T &v, T &out) {
     cusparseDnVecDescr_t rhs_desc, out_desc;
     cusparseErrCheck(cusparseCreateDnVec(&rhs_desc, v.getRows(), v.getMat(), CUDA_R_64F));
     cusparseErrCheck(cusparseCreateDnVec(&out_desc, out.getRows(), out.getMat(), CUDA_R_64F));
+    cusparseSpMVAlg_t CUSPARSE_ALG = ALGORITHM;
     cusparseErrCheck(cusparseSpMV_bufferSize(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, M.spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
-                                             CUSPARSE_MV_ALG_DEFAULT, &M.bufferSize));
+                                             CUSPARSE_ALG, &M.bufferSize));
     // cudaErrCheck(cudaMalloc(&dBuffer, this->bufferSize));
     cusparseErrCheck(cusparseSpMV(spHandle, CUSPARSE_OPERATION_NON_TRANSPOSE, &ONE, M.spMatDescr, rhs_desc, &ZERO, out_desc, CUDA_R_64F,
-                                  CUSPARSE_MV_ALG_DEFAULT, M.dBuffer));
+                                  CUSPARSE_ALG, M.dBuffer));
   } else {
     printf("Cannot perform multiplication, dimension mismatch %s(%d)\n", __FILE__, __LINE__);
     exit(1);
